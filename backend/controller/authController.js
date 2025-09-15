@@ -1,0 +1,68 @@
+const User = require('../models/User.js')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+require("dotenv").config();
+const cookieParser = require('cookie-parser');
+const validator = require('validator')
+
+const register = async (req, res) => {
+    
+    try {
+        //Get the attributes from request
+        const {name, email, password} = req.body;
+
+        //Check the email , name , password are exist and valid or not
+        if (!name) {
+            return res.status(400).send({ success: false, message: "Missing Name" });
+        }
+
+        if (!email) {
+            return res.status(400).send({ success: false, message: "Missing Email" });
+        } else if (!validator.isEmail(email)) {
+            return res.status(400).send({ success: false, message: "Invalid Email" });
+        }
+
+        if (!password) {
+            return res.status(400).send({ success: false, message: "Missing Password" });
+        }else if (!validator.isStrongPassword(password)) {
+            return res.status(400).send({ success: false, message: "Please create Strong password" });
+        }
+
+        //Check the user already registed or not
+        const existingUser = await User.findOne({email})
+        if(existingUser) {
+            return res.status(400).send({success: false, message: "User already exists"})
+        }
+
+        //hashed password using bcrypt
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        //make the new User using User model
+        const user = new User({name,email,password: hashPassword})
+
+        //Save the user
+        await user.save();
+
+        //Create token using jwt
+        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"})
+
+        
+        
+        //Save token to the cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 7*24*60*60*1000   // Milisecond
+        });
+
+        return res.status(201).send({token, success: true})
+        
+
+    } catch (error) {
+        return res.status(400).send({success: false, message: `Error : ${error}`})
+    }
+
+}
+
+exports.register = register;
