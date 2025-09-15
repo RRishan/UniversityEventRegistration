@@ -1,9 +1,13 @@
 const User = require('../models/User.js')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-require("dotenv").config();
 const cookieParser = require('cookie-parser');
 const validator = require('validator')
+const transporter = require('../config/nodemailer.js')
+const welcomeRegi = require('../public/mail-template/welcome-regi.js')
+
+
+require("dotenv").config();
 
 const register = async (req, res) => {
     
@@ -45,8 +49,6 @@ const register = async (req, res) => {
 
         //Create token using jwt
         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"})
-
-        
         
         //Save token to the cookie
         res.cookie('token', token, {
@@ -56,7 +58,19 @@ const register = async (req, res) => {
             maxAge: 7*24*60*60*1000   // Milisecond
         });
 
-        return res.status(201).send({token, success: true})
+        //Creating Welcome body
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: `Registration Successful – ${name} | University of Sri Jayewardenepura 🎉`,
+            text: welcomeRegi.getTextBody(name),
+            html: welcomeRegi.getHtml(name)
+        }
+
+        //Send the email for registration
+        await transporter.sendMail(mailOptions);
+
+        return res.status(201).send({message: "Succsfully Registered", success: true})
         
 
     } catch (error) {
