@@ -13,9 +13,9 @@ const register = async (req, res) => {
     
     try {
         //Get the attributes from request
-        const {name, email, password} = req.body;
+        const {name, email, regiNumber, contactNum, faculty, department ,password} = req.body;
 
-        //Check the email , name , password are exist and valid or not
+        //Check the email , name, regiNumber, contactNum, faculty, department , password are exist and valid or not
         if (!name) {
             return res.status(400).send({ success: false, message: "Missing Name" });
         }
@@ -24,6 +24,31 @@ const register = async (req, res) => {
             return res.status(400).send({ success: false, message: "Missing Email" });
         } else if (!validator.isEmail(email)) {
             return res.status(400).send({ success: false, message: "Invalid Email" });
+        }
+
+        if (!regiNumber) {
+            return res.status(400).send({success: false, message: "Missing Registration Number"})
+        }
+
+        if (!faculty) {
+            return res.status(400).send({success: false, message: "Missing faculty Name"})
+        }
+
+        if (!contactNum) {
+            return res.status(400).send({success: false, message: "Missing Contact Number"})
+        }else {
+            function isSriLankanPhone(number) {
+                // Matches either 07XXXXXXXX or +94XXXXXXXXX
+                return /^(?:\+94|0)(7\d{8})$/.test(number);
+            }
+            if(!isSriLankanPhone(contactNum)) {
+                return res.status(400).send({success: false, message: "Invalid contact number"})
+            }
+            
+        }
+
+        if (!department) {
+            return res.status(400).send({success: false, message: "Missing Department Name"})
         }
 
         if (!password) {
@@ -42,7 +67,7 @@ const register = async (req, res) => {
         const hashPassword = await bcrypt.hash(password, 10);
 
         //make the new User using User model
-        const user = new User({name,email,password: hashPassword})
+        const user = new User({name,email, regiNumber, contactNum, faculty, department,password: hashPassword})
 
         //Save the user
         await user.save();
