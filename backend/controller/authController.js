@@ -9,13 +9,14 @@ const welcomeRegi = require('../public/mail-template/welcome-regi.js')
 
 require("dotenv").config();
 
+// User Registration
 const register = async (req, res) => {
     
     try {
         //Get the attributes from request
-        const {name, email, password} = req.body;
+        const {name, email, regiNumber, contactNum, faculty, department ,password} = req.body;
 
-        //Check the email , name , password are exist and valid or not
+        //Check the email , name, regiNumber, contactNum, faculty, department , password are exist and valid or not
         if (!name) {
             return res.status(400).send({ success: false, message: "Missing Name" });
         }
@@ -24,6 +25,31 @@ const register = async (req, res) => {
             return res.status(400).send({ success: false, message: "Missing Email" });
         } else if (!validator.isEmail(email)) {
             return res.status(400).send({ success: false, message: "Invalid Email" });
+        }
+
+        if (!regiNumber) {
+            return res.status(400).send({success: false, message: "Missing Registration Number"})
+        }
+
+        if (!faculty) {
+            return res.status(400).send({success: false, message: "Missing faculty Name"})
+        }
+
+        if (!contactNum) {
+            return res.status(400).send({success: false, message: "Missing Contact Number"})
+        }else {
+            function isSriLankanPhone(number) {
+                // Matches either 07XXXXXXXX or +94XXXXXXXXX
+                return /^(?:\+94|0)(7\d{8})$/.test(number);
+            }
+            if(!isSriLankanPhone(contactNum)) {
+                return res.status(400).send({success: false, message: "Invalid contact number"})
+            }
+            
+        }
+
+        if (!department) {
+            return res.status(400).send({success: false, message: "Missing Department Name"})
         }
 
         if (!password) {
@@ -42,7 +68,7 @@ const register = async (req, res) => {
         const hashPassword = await bcrypt.hash(password, 10);
 
         //make the new User using User model
-        const user = new User({name,email,password: hashPassword})
+        const user = new User({name,email, regiNumber, contactNum, faculty, department,password: hashPassword})
 
         //Save the user
         await user.save();
@@ -79,4 +105,59 @@ const register = async (req, res) => {
 
 }
 
+//User Login
+const login = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {email, password} = req.body;
+
+        //Check the email , password are exist and valid or not
+        if (!email) {
+            return res.status(400).send({ success: false, message: "Missing Email" });
+        } else if (!validator.isEmail(email)) {
+            return res.status(400).send({ success: false, message: "Invalid Email" });
+        }
+
+        if (!password) {
+            return res.status(400).send({ success: false, message: "Missing Password" });
+        }
+
+        //Find the user from database
+        const user = await User.findOne({email});
+
+        //Check the user is valid or not
+        if (!user) {
+            return res.status(400).send({success: false, message: "User not found"})
+        }
+
+        //Check with password is match or not
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).send({success: false, message: "Invalid Password"})
+        }
+
+        //Create token using jwt
+        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"})
+
+
+        //Save token to the cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 7*24*60*60*1000   // Milisecond
+        });
+
+        return res.status(200).send({success: true, message: `Login successful! Welcome back, ${user.name}.`})
+
+
+    } catch (error) {
+
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+}
+
 exports.register = register;
+exports.login = login;
