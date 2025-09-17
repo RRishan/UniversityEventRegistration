@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const validator = require('validator')
 const transporter = require('../config/nodemailer.js')
 const welcomeRegi = require('../public/mail-template/welcome-regi.js')
+const verifyOtpMail = require('../public/mail-template/verify-otp.js')
 
 
 require("dotenv").config();
@@ -100,6 +101,7 @@ const register = async (req, res) => {
         
 
     } catch (error) {
+        //Send error message when it is cause error
         return res.status(400).send({success: false, message: `Error : ${error}`})
     }
 
@@ -159,5 +161,67 @@ const login = async (req, res) => {
     }
 }
 
+//User logout
+const logout = async (req, res) => {
+    try {
+        //Clear token to the cookie
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict' 
+        })
+
+        return res.status(200).send({success: true, message: `Logged Out`})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+}
+
+//User verify Otp
+const verifyOtp = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {userId} = req.body;
+        
+        //Get the user details 
+        const  user = await User.findById(userId)
+
+        //Check if its verify or not
+        if (user.isAccountVerified) {
+            return res.status(400).send({success: false, message: "Account already verified"})
+        }
+
+        //Create the otp
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+        
+        //Setting the otp and the databases
+        user.verifyOtp = otp
+        user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
+        await user.save();
+
+        //Build the mail body
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: verifyOtpMail.getSubject,
+            text: verifyOtpMail.getHtml(user.name, otp)
+        }
+
+        //Send mail to user
+        await transporter.sendMail(mailOptions)
+
+        return res.status(200).send({success: true, message: "Check your emails"})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+    
+}
+
 exports.register = register;
 exports.login = login;
+exports.logout = logout;
+exports.verifyOtp = verifyOtp;
