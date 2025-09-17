@@ -1,12 +1,14 @@
+// src/App.jsx
 import React from "react";
-import Dashboard from "./components/Dashboard/Dashboard";
+import DashboardPage from "./Pages/DashboardPage";
+import { UserProvider } from "./Context/UserContext";
 import "./App.css";
 
 function App() {
   return (
-    <div className="App">
-      <Dashboard />
-    </div>
+    <UserProvider>
+      <DashboardPage />
+    </UserProvider>
   );
 }
 
