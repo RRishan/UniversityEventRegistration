@@ -231,6 +231,7 @@ const verifyEmail = async (req, res) => {
     try {
         //Get the attributes from request
         const {userId, otp} = req;
+
         //Check if the user login or not
         if(!userId) {
             return res.status(400).send({success: false, message: "Please re-login"})
@@ -275,8 +276,42 @@ const verifyEmail = async (req, res) => {
     }
 }
 
+//User isAuthenticated function 
+const isAuthenticated = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {userId} = req.body;
+
+        //Check if the user login or not
+        if(!userId) {
+            return res.status(400).send({success: false, message: "Please re-login"})
+        }
+
+        //Get the user details using user id 
+        const user = await User.findById(userId);
+
+        //Check if the user if valid or not 
+        if(!user) {
+            return res.status(400).send({success: false, message: "User not found"})
+        }
+
+        //Check is account is verify or not
+        if (!user.isAccountVerified) {
+            return res.status(400).send({success: false, message: "Account is not authenticated"})
+        }
+        
+
+        return res.status(200).send({success: true, message: "Account is verfiy"})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+}
+
 exports.register = register;
 exports.login = login;
 exports.logout = logout;
 exports.verifyOtp = verifyOtp;
 exports.verifyEmail = verifyEmail;
+exports.isAuthenticated = isAuthenticated;
