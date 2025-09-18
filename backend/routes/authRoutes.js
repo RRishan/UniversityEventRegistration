@@ -9,6 +9,7 @@ router.post('/register', authController.register)
 router.post('/login', authController.login)
 router.post('/logout', authController.logout)
 router.post('/send-verify-otp', userAuth, authController.verifyOtp)
+router.post('/verify-email', userAuth, authController.verifyEmail)
 
 
 module.exports = router;

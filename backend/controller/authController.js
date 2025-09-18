@@ -184,6 +184,11 @@ const verifyOtp = async (req, res) => {
     try {
         //Get the attributes from request
         const {userId} = req.body;
+
+        //Check user login or not
+        if(!userId) {
+            return res.status(400).send({success: false, message: "Please re-login"})
+        }
         
         //Get the user details 
         const  user = await User.findById(userId)
@@ -221,7 +226,57 @@ const verifyOtp = async (req, res) => {
     
 }
 
+// User OTP Verification function
+const verifyEmail = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {userId, otp} = req;
+        //Check if the user login or not
+        if(!userId) {
+            return res.status(400).send({success: false, message: "Please re-login"})
+        }
+
+        //Check if the OTP missing or not
+        if (!otp) {
+            return res.status(400).send({success: false, message: "Missing OTP code"})
+        }
+
+        //Get the user details using user id 
+        const user = await User.findById(userId);
+
+        //Check if the user if valid or not 
+        if(!user) {
+            return res.status(400).send({success: false, message: "User not found"})
+        }
+
+        //Check if otp is missing and valid or not
+        if (user.verifyOtp == '' || user.verifyOtp !== otp) {
+            return res.status(400).send({success: false, message: "Invalid OTP"})
+        }
+
+        //Check otp expire or not
+        if(user.verifyOtpExpireAt < Date.now()) {
+            return res.status(400).send({success: false, message: "OTP Expired"})
+        }
+
+        //make user verify
+        user.isAccountVerified = true
+        user.verifyOtp = ''
+        user.verifyOtpExpireAt = ''
+
+        //Save the user
+        await user.save()
+
+        return res.status(400).send({success: true, message: "Email verify succesfully "})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+}
+
 exports.register = register;
 exports.login = login;
 exports.logout = logout;
 exports.verifyOtp = verifyOtp;
+exports.verifyEmail = verifyEmail;
