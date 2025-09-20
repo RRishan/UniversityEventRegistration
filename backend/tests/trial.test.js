@@ -143,6 +143,7 @@ describe('User Registration', () => {
                                           ...userInput,
                                           contactNum: invalidContactNum,
                                        });
+
                 expect(response.statusCode).toBe(400);
                 expect(response.body).toHaveProperty('message', 'Invalid contact number');
             });
@@ -187,6 +188,7 @@ describe('User Registration', () => {
                                           ...userInput,
                                           password: weakPassword,
                                        });
+                                       
                 expect(response.statusCode).toBe(400);
                 expect(response.body).toHaveProperty('message', 'Please create Strong password');
             });
