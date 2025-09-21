@@ -1,6 +1,6 @@
-const verifyOtpMail = {
+const verifyPassOtpMail = {
 
-    getSubject: "Account verification OTP",
+    getSubject: "Password Reset OTP",
 
     getHtml: function(name,otp) {
         const html = `<body style="font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px;">
@@ -10,7 +10,7 @@ const verifyOtpMail = {
           <h2 style="color: #0056b3; margin-bottom: 10px;">Account Verification</h2>
           <p style="font-size: 16px; color: #333;">
             Dear ${name},<br>
-            Use the following One-Time Password (OTP) to  your account:
+            Use the following One-Time OTP to  change password :
           </p>
           <p style="font-size: 28px; font-weight: bold; letter-spacing: 3px; color: #222; background: #f1f1f1; padding: 10px 20px; display: inline-block; border-radius: 6px;">
             ${otp}
@@ -31,4 +31,4 @@ const verifyOtpMail = {
     }    
 }
 
-module.exports = verifyOtpMail;
+module.exports = verifyPassOtpMail;

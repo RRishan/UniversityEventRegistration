@@ -11,6 +11,9 @@ router.post('/logout', authController.logout)
 router.post('/send-verify-otp', userAuth, authController.verifyOtp)
 router.post('/verify-email', userAuth, authController.verifyEmail)
 router.post('/is-auth', userAuth, authController.isAuthenticated)
+router.post('/sent-reset-otp', userAuth, authController.sendResetOtp)
+router.post('/reset-password', userAuth, authController.resetPassword)
+router.get('/data', userAuth, authController.getUserData)
 
 
 module.exports = router;

@@ -10,14 +10,13 @@ const userSchema = new Schema({
     regiNumber: { type: String, unique: true, sparse: true }, // sparse = allow null for admins
     contactNum: { type: String, unique: true, sparse: true },
     faculty: { type: String },
-    department: { type: String },
-    isOrganizer: { type: Boolean, default: false } // I assume this is what you meant by isOrginzer
+    department: { type: String }
   },
 
   // 👨‍💼 Admin Profile (only for admins)
   adminProfile: {
     department: { type: String },
-    role: { type: String, enum: ["approver", "admin"], default: '' }
+    role: { type: String, enum: ["approver", "admin", 'member'], default: 'member' }
   },
 
   // 🔑 Auth fields
