@@ -4,8 +4,11 @@ const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser');
 const validator = require('validator')
 const transporter = require('../config/nodemailer.js')
+
+//Import mail template functions
 const welcomeRegi = require('../public/mail-template/welcome-regi.js')
 const verifyOtpMail = require('../public/mail-template/verify-otp.js')
+const verifyPassOtpMail = require('../public/mail-template/pass-verify-otp.js')
 
 
 require("dotenv").config();
@@ -69,7 +72,12 @@ const register = async (req, res) => {
         const hashPassword = await bcrypt.hash(password, 10);
 
         //make the new User using User model
-        const user = new User({name,email, regiNumber, contactNum, faculty, department,password: hashPassword})
+        const user = new User({name,email, studentProfile : {
+            regiNumber,
+            contactNum,
+            faculty,
+            department
+        },password: hashPassword})
 
         //Save the user
         await user.save();
@@ -102,7 +110,7 @@ const register = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: `Error : ${error}`})
+        return res.status(400).send({success: false, message: `Error : ${error.message}`})
     }
 
 }
@@ -157,7 +165,7 @@ const login = async (req, res) => {
     } catch (error) {
 
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
     }
 }
 
@@ -175,7 +183,7 @@ const logout = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
     }
 }
 
@@ -221,7 +229,7 @@ const verifyOtp = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
     }
     
 }
@@ -274,7 +282,7 @@ const verifyEmail = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
     }
 }
 
@@ -306,7 +314,7 @@ const isAuthenticated = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
     }
 }
 
@@ -319,6 +327,8 @@ const sendResetOtp = async (req, res) => {
         //Check the email is valid or not
         if (!email) {
             return res.status(400).send({success: false, message: "Email is required"})
+        } else if (!validator.isEmail(email)) {
+            return res.status(400).send({ success: false, message: "Invalid Email" });
         }
 
         //Get user from databases
@@ -338,21 +348,107 @@ const sendResetOtp = async (req, res) => {
 
         //Build email structure
         const mailOptions = {
-            from: proces.env.SENDER_EMAIL,
+            from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: "Password reset OTP",
-            text: `Your OTP for resetting your password is ${otp}`
+            subject: verifyPassOtpMail.getSubject,
+            text: verifyPassOtpMail.getHtml(otp)
         }
 
 
         //send emails
         await transporter.sendMail(mailOptions)
 
-        return res.status(400).send({success: true, message: "OTP sent to your email"})
+        return res.status(200).send({success: true, message: "OTP sent to your email"})
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.status(400).send({success: false, message: error.message})
+    }
+}
+
+//User reset password function
+const resetPassword = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {email, otp, newPassword} = req.body;
+
+        //Check if the Email missing or not and valid or not
+        if (!email) {
+            return res.status(400).send({ success: false, message: "Missing Email" });
+        } else if (!validator.isEmail(email)) {
+            return res.status(400).send({ success: false, message: "Invalid Email" });
+        }
+
+        //Check if the OTP missing or not
+        if (!otp) {
+            return res.status(400).send({success: false, message: "Missing OTP code"})
+        }
+
+        //Check if the newPassword missing or not and valid or not
+        if (!newPassword) {
+            return res.status(400).send({ success: false, message: "Missing Password" });
+        }else if (!validator.isStrongPassword(newPassword)) {
+            return res.status(400).send({ success: false, message: "Please create Strong password" });
+        }
+
+        //Get user from database
+        const user = await User.findOne({email})
+
+        //Check user valid or not
+        if(!user) {
+            return res.status(400).send({success: false, message: "User not found"})
+        }
+
+        //Check resetOtp missing and valid or not
+        if(user.resetOtp == "" || user.resetOtp !== otp) {
+            return res.status(400).send({success: false, message: "Invalid OTP"})
+        }
+
+        //Check otp expire
+        if (user.resetOtpExpireAt < Date.now()) {
+            return res.status(400).send({success: false,  message: "OTP Expired"})
+        }
+
+        //hashed the password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+
+        //saved password to database
+        user.password = hashedPassword
+        user.resetOtp = ''
+        user.resetOtpExpireAt = 0
+
+        await user.save();
+
+        return res.status(200).send({success: false, message: 'Password has been reset succesfully'})
+
+
+    } catch (error) {
+        //Send error message when it is cause error
+        console.log(error)
+        return res.status(400).send({success: false, message: error.message})
+    }
+}
+
+//User get Data function
+const getUserData = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {userId} = req.body;
+
+        //Get user from database
+        const user = await User.findById(userId)
+
+        //Check user valid or not
+        if(!user) {
+            return res.status(400).send({success: false, message: "User not found"})
+        }
+
+        return res.status(200).send({success: true, userData: {name: user.name, email: user.email}})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error.message})
     }
 }
 
@@ -363,3 +459,5 @@ exports.verifyOtp = verifyOtp;
 exports.verifyEmail = verifyEmail;
 exports.isAuthenticated = isAuthenticated;
 exports.sendResetOtp = sendResetOtp;
+exports.resetPassword = resetPassword
+exports.getUserData = getUserData
