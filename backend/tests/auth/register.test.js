@@ -1,47 +1,36 @@
 const request = require('supertest');
-const app = require('../app.js');
+const app = require('../../app.js');
 
-const userInput = {
-    "name": "Saranga Samarakoon",
-    "password": "User@789",
-    "regiNumber": "FC115625",
-    "contactNum": "0712345678",
-    "faculty": "Computing",
-    "department": "SE",
-    "email": "sarangasama@gmail.com"
-};
+// Import data for testing
+const {
+    newUser,
+    userInput, 
+    invalidEmails, 
+    invalidContactNums, 
+    weakPasswords
+} = require('../data/testUsers.js');
 
-const invalidEmails = [
-    'plainaddress',
-    '@domain.com',
-    'john@.com',
-    'john@domain',
-    'john@domain..com'
-];
+// Reusable mocks
+const { 
+  mockSave,
+  mockFindOne,
+  mockFind,
+  mockBcryptHash,
+  mockJWT,
+  mockSendMail,
+} = require('../utils/commonMocks.js');
 
-const invalidContactNums = [
-    '1234567890',
-    '0812345678',
-    '071234567',
-    '07123456789',
-    '+94123456789',
-    '+9471234567',
-    '07123abcd8',
-    '07 123 45678',
-    '+94-712345678'
-];
+// Modules for assertions
+const { User, bcrypt, jwt, transporter } = require('../utils/modules.js');
 
-const weakPasswords = [
-    'password',
-    'Password',
-    'Password123',
-    'pass123!',
-    'PASSWORD123!',
-    'Pa1!',
-    '12345678!'
-];
+// Mock external modules
+jest.mock('../../models/User.js');
+jest.mock('bcryptjs');
+jest.mock('jsonwebtoken');
+jest.mock('../../config/nodemailer.js');
 
 describe('User Registration', () => {
+    /**************** Validation Errors ****************/
     describe('Validation Errors', () => {
 
         // Test Case 1: Missing Name
@@ -190,6 +179,99 @@ describe('User Registration', () => {
                 expect(response.statusCode).toBe(400);
                 expect(response.body).toHaveProperty('message', 'Please create Strong password');
             });
+        });
+    });
+    
+    /**************** Successful Registration ****************/
+    describe('Successful Registration', () => {
+        let response;
+
+        // Prepare mocks before each test
+        beforeEach(async() => {
+            mockFindOne(User,null);     // user does not exist
+            mockBcryptHash();           // hash password
+            mockSave(User);                 // save user
+            mockJWT();                  // generate token
+            mockSendMail();             // send email
+
+            // Make the request once and reuse the response
+            response = await request(app)
+                             .post('/api/auth/register')
+                             .send(userInput); // userInput is what we send to the backend.
+        });
+
+        // Test Case 11: Successful Registration - Response Test
+        it('should register a new user successfuly and return 201', () => {
+            expect(response.status).toBe(201);
+            expect(response.body).toHaveProperty('message', 'Succsfully Registered');
+        });
+
+        // Test Case 12: Successful Registration – Database/Behavior Test
+        it('should save the new user', () => {
+            expect(User.prototype.save).toHaveBeenCalled();
+        });
+
+        // Test Case 13: Hash the password before saving
+        it('should hash the password', () => {
+            expect(bcrypt.hash).toHaveBeenCalledWith(userInput.password, 10);
+        });
+
+        // Test Case 14: Generates JWT token
+        it('should generate a JWT token', () => {
+            expect(jwt.sign).toHaveBeenCalledWith(
+               { id: '123' }, 
+               process.env.JWT_SECRET, 
+               { expiresIn: '7d' }
+            );
+        });
+
+        // Test Case 15: Sends a welcome email
+        it('should send a welcome email', () => {
+            // userInput is what we sent to the backend
+            // newUser is what we expect the backend to save and use in emails
+            expect(transporter.sendMail).toHaveBeenCalledWith(
+                expect.objectContaining({
+                   to: newUser.email,
+                   subject: expect.stringContaining('Registration Successful'),
+                   html: expect.stringContaining(newUser.name)
+                })
+            );
+        });
+    });
+
+    /**************** Duplicate User ****************/
+    describe('Duplicate User', () => {
+        beforeEach(() => {
+           mockFindOne(User, userInput); // User already exists
+        });
+
+        it('should return 400 if user already exists', async() => {
+            const response = await request(app)
+                                   .post('/api/auth/register')
+                                   .send(userInput);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty('message', 'User already exists');
+            expect(User.prototype.save).not.toHaveBeenCalled();
+        });
+    });
+
+    /**************** Error Handling ****************/
+    describe('Error Handling', () => {
+        it('should return 400 with an error message if something goes wrong', async() => {
+            // Make User.findOne throw an error
+            User.findOne.mockImplementation(() => {
+                throw new Error('Database failure');
+            });
+
+            const response = await request(app)
+                                   .post('/api/auth/register')
+                                   .send(userInput);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty('success', false);
+            expect(response.body).toHaveProperty('message');
+            expect(response.body.message).toMatch(/Database failure/);
         });
     });
 });

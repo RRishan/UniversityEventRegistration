@@ -1,18 +1,60 @@
+// A plain object to build User document
 const newUser = {
-  name: 'Chris Gayle',
-  email: 'gayle@example.com',
-  password: 'StrongPass123!',
-  regiNumber: 'FC115432',
-  contactNum: '0712345678',
-  faculty: 'Computing',
-  department: 'CS'
+  "name": "Saranga Samarakoon",
+  "password": "User@789",
+  "regiNumber": "FC115625",
+  "contactNum": "0712345678",
+  "faculty": "Computing",
+  "department": "SE",
+  "email": "sarangasama@gmail.com"
 };
 
-const existingUser = {
-  _id: 'abc123',
-  name: 'Jane Smith',
-  email: 'jane@example.com',
-  password: 'hashedPass123'
+// Payload sent in a request body
+const userInput = {
+  "name": "Saranga Samarakoon",
+  "password": "User@789",
+  "regiNumber": "FC115625",
+  "contactNum": "0712345678",
+  "faculty": "Computing",
+  "department": "SE",
+  "email": "sarangasama@gmail.com"
 };
 
-module.exports = { newUser, existingUser };
+// Arrays to loop for testing field-validation failures
+const invalidEmails = [
+  'plainaddress',
+  '@domain.com',
+  'john@.com',
+  'john@domain',
+  'john@domain..com'
+];
+
+const invalidContactNums = [
+  '1234567890',
+  '0812345678',
+  '071234567',
+  '07123456789',
+  '+94123456789',
+  '+9471234567',
+  '07123abcd8',
+  '07 123 45678',
+  '+94-712345678'
+];
+
+const weakPasswords = [
+  'password',
+  'Password',
+  'Password123',
+  'pass123!',
+  'PASSWORD123!',
+  'Pa1!',
+  '12345678!'
+];
+
+module.exports =  { newUser, 
+                    invalidEmails, 
+                    invalidContactNums, 
+                    weakPasswords,
+                    userInput 
+                  };
+                  
