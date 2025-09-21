@@ -211,7 +211,7 @@ const verifyOtp = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: user.email,
             subject: verifyOtpMail.getSubject,
-            text: verifyOtpMail.getHtml(user.name, otp)
+            html: verifyOtpMail.getHtml(user.name, otp)
         }
 
         //Send mail to user
@@ -230,13 +230,15 @@ const verifyOtp = async (req, res) => {
 const verifyEmail = async (req, res) => {
     try {
         //Get the attributes from request
-        const {userId, otp} = req;
+        const {userId, otp} = req.body;
+
+        
 
         //Check if the user login or not
         if(!userId) {
             return res.status(400).send({success: false, message: "Please re-login"})
         }
-
+        
         //Check if the OTP missing or not
         if (!otp) {
             return res.status(400).send({success: false, message: "Missing OTP code"})
@@ -299,9 +301,54 @@ const isAuthenticated = async (req, res) => {
         if (!user.isAccountVerified) {
             return res.status(400).send({success: false, message: "Account is not authenticated"})
         }
-        
 
         return res.status(200).send({success: true, message: "Account is verfiy"})
+
+    } catch (error) {
+        //Send error message when it is cause error
+        return res.status(400).send({success: false, message: error})
+    }
+}
+
+// User send OTP for password reset 
+const sendResetOtp = async (req, res) => {
+    try {
+        //Get the attributes from request
+        const {email} = req.body;
+
+        //Check the email is valid or not
+        if (!email) {
+            return res.status(400).send({success: false, message: "Email is required"})
+        }
+
+        //Get user from databases
+        const user = await User.findOne({email})
+
+        //Check if the user found or not
+        if(!user) {
+            return res.status(400).send({sccess: false,  message: "User not found"})
+        }
+
+        //Build the OTP and the send to database
+        const otp = String(Math.floor(100000+ Math.random() * 900000))
+
+        user.resetOtp = otp
+        user.resetOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
+        await user.save();
+
+        //Build email structure
+        const mailOptions = {
+            from: proces.env.SENDER_EMAIL,
+            to: user.email,
+            subject: "Password reset OTP",
+            text: `Your OTP for resetting your password is ${otp}`
+        }
+
+
+        //send emails
+        await transporter.sendMail(mailOptions)
+
+        return res.status(400).send({success: true, message: "OTP sent to your email"})
 
     } catch (error) {
         //Send error message when it is cause error
@@ -315,3 +362,4 @@ exports.logout = logout;
 exports.verifyOtp = verifyOtp;
 exports.verifyEmail = verifyEmail;
 exports.isAuthenticated = isAuthenticated;
+exports.sendResetOtp = sendResetOtp;
