@@ -22,6 +22,18 @@ const registrationData = {
   "Confirm Password": "User@789rtl123" 
 };
 
+const invalidContactNums = [
+  '1234567890',
+  '0812345678',
+  '071234567',
+  '07123456789',
+  '+94123456789',
+  '+9471234567',
+  '07123abcd8',
+  '07 123 45678',
+  '+94-712345678'
+];
+
 const inputs = [
     "Full Name",
     "Email",
@@ -121,6 +133,18 @@ describe('Register Component', () => {
                 await userEvent.click(button);
             });
             expect(screen.getByText(/Passwords do not match/i)).toBeInTheDocument();
+        });
+
+        it('should prevent submission for invalid contact number', async() => {
+            render(<Register />);
+            for(const number of invalidContactNums){
+                await fillForm({ ...registrationData, "Contact Number": number });
+                const button = screen.getByRole("button", { name: /Register/i });
+                await act(async() => {
+                   await userEvent.click(button);
+                });
+                expect(screen.getByText(/Invalid contact number/i)).toBeInTheDocument();
+            };
         });
     });
 
