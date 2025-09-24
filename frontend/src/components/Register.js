@@ -10,10 +10,11 @@ function Register() {
     faculty: "",
     department: "",
     password: "",
+    confirmPassword: "",
   });
 
-  
   const [message, setMessage] = useState("");
+  const [error, setError] = useState(""); 
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,11 +22,18 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match ❌");
+      return;
+    }
+
     try {
-      const res = await api.post("/register", form);
+      const res = await api.post("/auth/register", form);
       setMessage(res.data.message);
+      setError("");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || "Registration failed");
     }
   };
 
@@ -33,16 +41,78 @@ function Register() {
     <div className="form-container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Full Name" onChange={handleChange} required />
-        <input name="email" placeholder="Email" type="email" onChange={handleChange} required />
-        <input name="regiNumber" placeholder="Registration No" onChange={handleChange} required />
-        <input name="contactNum" placeholder="Contact Number" onChange={handleChange} required />
-        <input name="faculty" placeholder="Faculty" onChange={handleChange} required />
-        <input name="department" placeholder="Department" onChange={handleChange} required />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
+        <input
+          name="name"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="email"
+          placeholder="Email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="regiNumber"
+          placeholder="Registration No"
+          value={form.regiNumber}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="contactNum"
+          placeholder="Contact Number"
+          value={form.contactNum}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="faculty"
+          placeholder="Faculty"
+          value={form.faculty}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="department"
+          placeholder="Department"
+          value={form.department}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          required
+        />
+
         <button type="submit">Register</button>
       </form>
-      <p>{message}</p>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <p style={{ color: "green" }}>{message}</p>}
     </div>
   );
 }
