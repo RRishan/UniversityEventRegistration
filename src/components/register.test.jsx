@@ -31,6 +31,14 @@ const inputs = [
     "Password",
 ];
 
+const backendResponses = {
+  success:   { data: { message: 'Succsfully Registered' } },
+  missingName: { response: { data: { message: 'Missing Name' } } },
+  invalidEmail: { response: { data: { message: 'Invalid Email' } } },
+  weakPassword: { response: { data: { message: 'Please create Strong password' } } },
+  existingUser: { response: { data: { message: 'User already exists' } } },
+};
+
 const fillForm = async (data, skipFields = []) => {
   for (const [name, value] of Object.entries(data)) {
     if (!skipFields.includes(name)) {
