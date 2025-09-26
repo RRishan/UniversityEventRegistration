@@ -1,14 +1,40 @@
-// src/components/Dashboard/Sidebar.jsx
+// src/components/Sidebar.js
 import React from "react";
+import { NavLink } from "react-router-dom";
 
-const Sidebar = () => (
-  <aside className="dashboard-sidebar">
-    <ul>
-      <li>Dashboard</li>
-      <li>Events</li>
-      <li>Profile</li>
-    </ul>
-  </aside>
-);
 
-export default Sidebar;
+export default function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <nav className="sidebar-nav">
+        <ul>
+          <li>
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Dashboard
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/events"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Events
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Profile
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+
