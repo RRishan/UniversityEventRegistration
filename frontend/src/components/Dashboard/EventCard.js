@@ -1,14 +1,7 @@
-// src/components/EventCard.js
+// src/components/Dashboard/EventCard.js
 import React from "react";
 
-
 export default function EventCard({ event }) {
-  // Example event object structure:
-  // {
-  //   title, date, startTime, endTime,
-  //   venue, category, description, posterUrl
-  // }
-
   return (
     <div className="event-card">
       {/* Poster/Flyer */}
@@ -22,9 +15,11 @@ export default function EventCard({ event }) {
         <h3 className="event-title">{event.title}</h3>
 
         {/* Date */}
-        <p className="event-date">
-          <strong>Date:</strong> {event.date}
-        </p>
+        {event.date && (
+          <p className="event-date">
+            <strong>Date:</strong> {event.date}
+          </p>
+        )}
 
         {/* Start & End Time */}
         {event.startTime && event.endTime && (
@@ -56,17 +51,9 @@ export default function EventCard({ event }) {
   );
 }
 
-<EventCard
-  event={{
-    title: "Music Night",
-    date: "2025-10-05",
-    startTime: "6:00 PM",
-    endTime: "9:00 PM",
-    venue: "Main Hall",
-    category: "Music",
-    description: "An evening of live performances.",
-    posterUrl: "/images/music-night.jpg",
-  }}
-/>
 
+
+
+ 
+  
 
