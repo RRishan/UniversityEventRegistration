@@ -1,61 +1,55 @@
-import React, { createContext, useState, useContext } from "react";
+// src/Context/UserContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Create Context
 const UserContext = createContext();
 
-// Provider Component
-export const UserProvider = ({ children }) => {
-  // Store user + events in context
-  const [user, setUser] = useState(null);
+export function UserProvider({ children }) {
+  const [user, setUser] = useState({ name: "Student" });
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Freshers’ Orientation",
-      date: "2025-10-05",
-      startTime: "10:00 AM",
-      endTime: "12:00 PM",
-      venue: "Main Hall",
-      category: "Educational"
-    },
-    {
-      id: 2,
-      title: "Cultural Night",
-      date: "2025-10-10",
-      startTime: "7:00 PM",
-      endTime: "10:00 PM",
-      venue: "Open Theatre",
-      category: "Entertainment"
-    }
-  ]);
-
-  // Add new event
-  const addEvent = (event) => {
-    setEvents((prev) => [...prev, { id: Date.now(), ...event }]);
-  };
-
-  // Update event
-  const updateEvent = (id, updatedEvent) => {
-    setEvents((prev) =>
-      prev.map((event) => (event.id === id ? { ...event, ...updatedEvent } : event))
-    );
-  };
-
-  // Delete event
-  const deleteEvent = (id) => {
-    setEvents((prev) => prev.filter((event) => event.id !== id));
-  };
+  useEffect(() => {
+    // Fake fetch simulation
+    setTimeout(() => {
+      try {
+        setEvents([
+          {
+            title: "Music Night",
+            date: "2025-10-10",
+            startTime: "18:00",
+            endTime: "21:00",
+            venue: "University Hall",
+            category: "Music",
+            description: "An evening filled with live performances.",
+            poster: "/images/music-night.jpg",
+          },
+          {
+            title: "Tech Talk",
+            date: "2025-10-15",
+            startTime: "14:00",
+            endTime: "16:00",
+            venue: "Auditorium",
+            category: "Educational",
+            description: "Insights into AI & software.",
+            poster: "/images/tech-talk.jpg",
+          },
+        ]);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load events.");
+        setLoading(false);
+      }
+    }, 1500);
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, events, addEvent, updateEvent, deleteEvent }}>
+    <UserContext.Provider value={{ user, events, loading, error }}>
       {children}
     </UserContext.Provider>
   );
-};
+}
 
-// Custom Hook to use context easily
-export const useUserContext = () => {
-  return useContext(UserContext);
-};
+export const useUserContext = () => useContext(UserContext);
 
 

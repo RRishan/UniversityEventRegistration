@@ -5,13 +5,18 @@ export default function EventCard({ event }) {
   return (
     <div className="event-card">
       {/* Poster/Flyer */}
-      {event.posterUrl && (
+      {event.poster && (
         <div className="event-card-poster">
-          <img src={event.posterUrl} alt={`${event.title} poster`} />
+          <img 
+            src={event.poster} 
+            alt={`${event.title} poster`} 
+            className="poster-image"
+          />
         </div>
       )}
 
       <div className="event-card-body">
+        {/* Title */}
         <h3 className="event-title">{event.title}</h3>
 
         {/* Date */}
@@ -44,12 +49,15 @@ export default function EventCard({ event }) {
 
         {/* Description/Summary */}
         {event.description && (
-          <p className="event-description">{event.description}</p>
+          <p className="event-description">
+            <strong>Description:</strong> {event.description}
+          </p>
         )}
       </div>
     </div>
   );
 }
+
 
 
 
