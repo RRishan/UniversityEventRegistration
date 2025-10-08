@@ -2,6 +2,7 @@
 const newUser = {
   "name": "Saranga Samarakoon",
   "password": "User@789",
+  "confirmPassword": "User@789",
   "regiNumber": "FC115625",
   "contactNum": "0712345678",
   "faculty": "Computing",
@@ -13,6 +14,7 @@ const newUser = {
 const userInput = {
   "name": "Saranga Samarakoon",
   "password": "User@789",
+  "confirmPassword": "User@789",
   "regiNumber": "FC115625",
   "contactNum": "0712345678",
   "faculty": "Computing",

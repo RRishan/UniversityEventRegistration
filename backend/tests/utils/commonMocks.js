@@ -33,6 +33,11 @@ const mockSendMail = (resolveValue = true) => {
   jest.spyOn(transporter, 'sendMail').mockResolvedValue(resolveValue);
 };
 
+// Mock a method to throw an error
+const mockThrowError = (model, method = 'findOne', message = 'Test Error') => {
+  jest.spyOn(model, method).mockImplementation(() => { throw new Error(message); });
+};
+
 module.exports = {
   mockSave,
   mockFindOne,
@@ -40,4 +45,5 @@ module.exports = {
   mockBcryptHash,
   mockJWT,
   mockSendMail,
+  mockThrowError,
 };
