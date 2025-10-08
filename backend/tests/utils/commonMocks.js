@@ -13,6 +13,11 @@ const mockFindOne = (model, returnValue = null) => {
   jest.spyOn(model, 'findOne').mockResolvedValue(returnValue);
 };
 
+// Mock deleteOne() on any Mongoose model
+const mockDeleteOne = (model, returnValue = { deletedCount: 1 }) => {
+  jest.spyOn(model, 'deleteOne').mockResolvedValue(returnValue);
+};
+
 // Mock find()
 const mockFind = (model, returnValue = []) => {
   jest.spyOn(model, 'find').mockResolvedValue(returnValue);
@@ -41,6 +46,7 @@ const mockThrowError = (model, method = 'findOne', message = 'Test Error') => {
 module.exports = {
   mockSave,
   mockFindOne,
+  mockDeleteOne,
   mockFind,
   mockBcryptHash,
   mockJWT,

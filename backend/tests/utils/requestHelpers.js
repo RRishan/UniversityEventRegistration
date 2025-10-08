@@ -2,7 +2,8 @@ const request = require('supertest');
 const { 
     mockSave, 
     mockFindOne, 
-    mockThrowError 
+    mockThrowError,
+    mockDeleteOne, 
 } = require('./commonMocks.js'); // reuse existing mocks
 
 // Change status code to 201 later
@@ -73,6 +74,9 @@ const testErrorResponse = async ({
   // Send POST request
   const response = await request(app).post(endpoint).send(payload);
 
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
   // Assertions
   expect(response.statusCode).toBe(status);
   expect(response.body).toHaveProperty('success', false);
@@ -80,9 +84,66 @@ const testErrorResponse = async ({
   expect(response.body.message).toMatch(new RegExp(errorMessage));
 };
 
+// ---------- DELETE Helpers ----------
+const testSuccessfulDeletion = async ({ app, endpoint, Model, eventId, successMessage }) => {
+  mockDeleteOne(Model, { deletedCount: 1 });
+
+  const response = await request(app).delete(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(200); 
+  expect(response.body).toHaveProperty('success', true);
+  expect(response.body).toHaveProperty('message', successMessage);
+  expect(Model.deleteOne).toHaveBeenCalledWith({ _id: eventId });
+};
+
+const testDeleteError = async ({ app, endpoint, Model, eventId, errorMessage, status = 500 }) => {
+  mockThrowError(Model, 'deleteOne', errorMessage);
+
+  const response = await request(app).delete(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(status);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message');
+  expect(response.body.message).toMatch(new RegExp(errorMessage));
+};
+
+const testDeleteNotFound = async ({ app, endpoint, Model, eventId, expectedMessage }) => {
+  mockDeleteOne(Model, { deletedCount: 0 });
+
+  const response = await request(app).delete(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+};
+
+const testDeleteMissingId = async ({ app, endpoint }) => {
+  const response = await request(app).delete(endpoint).query({});
+  
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', 'Invalid Event');
+};
+
 module.exports = { 
     testSuccessfulRegistration,
     testDuplicateErrorResponse,
     testFieldWithValues,
     testErrorResponse,
+    testSuccessfulDeletion,
+    testDeleteError,
+    testDeleteNotFound,
+    testDeleteMissingId,
 };

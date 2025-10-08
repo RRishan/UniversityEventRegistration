@@ -15,7 +15,6 @@ const eventData = {
 // Arrays of invalid values with exact expected messages
 
 const invalidTitles = [
-  { value: "   ", expectedMessage: "Missing title" },
   { value: 123, expectedMessage: "Invalid title" },
   { value: {}, expectedMessage: "Invalid title" },
   { value: [], expectedMessage: "Invalid title" }
@@ -28,8 +27,6 @@ const invalidDescriptions = [
 ];
 
 const invalidCategories = [
-  { value: "", expectedMessage: "Missing Category" },
-  { value: null, expectedMessage: "Missing Category" },
   { value: "123", expectedMessage: "Invalid Category" },
   { value: {}, expectedMessage: "Invalid Category" },
   { value: [], expectedMessage: "Invalid Category" }

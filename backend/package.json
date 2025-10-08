@@ -30,6 +30,7 @@
   "jest": {
     "testEnvironment": "node",
     "clearMocks": true,
-    "restoreMocks": true
+    "restoreMocks": true,
+    "setupFilesAfterEnv": ["<rootDir>/tests/testSetup/jest.setup.js"]
   }
 }
