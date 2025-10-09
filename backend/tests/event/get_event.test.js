@@ -1,0 +1,32 @@
+const request = require('supertest');
+const app = require('../../app.js');
+
+// Modules
+const { Event } = require('../utils/modules.js');
+
+// Mock authentication middleware
+jest.mock('../../middleware/userAuth', () => (req, res, next) => next());
+
+// Base endpoint
+const endpoint = '/api/event/event';
+
+const {
+    testApiError,
+} = require('../utils/requestHelpers.js');
+
+describe('Get Event - Basic Tests', () => {
+    // For Server/DB Errors: 500 status code
+    it('should return 500 with error message if DB fails', async() => {
+        await testApiError({
+            app,
+            method: 'get',
+            endpoint,
+            Model: Event,
+            methodToMock: 'findById',
+            errorMessage: 'Database failure',
+            query: { eventId: '68e6668c09cac9795a9184eb' },
+            body: {},
+            status: 400
+        });
+    });
+});

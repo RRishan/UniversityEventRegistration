@@ -23,6 +23,11 @@ const mockFind = (model, returnValue = []) => {
   jest.spyOn(model, 'find').mockResolvedValue(returnValue);
 };
 
+// Mock findById() on any Mongoose model
+const mockFindById = (model, returnValue = null) => {
+  jest.spyOn(model, 'findById').mockResolvedValue(returnValue);
+};
+
 // Mock bcrypt.hash()
 const mockBcryptHash = (hash = 'hashedPass123') => {
   jest.spyOn(bcrypt, 'hash').mockResolvedValue(hash);

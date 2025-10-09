@@ -99,14 +99,37 @@ const testSuccessfulDeletion = async ({ app, endpoint, Model, eventId, successMe
   expect(Model.deleteOne).toHaveBeenCalledWith({ _id: eventId });
 };
 
-const testDeleteError = async ({ app, endpoint, Model, eventId, errorMessage, status = 500 }) => {
-  mockThrowError(Model, 'deleteOne', errorMessage);
+const testApiError = async ({
+  app,
+  method,
+  endpoint,
+  Model,
+  methodToMock,
+  errorMessage,
+  query,
+  body,
+  status = 500,
+}) => {
+  // Mock model method to throw error
+  mockThrowError(Model, methodToMock, errorMessage);
 
-  const response = await request(app).delete(endpoint).query({ eventId });
+  // Start the request with the chosen HTTP method
+  let httpRequest = request(app)[method](endpoint);
 
-  // Store globally for afterEach hook to log if needed
+  if (query) {
+    httpRequest = httpRequest.query(query);
+  }
+  
+  if (body) {
+    httpRequest = httpRequest.send(body);
+  }
+
+  const response = await httpRequest;
+
+  // Save globally for afterEach logging if needed
   global.lastResponse = response;
 
+  // Assertions
   expect(response.statusCode).toBe(status);
   expect(response.body).toHaveProperty('success', false);
   expect(response.body).toHaveProperty('message');
@@ -143,7 +166,7 @@ module.exports = {
     testFieldWithValues,
     testErrorResponse,
     testSuccessfulDeletion,
-    testDeleteError,
+    testApiError,
     testDeleteNotFound,
     testDeleteMissingId,
 };

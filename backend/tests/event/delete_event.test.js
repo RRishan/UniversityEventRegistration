@@ -1,4 +1,3 @@
-// tests/event/delete_event.test.js
 const request = require('supertest');
 const app = require('../../app.js');
 
@@ -13,7 +12,7 @@ const endpoint = '/api/event/delete';
 
 const {
   testSuccessfulDeletion,
-  testDeleteError,
+  testApiError,
   testDeleteNotFound,
   testDeleteMissingId,
 } = require('../utils/requestHelpers.js');
@@ -32,12 +31,15 @@ describe('Delete Event - Basic Tests', () => {
 
     // For Server/DB Errors: 500 status code
     it('should return 500 with error message if DB fails', async () => {
-        await testDeleteError({
+        await testApiError({
           app,
+          method: 'delete',
           endpoint,
           Model: Event,
-          eventId: '123abc',
-          errorMessage: 'Database failure'
+          methodToMock: 'deleteOne',
+          query: { eventId: '68e6668c09cac9795a9184eb' },
+          errorMessage: 'Database failure',
+          status: 500
         });
     });
 
