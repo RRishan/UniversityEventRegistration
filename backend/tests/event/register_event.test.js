@@ -1,6 +1,5 @@
 const request = require('supertest');
 const app = require('../../app.js');
-const { testMissingOrInvalidField } = require('../utils/validationHelpers.js');
 
 // Import data for testing
 const {
