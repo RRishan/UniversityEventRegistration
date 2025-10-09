@@ -4,6 +4,8 @@ const {
     mockFindOne, 
     mockThrowError,
     mockDeleteOne, 
+    mockFindById,
+    mockReturn,
 } = require('./commonMocks.js'); // reuse existing mocks
 
 // Change status code to 201 later
@@ -200,6 +202,32 @@ const testFieldWithValues = (app, endpoint, baseData, field, values, expectedMes
 };
 
 // ---------- GET Helpers ----------
+const testGetEventNotFound = async ({ app, endpoint, Model, eventId, expectedMessage }) => {
+  mockFindById(Model, null);
+
+  const response = await request(app).get(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+};
+
+const testSuccessfulFetch = async ({ app, endpoint, Model, eventId, mockReturn, expectedMessage }) => {
+  // Mock findById to return the document
+  mockFindById(Model, mockReturn);
+
+  const response = await request(app).get(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toHaveProperty('success', true);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+};
 
 module.exports = { 
     testSuccessfulRegistration,
@@ -212,4 +240,6 @@ module.exports = {
     testMissingId,
     missingFieldTest,
     invalidFieldTest,
+    testGetEventNotFound,
+    testSuccessfulFetch,
 };

@@ -13,7 +13,10 @@ const endpoint = '/api/event/event';
 const {
     testApiError,
     testMissingId,
+    testGetEventNotFound,
+    testSuccessfulFetch,
 } = require('../utils/requestHelpers.js');
+const { eventData } = require('../data/testEvents.js');
 
 describe('Get Event - Basic Tests', () => {
     // For Server/DB Errors: 500 status code
@@ -27,7 +30,7 @@ describe('Get Event - Basic Tests', () => {
             errorMessage: 'Database failure',
             query: { eventId: '68e6668c09cac9795a9184eb' },
             body: {},
-            status: 400
+            status: 500
         });
     });
 
@@ -39,6 +42,29 @@ describe('Get Event - Basic Tests', () => {
           endpoint,
           idField: 'eventId',   // optional, defaults to 'eventId'
           sendInBody: false      // GET expects ID in query
+        });
+    });
+
+    // Test for non-existent event
+    it('should return 400 if event does not exist', async () => {
+        await testGetEventNotFound({
+            app,
+            endpoint,
+            Model: Event,
+            eventId: 'nonexistentId',
+            expectedMessage: 'Invalid Event'
+        });
+    });
+
+    // Test for successful fetch
+    it('should fetch the event successfully', async () => {
+        await testSuccessfulFetch({
+            app,
+            endpoint,
+            Model: Event,
+            eventId: '68e6668c09cac9795a9184eb',
+            mockReturn: eventData,
+            expectedMessage: eventData
         });
     });
 });

@@ -48,6 +48,16 @@ const mockThrowError = (model, method = 'findOne', message = 'Test Error') => {
   jest.spyOn(model, method).mockImplementation(() => { throw new Error(message); });
 };
 
+// Mock return value generator for Mongoose documents
+const mockReturn = (overrides = {}) => {
+  return {
+    _id: '123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+};
+
 module.exports = {
   mockSave,
   mockFindOne,
@@ -57,4 +67,6 @@ module.exports = {
   mockJWT,
   mockSendMail,
   mockThrowError,
+  mockReturn,
+  mockFindById,
 };
