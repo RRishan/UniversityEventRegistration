@@ -12,6 +12,49 @@ const eventData = {
   organizationId: "OC1234"
 };
 
+// Additional events for "fetch all" tests
+const multipleEventsData = [
+  {
+    title: "Annual Music Concert",
+    description: "Music concert with popular singers.",
+    category: "Music",
+    venue: "Bandaranayake Hall",
+    startDate: "2025-11-07",
+    startTime: "16:00",
+    endDate: "2025-11-07",
+    endTime: "20:00",
+    participantsCount: 100,
+    isApproved: true,
+    organizationId: "OC1234"
+  },
+  {
+    title: "Tech Expo 2025",
+    description: "Technology exhibition with new gadgets.",
+    category: "Technology",
+    venue: "Colombo Exhibition Hall",
+    startDate: "2025-12-01",
+    startTime: "09:00",
+    endDate: "2025-12-01",
+    endTime: "18:00",
+    participantsCount: 200,
+    isApproved: false,
+    organizationId: "OC5678"
+  },
+  {
+    title: "Art & Culture Fair",
+    description: "Showcase of local artists and performances.",
+    category: "Art",
+    venue: "National Art Gallery",
+    startDate: "2025-11-20",
+    startTime: "10:00",
+    endDate: "2025-11-20",
+    endTime: "17:00",
+    participantsCount: 150,
+    isApproved: true,
+    organizationId: "OC9101"
+  }
+];
+
 const missingFieldTests = [
     { field: 'title', expectedMessage: 'Missing tittle' },
     { field: 'description', expectedMessage: 'Missing Description' },
@@ -106,4 +149,5 @@ module.exports = {
   invalidParticipantsCounts,
   missingFieldTests,
   invalidFieldTests,
+  multipleEventsData,
 };

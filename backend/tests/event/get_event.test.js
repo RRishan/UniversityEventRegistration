@@ -16,6 +16,7 @@ const {
     testGetEventNotFound,
     testSuccessfulFetch,
 } = require('../utils/requestHelpers.js');
+
 const { eventData } = require('../data/testEvents.js');
 
 describe('Get Event - Basic Tests', () => {

@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { 
     mockSave, 
+    mockFind,
     mockFindOne, 
     mockThrowError,
     mockDeleteOne, 
@@ -229,6 +230,24 @@ const testSuccessfulFetch = async ({ app, endpoint, Model, eventId, mockReturn, 
   expect(response.body).toHaveProperty('message', expectedMessage);
 };
 
+const testSuccessfulFetchAll = async ({ app, endpoint, Model, mockReturn, expectedMessage, query }) => { 
+  // Use commonMocks to mock Model.find
+  mockFind(Model, mockReturn);
+
+  const response = await request(app).get(endpoint);
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  // Validate that find was called with the correct query
+  expect(Model.find).toHaveBeenCalledWith(query || {});
+
+  // Validate response
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toHaveProperty('success', true);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+};
+
 module.exports = { 
     testSuccessfulRegistration,
     testDuplicateErrorResponse,
@@ -242,4 +261,5 @@ module.exports = {
     invalidFieldTest,
     testGetEventNotFound,
     testSuccessfulFetch,
+    testSuccessfulFetchAll,
 };
