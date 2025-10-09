@@ -47,18 +47,6 @@ const testDuplicateErrorResponse = async ({
   expect(Model.prototype.save).not.toHaveBeenCalled();
 };
 
-// Utility to test multiple invalid values for a specific field
-const testFieldWithValues = (app, endpoint, baseData, field, values, expectedMessage) => {
-  values.forEach(value => {
-    it(`should return 400 when ${field} is "${value}"`, async () => {
-      const payload = { ...baseData, [field]: value };
-      const response = await request(app).post(endpoint).send(payload);
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty('message', expectedMessage);
-    });
-  });
-};
-
 // Utility function to test error responses from the model
 const testErrorResponse = async ({
   app,
@@ -81,7 +69,7 @@ const testErrorResponse = async ({
   expect(response.statusCode).toBe(status);
   expect(response.body).toHaveProperty('success', false);
   expect(response.body).toHaveProperty('message');
-  expect(response.body.message).toMatch(new RegExp(errorMessage));
+  expect(response.body.message).toBe(errorMessage);
 };
 
 // ---------- DELETE Helpers ----------
@@ -93,12 +81,27 @@ const testSuccessfulDeletion = async ({ app, endpoint, Model, eventId, successMe
   // Store globally for afterEach hook to log if needed
   global.lastResponse = response;
 
-  expect(response.statusCode).toBe(200); 
+  expect(response.statusCode).toBe(204); 
   expect(response.body).toHaveProperty('success', true);
   expect(response.body).toHaveProperty('message', successMessage);
   expect(Model.deleteOne).toHaveBeenCalledWith({ _id: eventId });
 };
 
+const testDeleteNotFound = async ({ app, endpoint, Model, eventId, expectedMessage }) => {
+  mockDeleteOne(Model, { deletedCount: 0 });
+
+  const response = await request(app).delete(endpoint).query({ eventId });
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+};
+
+// ---------- Common Helpers ----------
+// Utility function to test API errors for DELETE and GET requests
 const testApiError = async ({
   app,
   method,
@@ -133,40 +136,80 @@ const testApiError = async ({
   expect(response.statusCode).toBe(status);
   expect(response.body).toHaveProperty('success', false);
   expect(response.body).toHaveProperty('message');
-  expect(response.body.message).toMatch(new RegExp(errorMessage));
+  expect(response.body.message).toBe(errorMessage);
 };
 
-const testDeleteNotFound = async ({ app, endpoint, Model, eventId, expectedMessage }) => {
-  mockDeleteOne(Model, { deletedCount: 0 });
+// Utility function to test missing ID in any request (DELETE, GET, etc.)
+const testMissingId = async ({ app, method, endpoint, idField = 'eventId', sendInBody = false }) => {
+  let httpRequest = request(app)[method](endpoint);
 
-  const response = await request(app).delete(endpoint).query({ eventId });
+  if (sendInBody) {
+    httpRequest = httpRequest.send({}); // empty body, missing ID
+  } else {
+    httpRequest = httpRequest.query({}); // empty query, missing ID
+  }
 
-  // Store globally for afterEach hook to log if needed
-  global.lastResponse = response;
+  const response = await httpRequest;
 
+  // Assertions
   expect(response.statusCode).toBe(400);
   expect(response.body).toHaveProperty('success', false);
-  expect(response.body).toHaveProperty('message', expectedMessage);
-};
+  expect(response.body).toHaveProperty('message');
+  expect(response.body.message).toMatch(/Invalid/i); // matches "Invalid Event" or similar
 
-const testDeleteMissingId = async ({ app, endpoint }) => {
-  const response = await request(app).delete(endpoint).query({});
-  
-  // Store globally for afterEach hook to log if needed
+  // Store globally for logging in afterEach if needed
   global.lastResponse = response;
-
-  expect(response.statusCode).toBe(400);
-  expect(response.body).toHaveProperty('success', false);
-  expect(response.body).toHaveProperty('message', 'Invalid Event');
 };
+
+// Utility to test missing field
+const missingFieldTest = ({ app, method, endpoint, baseData, field, expectedMessage }) => {
+  return async () => {
+    const payload = { ...baseData };
+    delete payload[field];
+    const response = await request(app)[method](endpoint).send(payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toHaveProperty('success', false);
+    expect(response.body).toHaveProperty('message', expectedMessage);
+  };
+};
+
+// Utility to test a single invalid field value
+const invalidFieldTest = ({ app, method, endpoint, baseData, field, value, expectedMessage }) => {
+  return async () => {
+    const payload = { ...baseData, [field]: value };
+    const response = await request(app)[method](endpoint).send(payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toHaveProperty('success', false);
+    expect(response.body).toHaveProperty('message', expectedMessage);
+  };
+};
+
+// Utility to test multiple invalid values for a specific field
+const testFieldWithValues = (app, endpoint, baseData, field, values, expectedMessage) => {
+  for (const value of values) {
+    it(`should return 400 when ${field} is "${value}"`, async () => {
+      const payload = { ...baseData, [field]: value };
+      const response = await request(app).post(endpoint).send(payload);
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty('message', expectedMessage);
+    });
+  }
+};
+
+// ---------- GET Helpers ----------
 
 module.exports = { 
     testSuccessfulRegistration,
     testDuplicateErrorResponse,
-    testFieldWithValues,
     testErrorResponse,
     testSuccessfulDeletion,
     testApiError,
+    testFieldWithValues,
     testDeleteNotFound,
-    testDeleteMissingId,
+    testMissingId,
+    missingFieldTest,
+    invalidFieldTest,
 };

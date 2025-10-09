@@ -14,7 +14,7 @@ const {
   testSuccessfulDeletion,
   testApiError,
   testDeleteNotFound,
-  testDeleteMissingId,
+  testMissingId,
 } = require('../utils/requestHelpers.js');
 
 describe('Delete Event - Basic Tests', () => {
@@ -56,6 +56,12 @@ describe('Delete Event - Basic Tests', () => {
 
     // Test for missing eventId
     it('should return 400 if eventId is missing', async () => {
-        await testDeleteMissingId({ app, endpoint });
+        await testMissingId({
+          app,
+          method: 'delete',
+          endpoint,
+          idField: 'eventId',   // optional, defaults to 'eventId'
+          sendInBody: false      // DELETE expects ID in query
+        });
     });
 });

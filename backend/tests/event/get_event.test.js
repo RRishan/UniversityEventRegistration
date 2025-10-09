@@ -12,6 +12,7 @@ const endpoint = '/api/event/event';
 
 const {
     testApiError,
+    testMissingId,
 } = require('../utils/requestHelpers.js');
 
 describe('Get Event - Basic Tests', () => {
@@ -27,6 +28,17 @@ describe('Get Event - Basic Tests', () => {
             query: { eventId: '68e6668c09cac9795a9184eb' },
             body: {},
             status: 400
+        });
+    });
+
+    // Test for missing eventId
+    it('should return 400 if eventId is missing', async () => {
+        await testMissingId({
+          app,
+          method: 'get',
+          endpoint,
+          idField: 'eventId',   // optional, defaults to 'eventId'
+          sendInBody: false      // GET expects ID in query
         });
     });
 });

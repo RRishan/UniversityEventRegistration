@@ -12,6 +12,18 @@ const eventData = {
   organizationId: "OC1234"
 };
 
+const missingFieldTests = [
+    { field: 'title', expectedMessage: 'Missing tittle' },
+    { field: 'description', expectedMessage: 'Missing Description' },
+    { field: 'category', expectedMessage: 'Missing Category' },
+    { field: 'venue', expectedMessage: 'Missing Venue' },
+    { field: 'startDate', expectedMessage: 'Missing Start Date' },
+    { field: 'startTime', expectedMessage: 'Missing Start Time' },
+    { field: 'endDate', expectedMessage: 'Missing End Date' },
+    { field: 'endTime', expectedMessage: 'Missing End Time' },
+    { field: 'participantsCount', expectedMessage: 'Missing Participants Count' },
+];
+
 // Arrays of invalid values with exact expected messages
 
 const invalidTitles = [
@@ -74,6 +86,13 @@ const invalidParticipantsCounts = [
   { value: [], expectedMessage: "Invalid Participants Count" }
 ];
 
+const invalidFieldTests = [
+     { field: 'startDate', invalidValues: invalidStartDates },
+     { field: 'startTime', invalidValues: invalidStartTimes },
+     { field: 'endDate', invalidValues: invalidEndDates },
+     { field: 'endTime', invalidValues: invalidEndTimes },
+];
+
 module.exports = {
   eventData,
   invalidTitles,
@@ -84,5 +103,7 @@ module.exports = {
   invalidStartTimes,
   invalidEndDates,
   invalidEndTimes,
-  invalidParticipantsCounts
+  invalidParticipantsCounts,
+  missingFieldTests,
+  invalidFieldTests,
 };

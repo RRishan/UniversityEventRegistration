@@ -4,7 +4,13 @@ const { testMissingOrInvalidField } = require('../utils/validationHelpers.js');
 
 // Import data for testing
 const {
-  eventData
+  eventData,
+  invalidStartDates,
+  invalidStartTimes,
+  invalidEndDates,
+  invalidEndTimes,
+  missingFieldTests,
+  invalidFieldTests,
 } = require('../data/testEvents.js');
 
 // Import reusable request helpers
@@ -12,6 +18,9 @@ const {
   testSuccessfulRegistration,
   testDuplicateErrorResponse,
   testErrorResponse,
+  testMissingId,
+  missingFieldTest,
+  testFieldWithValues,
 } = require('../utils/requestHelpers.js');
 
 // Modules for assertions
@@ -23,26 +32,35 @@ jest.mock('../../models/Event.js');
 // Mock the authentication middleware for testing purposes.
 jest.mock('../../middleware/userAuth', () => (req, res, next) => next());
 
-// Test Suite for Event Registration
-// Validation Error Tests
-describe('Validation Errors', () => {
-  const fieldTests = [
-    { field: 'title', value: '', expectedMessage: 'Missing tittle' },
-    { field: 'description', value: '', expectedMessage: 'Missing Description' },
-    { field: 'category', value: '', expectedMessage: 'Missing Category' },
-    { field: 'venue', value: '', expectedMessage: 'Missing Venue' },
-    { field: 'startDate', value: '', expectedMessage: 'Missing Start Date' },
-    { field: 'startDate', value: 'Invalid Start Date', expectedMessage: 'Invlid Start Date' },
-    { field: 'startTime', value: '', expectedMessage: 'Missing Start Time' },
-    { field: 'startTime', value: 'Invalid Start Time', expectedMessage: 'Invlid Start Time' },
-    { field: 'endDate', value: '', expectedMessage: 'Missing End Date' },
-    { field: 'endDate', value: 'Invalid', expectedMessage: 'Invlid End Date' },
-    { field: 'endTime', value: '', expectedMessage: 'Missing End Time' },
-    { field: 'endTime', value: 'Invalid Start Time', expectedMessage: 'Invlid End Time' },
-    { field: 'participantsCount', value: '', expectedMessage: 'Missing Participants Count' },
-  ];
+// Base endpoint
+const endpoint = '/api/event/register';
 
-  testMissingOrInvalidField('/api/event/register', eventData, fieldTests);
+// Test Suite for Event Registration
+describe('Event Registration - Missing Fields', () => {
+  missingFieldTests.forEach(({ field, expectedMessage }) => {
+    it(`should return 400 when "${field}" is missing`, missingFieldTest({
+      app,
+      method: 'post',
+      endpoint: '/api/event/register',
+      baseData: eventData,
+      field,
+      expectedMessage
+    }));
+  });
+});
+
+describe('Event Registration - Invalid Fields', () => {
+  // Start Date
+  testFieldWithValues(app, endpoint, eventData, 'startDate', invalidStartDates.map(v => v.value), 'Invlid Start Date');
+
+  // Start Time
+  testFieldWithValues(app, endpoint, eventData, 'startTime', invalidStartTimes.map(v => v.value), 'Invlid Start Time');
+
+  // End Date
+  testFieldWithValues(app, endpoint, eventData, 'endDate', invalidEndDates.map(v => v.value), 'Invlid End Date');
+
+  // End Time
+  testFieldWithValues(app, endpoint, eventData, 'endTime', invalidEndTimes.map(v => v.value), 'Invlid End Time');
 });
 
 // Successful Registration Test
