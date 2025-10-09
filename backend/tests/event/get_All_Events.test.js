@@ -22,7 +22,7 @@ const {
     testApiError,
 } = require('../utils/requestHelpers.js');
 
-describe('Get All Events - Basic Tests', () => {
+describe('Get All Events - Complete', () => {
     // Test for successful fetch of all approved events
     it('should fetch all approved events successfully', async() => {
         const approvedEvents = multipleEventsData.filter(e => e.isApproved);
