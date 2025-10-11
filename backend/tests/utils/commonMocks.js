@@ -58,6 +58,22 @@ const mockReturn = (overrides = {}) => {
   };
 };
 
+// Mock updateOne() on any Mongoose model
+const mockUpdateOne = (model, returnValue = { acknowledged: true, modifiedCount: 1 }) => {
+  jest.spyOn(model, 'updateOne').mockResolvedValue(returnValue);
+};
+
+// NEW: Mock for checking existing event with same title but different ID
+const mockFindOneExcludingId = (model, returnValue = null) => {
+  jest.spyOn(model, 'findOne').mockImplementation((query) => {
+    // If query has both title and _id.$ne, we can handle it specifically
+    if (query.title && query._id && query._id.$ne) {
+      return Promise.resolve(returnValue);
+    }
+    return Promise.resolve(returnValue);
+  });
+};
+
 module.exports = {
   mockSave,
   mockFindOne,
@@ -69,4 +85,6 @@ module.exports = {
   mockThrowError,
   mockReturn,
   mockFindById,
+  mockUpdateOne,
+  mockFindOneExcludingId,
 };

@@ -91,14 +91,14 @@ describe('Duplicate Event', () => {
 
 // Error Handling Test
 describe('Error Handling', () => {
-  it('should return 400 with an error message if something goes wrong', async () => {
+  it('should return 500 with an error message if something goes wrong', async () => {
     await testErrorResponse({
       app,
       endpoint: '/api/event/register',
       payload: eventData,
       Model: Event,
       errorMessage: 'Database failure',
-      status: 400
+      status: 500
     });
   });
 });

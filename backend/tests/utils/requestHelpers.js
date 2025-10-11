@@ -7,6 +7,8 @@ const {
     mockDeleteOne, 
     mockFindById,
     mockReturn,
+    mockFindOneExcludingId,
+    mockUpdateOne,
 } = require('./commonMocks.js'); // reuse existing mocks
 
 // Change status code to 201 later
@@ -18,8 +20,11 @@ const testSuccessfulRegistration = async ({ app, endpoint, baseData, Model, succ
   // Make POST request
   const response = await request(app).post(endpoint).send(baseData);
 
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
   // Assertions
-  expect(response.statusCode).toBe(200);
+  expect(response.statusCode).toBe(201);
   expect(response.body).toHaveProperty('success', true);
   expect(response.body).toHaveProperty('message', successMessage);
 
@@ -248,6 +253,50 @@ const testSuccessfulFetchAll = async ({ app, endpoint, Model, mockReturn, expect
   expect(response.body).toHaveProperty('message', expectedMessage);
 };
 
+// ---------- Update Helpers ----------
+const testSuccessfulUpdate = async ({ 
+  app, 
+  endpoint, 
+  updateData, 
+  Model, 
+  successMessage,
+  existingEventData = null 
+}) => {
+  // Mock finding the existing document to ensure it exists
+  const existingData = existingEventData || { 
+    _id: updateData._id, 
+    title: 'Original Title', // Different from update title to avoid duplicate check
+    ...updateData 
+  };
+
+  mockFindById(Model, existingData);
+    
+  // Mock duplicate check - return null (no duplicate found)
+  mockFindOneExcludingId(Model, null);
+    
+  // Mock a successful update operation
+  mockUpdateOne(Model, { acknowledged: true, modifiedCount: 1 });
+
+  // Make PUT request to the endpoint
+  const response = await request(app).put(endpoint).send(updateData);
+
+  // Store globally for afterEach hook to log if needed
+  global.lastResponse = response;
+
+  // Assertions
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toHaveProperty('success', true);
+  expect(response.body).toHaveProperty('message', successMessage);
+
+  // Check that updateOne was called correctly
+  // Extract only the fields that actual update function uses
+  const { _id, isApproved, organizationId, userId, ...updateFields } = updateData;
+  expect(Model.updateOne).toHaveBeenCalledWith(
+    { _id }, // filter by ID
+    { $set: updateFields } // update operation (only the fields, the function actually updates)
+  );
+};
+
 module.exports = { 
     testSuccessfulRegistration,
     testDuplicateErrorResponse,
@@ -262,4 +311,5 @@ module.exports = {
     testGetEventNotFound,
     testSuccessfulFetch,
     testSuccessfulFetchAll,
+    testSuccessfulUpdate,
 };

@@ -136,6 +136,20 @@ const invalidFieldTests = [
      { field: 'endTime', invalidValues: invalidEndTimes },
 ];
 
+const updateEventData = { 
+  title: "Updated Annual Music Concert",
+  description: "Updated description for the music concert.",
+  category: "Music",
+  venue: "Updated Bandaranayake Hall",
+  startDate: "2025-11-08",
+  startTime: "17:00",
+  endDate: "2025-11-08",
+  endTime: "21:00",
+  participantsCount: 150,
+  isApproved: true,
+  organizationId: "OC1234"
+};
+
 module.exports = {
   eventData,
   invalidTitles,
@@ -150,4 +164,5 @@ module.exports = {
   missingFieldTests,
   invalidFieldTests,
   multipleEventsData,
+  updateEventData,
 };

@@ -37,7 +37,7 @@ describe('Get All Events - Complete', () => {
         });
     });
 
-    // For Server/DB Errors: 500 status code
+    // Test for Server/DB Errors: 500 status code
     it('should return 500 with error message if DB fails', async() => {
         await testApiError({
             app,
@@ -46,7 +46,7 @@ describe('Get All Events - Complete', () => {
             Model: Event,
             methodToMock: 'find',
             errorMessage: 'Database failure',
-            status: 400
+            status: 500
         });
     });
     
