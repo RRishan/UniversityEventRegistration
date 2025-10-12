@@ -1,8 +1,6 @@
+const { bcrypt, jwt, transporter } = require('./modules.js');
 
-const {bcrypt,jwt,transporter} = require('./modules.js');
-
-// Replacing save() with mock implementation
-// so that calling `save()` doesn’t hit the real database.
+// Mock save() on any Mongoose model instance
 const mockSave = (model, id = '123') => {
   jest.spyOn(model.prototype, 'save').mockImplementation(function () {
     this._id = id;
@@ -10,22 +8,32 @@ const mockSave = (model, id = '123') => {
   });
 };
 
-// Mock the `findOne()` method of a Mongoose model
+// Mock findOne() on any Mongoose model
 const mockFindOne = (model, returnValue = null) => {
   jest.spyOn(model, 'findOne').mockResolvedValue(returnValue);
 };
 
-// Mock the `find()` method of a Mongoose model
+// Mock deleteOne() on any Mongoose model
+const mockDeleteOne = (model, returnValue = { deletedCount: 1 }) => {
+  jest.spyOn(model, 'deleteOne').mockResolvedValue(returnValue);
+};
+
+// Mock find()
 const mockFind = (model, returnValue = []) => {
   jest.spyOn(model, 'find').mockResolvedValue(returnValue);
 };
 
-// Mock bcrypt.hash() to always return a fixed hash string
+// Mock findById() on any Mongoose model
+const mockFindById = (model, returnValue = null) => {
+  jest.spyOn(model, 'findById').mockResolvedValue(returnValue);
+};
+
+// Mock bcrypt.hash()
 const mockBcryptHash = (hash = 'hashedPass123') => {
   jest.spyOn(bcrypt, 'hash').mockResolvedValue(hash);
 };
 
-// Mock jwt.sign() to always return a fake token
+// Mock jwt.sign()
 const mockJWT = (token = 'fakeToken123') => {
   jest.spyOn(jwt, 'sign').mockReturnValue(token);
 };
@@ -35,74 +43,48 @@ const mockSendMail = (resolveValue = true) => {
   jest.spyOn(transporter, 'sendMail').mockResolvedValue(resolveValue);
 };
 
-// Export all mocks so they can be reused in multiple test files
-const { bcrypt, jwt, transporter } = require('./modules.js');
-
-// Mock save() on any Mongoose model instance
-const mockSave = (model, id = '123') => {
-  if (model.prototype.save) {
-    jest.spyOn(model.prototype, 'save').mockImplementation(function () {
-      this._id = id;
-      return Promise.resolve(this);
-    });
-  } else {
-    model.prototype.save = jest.fn(function () {
-      this._id = id;
-      return Promise.resolve(this);
-    });
-  }
+// Mock a method to throw an error
+const mockThrowError = (model, method = 'findOne', message = 'Test Error') => {
+  jest.spyOn(model, method).mockImplementation(() => { throw new Error(message); });
 };
 
-// Mock findOne() safely
-const mockFindOne = (model, returnValue = null) => {
-  if (model.findOne) {
-    jest.spyOn(model, 'findOne').mockResolvedValue(returnValue);
-  } else {
-    model.findOne = jest.fn().mockResolvedValue(returnValue);
-  }
+// Mock return value generator for Mongoose documents
+const mockReturn = (overrides = {}) => {
+  return {
+    _id: '123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
 };
 
-// Mock find() safely
-const mockFind = (model, returnValue = []) => {
-  if (model.find) {
-    jest.spyOn(model, 'find').mockResolvedValue(returnValue);
-  } else {
-    model.find = jest.fn().mockResolvedValue(returnValue);
-  }
+// Mock updateOne() on any Mongoose model
+const mockUpdateOne = (model, returnValue = { acknowledged: true, modifiedCount: 1 }) => {
+  jest.spyOn(model, 'updateOne').mockResolvedValue(returnValue);
 };
 
-// Mock bcrypt.hash()
-const mockBcryptHash = (hash = 'hashedPass123') => {
-  if (bcrypt.hash) {
-    jest.spyOn(bcrypt, 'hash').mockResolvedValue(hash);
-  } else {
-    bcrypt.hash = jest.fn().mockResolvedValue(hash);
-  }
-};
-
-// Mock jwt.sign()
-const mockJWT = (token = 'fakeToken123') => {
-  if (jwt.sign) {
-    jest.spyOn(jwt, 'sign').mockReturnValue(token);
-  } else {
-    jwt.sign = jest.fn().mockReturnValue(token);
-  }
-};
-
-// Mock sending email safely
-const mockSendMail = (resolveValue = true) => {
-  if (transporter.sendMail) {
-    jest.spyOn(transporter, 'sendMail').mockResolvedValue(resolveValue);
-  } else {
-    transporter.sendMail = jest.fn().mockResolvedValue(resolveValue);
-  }
+// NEW: Mock for checking existing event with same title but different ID
+const mockFindOneExcludingId = (model, returnValue = null) => {
+  jest.spyOn(model, 'findOne').mockImplementation((query) => {
+    // If query has both title and _id.$ne, we can handle it specifically
+    if (query.title && query._id && query._id.$ne) {
+      return Promise.resolve(returnValue);
+    }
+    return Promise.resolve(returnValue);
+  });
 };
 
 module.exports = {
   mockSave,
   mockFindOne,
+  mockDeleteOne,
   mockFind,
   mockBcryptHash,
   mockJWT,
   mockSendMail,
+  mockThrowError,
+  mockReturn,
+  mockFindById,
+  mockUpdateOne,
+  mockFindOneExcludingId,
 };

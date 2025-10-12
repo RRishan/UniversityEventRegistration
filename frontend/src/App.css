@@ -1,63 +1,40 @@
-.dashboard-container {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  min-height: 100vh;
+/* src/components/Dashboard/EventList.css */
+.event-listing-container {
+  padding: 1rem;
 }
 
-.dashboard-sidebar {
-  background: #222;
-  color: #fff;
-  padding: 20px;
-}
-
-.dashboard-main {
+.controls {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.dashboard-header {
-  background: #f5f5f5;
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
+.controls input,
+.controls select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
-.event-list {
-  padding: 20px;
-}
-
-.event-grid {
+.event-listing {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-.event-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .event-grid {
+/* Tablet */
+@media (min-width: 768px) {
+  .event-listing {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-  }
-
-  .event-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-sidebar {
-    grid-row: 2;
-    text-align: center;
+/* Desktop */
+@media (min-width: 1024px) {
+  .event-listing {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
+
 

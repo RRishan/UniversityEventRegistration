@@ -167,7 +167,35 @@ describe('User Registration', () => {
             });
         });
 
-        // Test Case 10: Please create Strong password
+        describe.skip('given that confirm password is missing', () => {
+            it('should return error 400 with a validation message', async() => {
+                const response = await request(app)
+                                        .post('/api/auth/register')
+                                        .send({
+                                          ...userInput,
+                                          confirmPassword: "",
+                                        });
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body).toHaveProperty('message', 'Missing Confirm Password');
+            });
+        });
+
+        describe.skip('given that password and confirm password do not match', () => {
+            it('should return error 400 with a validation message', async() => {
+                const response = await request(app)
+                                       .post('/api/auth/register')
+                                       .send({
+                                               ...userInput,
+                                               confirmPassword: "Password1234!", // mismatch
+                                        });
+
+                    expect(response.statusCode).toBe(400);
+                    expect(response.body).toHaveProperty('message', 'Passwords do not match');
+            });
+        });
+
+        // Test Case: Please create Strong password
         describe('given that password is weak', () => {
             test.each(weakPasswords)('should return error 400 with validation message, given that password is "%s"', async(weakPassword) => {
                 const response = await request(app)

@@ -18,7 +18,17 @@ const register = async (req, res) => {
     
     try {
         //Get the attributes from request
-        const {name, email, regiNumber, contactNum, faculty, department ,password} = req.body;
+        const {name, email, regiNumber, contactNum, faculty, department ,password, confirmPassword} = req.body;
+
+        console.log(confirmPassword == password)
+
+        // Checking confirm password valid or not and the password and confirm password maches or not
+        if(!confirmPassword) {
+            return res.status(400).send({success: false, message: "Missing Confirm Password"})
+        }
+        else if(password != confirmPassword) {
+            return res.status(400).send({success: false, message: "Passwords do not match."})
+        }
 
         //Check the email , name, regiNumber, contactNum, faculty, department , password are exist and valid or not
         if (!name) {
@@ -92,18 +102,6 @@ const register = async (req, res) => {
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             maxAge: 7*24*60*60*1000   // Milisecond
         });
-
-        //Creating Welcome body
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: email,
-            subject: `Registration Successful – ${name} | University of Sri Jayewardenepura 🎉`,
-            text: welcomeRegi.getTextBody(name),
-            html: welcomeRegi.getHtml(name)
-        }
-
-        //Send the email for registration
-        await transporter.sendMail(mailOptions);
 
         return res.status(201).send({message: "Succsfully Registered", success: true})
         
@@ -278,7 +276,19 @@ const verifyEmail = async (req, res) => {
         //Save the user
         await user.save()
 
-        return res.status(400).send({success: true, message: "Email verify succesfully "})
+        //Creating Welcome body
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: `Registration Successful – ${user.name} | University of Sri Jayewardenepura 🎉`,
+            text: welcomeRegi.getTextBody(user.name),
+            html: welcomeRegi.getHtml(user.name)
+        }
+
+        //Send the email for registration
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).send({success: true, message: "Email verify succesfully "})
 
     } catch (error) {
         //Send error message when it is cause error
@@ -351,7 +361,7 @@ const sendResetOtp = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: user.email,
             subject: verifyPassOtpMail.getSubject,
-            text: verifyPassOtpMail.getHtml(otp)
+            text: verifyPassOtpMail.getHtml(user.name, otp)
         }
 
 
@@ -409,6 +419,15 @@ const resetPassword = async (req, res) => {
             return res.status(400).send({success: false,  message: "OTP Expired"})
         }
 
+        //Check with password is match or not
+        const isMatch = await bcrypt.compare(newPassword, user.password);
+
+        // Chec password same as the old passowrd
+        if(!isMatch) {
+            return res.status(400).send({success: false, message: "New password cannot be the same as the old password"})
+        }
+
+
         //hashed the password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -420,7 +439,7 @@ const resetPassword = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).send({success: false, message: 'Password has been reset succesfully'})
+        return res.status(200).send({success: true, message: 'Password has been reset succesfully'})
 
 
     } catch (error) {

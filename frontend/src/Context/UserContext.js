@@ -1,26 +1,55 @@
-// src/context/UserContext.jsx
-import React, { createContext, useState, useEffect } from "react";
+// src/Context/UserContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-export const UserContext = createContext();
+const UserContext = createContext();
 
-export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState({ id: 1, name: "Test User" }); // temp until integrated
+export function UserProvider({ children }) {
+  const [user, setUser] = useState({ name: "Student" });
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Simulate fetching events
   useEffect(() => {
-    const fakeEvents = [
-      { id: 1, title: "Orientation", date: "2025-09-20" },
-      { id: 2, title: "Workshop", date: "2025-09-22" },
-      { id: 3, title: "Hackathon", date: "2025-09-25" },
-    ];
-    setEvents(fakeEvents);
+    // Fake fetch simulation
+    setTimeout(() => {
+      try {
+        setEvents([
+          {
+            title: "Music Night",
+            date: "2025-10-10",
+            startTime: "18:00",
+            endTime: "21:00",
+            venue: "University Hall",
+            category: "Music",
+            description: "An evening filled with live performances.",
+            poster: "/images/music-night.jpg",
+          },
+          {
+            title: "Tech Talk",
+            date: "2025-10-15",
+            startTime: "14:00",
+            endTime: "16:00",
+            venue: "Auditorium",
+            category: "Educational",
+            description: "Insights into AI & software.",
+            poster: "/images/tech-talk.jpg",
+          },
+        ]);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load events.");
+        setLoading(false);
+      }
+    }, 1500);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, events, setEvents }}>
+    <UserContext.Provider value={{ user, events, loading, error }}>
       {children}
     </UserContext.Provider>
   );
-};
+}
+
+export const useUserContext = () => useContext(UserContext);
+
 
