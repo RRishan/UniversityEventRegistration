@@ -254,22 +254,28 @@ const testSuccessfulFetchAll = async ({ app, endpoint, Model, mockReturn, expect
 };
 
 // ---------- Update Helpers ----------
+
+// Generic successful full update test
 const testSuccessfulUpdate = async ({ 
   app, 
   endpoint, 
   updateData, 
   Model, 
   successMessage,
-  existingEventData = null 
+  existingData = null,
+  httpMethod = 'put',
+  // Optional: specify which fields to expect in the update (for strict validation)
+  expectedUpdateFields = null,
+  // Specify which fields to exclude from the update check
+  excludeFields = ['isApproved', 'organizationId', 'userId', 'createdAt', 'updatedAt', '__v']
 }) => {
   // Mock finding the existing document to ensure it exists
-  const existingData = existingEventData || { 
-    _id: updateData._id, 
-    title: 'Original Title', // Different from update title to avoid duplicate check
+  const mockExistingData = existingData || { 
+    _id: updateData._id,
     ...updateData 
   };
 
-  mockFindById(Model, existingData);
+  mockFindById(Model, mockExistingData);
     
   // Mock duplicate check - return null (no duplicate found)
   mockFindOneExcludingId(Model, null);
@@ -277,8 +283,8 @@ const testSuccessfulUpdate = async ({
   // Mock a successful update operation
   mockUpdateOne(Model, { acknowledged: true, modifiedCount: 1 });
 
-  // Make PUT request to the endpoint
-  const response = await request(app).put(endpoint).send(updateData);
+  // Make request with specified HTTP method
+  const response = await request(app)[httpMethod](endpoint).send(updateData);
 
   // Store globally for afterEach hook to log if needed
   global.lastResponse = response;
@@ -289,12 +295,97 @@ const testSuccessfulUpdate = async ({
   expect(response.body).toHaveProperty('message', successMessage);
 
   // Check that updateOne was called correctly
-  // Extract only the fields that actual update function uses
-  const { _id, isApproved, organizationId, userId, ...updateFields } = updateData;
-  expect(Model.updateOne).toHaveBeenCalledWith(
-    { _id }, // filter by ID
-    { $set: updateFields } // update operation (only the fields, the function actually updates)
-  );
+  if (expectedUpdateFields) {
+    // If specific fields are provided, check only those
+    const expectedUpdate = {};
+    expectedUpdateFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        expectedUpdate[field] = updateData[field];
+      }
+    });
+    
+    expect(Model.updateOne).toHaveBeenCalledWith(
+      { _id: updateData._id },
+      { $set: expectedUpdate }
+    );
+  } else {
+    // Otherwise, exclude common fields that might not be updated
+    const { _id, ...updateFields } = updateData;
+    const filteredUpdateFields = { ...updateFields };
+    
+    // Remove excluded fields
+    excludeFields.forEach(field => {
+      delete filteredUpdateFields[field];
+    });
+    
+    expect(Model.updateOne).toHaveBeenCalledWith(
+      { _id },
+      { $set: filteredUpdateFields }
+    );
+  }
+};
+
+// Generic duplicate check during update
+const testUpdateDuplicate = async ({ 
+  app, 
+  endpoint, 
+  updateData, 
+  Model, 
+  duplicateRecord,
+  expectedMessage,
+  duplicateField = 'title',
+  httpMethod = 'put'
+}) => {
+  // Mock finding the existing document
+  mockFindById(Model, { _id: updateData._id, [duplicateField]: 'Original Value' });
+  
+  // Mock duplicate check - return a different record with same field value
+  mockFindOneExcludingId(Model, duplicateRecord);
+
+  const response = await request(app)[httpMethod](endpoint).send(updateData);
+
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+  
+  // Ensure update was NOT called
+  expect(Model.updateOne).not.toHaveBeenCalled();
+};
+
+// Test for duplicate during full update
+const testFullUpdateDuplicate = async ({ 
+  app, 
+  endpoint, 
+  updateData, 
+  Model, 
+  duplicateRecord,
+  expectedMessage,
+  duplicateCheckField = 'title',
+  existingData = null
+}) => {
+  // Mock finding the existing document
+  const mockExistingData = existingData || { 
+    _id: updateData._id, 
+    [duplicateCheckField]: 'Original Value' // Different from update value
+  };
+  mockFindById(Model, mockExistingData);
+  
+  // Mock duplicate check - return a different record with same field value
+  // This simulates the case where the new value conflicts with another record
+  mockFindOneExcludingId(Model, duplicateRecord);
+
+  const response = await request(app).put(endpoint).send(updateData);
+
+  global.lastResponse = response;
+
+  expect(response.statusCode).toBe(400);
+  expect(response.body).toHaveProperty('success', false);
+  expect(response.body).toHaveProperty('message', expectedMessage);
+  
+  // Ensure update was NOT called due to duplicate
+  expect(Model.updateOne).not.toHaveBeenCalled();
 };
 
 module.exports = { 
@@ -312,4 +403,6 @@ module.exports = {
     testSuccessfulFetch,
     testSuccessfulFetchAll,
     testSuccessfulUpdate,
+    testUpdateDuplicate,
+    testFullUpdateDuplicate,
 };

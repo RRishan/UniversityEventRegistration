@@ -19,6 +19,8 @@ const {
 const {
     testApiError,
     testSuccessfulUpdate,
+    testUpdateDuplicate,
+    testFullUpdateDuplicate,
 } = require('../utils/requestHelpers.js');
 
 describe('Update Event', () => {
@@ -26,10 +28,13 @@ describe('Update Event', () => {
     it('should update event successfully', async() => {
         await testSuccessfulUpdate({
             app,
-            endpoint,
+            endpoint: endpoint,
             updateData: updateEventData,
             Model: Event,
-            successMessage: 'Succsfully updated !!'
+            successMessage: 'Succsfully updated !!',
+
+           // Fields to exclude from update check
+           excludeFields: ['isApproved', 'organizationId', 'userId']
         });
     });
 
@@ -46,4 +51,6 @@ describe('Update Event', () => {
             status: 400
         });
     });
+
+    // Test for Duplicate Update
 });
