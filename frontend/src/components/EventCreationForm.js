@@ -1,178 +1,153 @@
 import { useState } from "react";
-import api from "../api"; // adjust path if needed
+import axios from "axios";
 
-function EventCreationForm() {
+function EventRegistrationForm() {
   const [form, setForm] = useState({
-    applicantName: "",
-    email: "",
-    registrationNumber: "",
-    telephoneNumber: "",
-    faculty: "",
-    department: "",
-    society: "",
-    activity: "",
-    hall: "",
-    date: "",
-    participants: "",
-    timeFrom: "",
-    timeTo: "",
+    title: "",
+    description: "",
+    category: "",
+    venue: "",
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
+    participantsCount: "",
+    organizationId: "",
   });
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
-    if (!form.applicantName || !form.email || !form.registrationNumber) {
-      setError("Please fill all compulsory fields ❌");
-      return;
-    }
-
-    if (form.timeTo <= form.timeFrom) {
-      setError("End time must be after start time ❌");
-      return;
-    }
-
-    if (form.timeTo > "23:00") {
-      setError("Activities cannot continue after 11:00 PM ❌");
+    
+    if (!form.title || !form.description || !form.category || !form.venue) {
+      setError("Please fill all required fields ❌");
       return;
     }
 
     try {
-      const res = await api.post("/events/register", form);
+      const res = await axios.post(
+        "http://localhost:3001/api/event/register",
+        form,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${token}` // uncomment if authentication is required
+          },
+        }
+      );
+
       setMessage(res.data.message || "Event registered successfully ✅");
       setError("");
     } catch (err) {
-      setError(err.response?.data?.message || "Event registration failed");
+      setError(err.response?.data?.message || "Event registration failed ❌");
     }
   };
 
   return (
     <div className="form-container">
-      <h2>Event Registration Form</h2>
+      <h2>Register New Event</h2>
       <form onSubmit={handleSubmit}>
         <input
-          name="applicantName"
-          placeholder="Applicant's Name"
-          value={form.applicantName}
+          name="title"
+          placeholder="Event Title"
+          value={form.title}
           onChange={handleChange}
           required
         />
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
+        <textarea
+          name="description"
+          placeholder="Event Description"
+          value={form.description}
           onChange={handleChange}
           required
         />
 
-        <input
-          name="registrationNumber"
-          placeholder="Registration Number"
-          value={form.registrationNumber}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="telephoneNumber"
-          placeholder="Telephone Number"
-          value={form.telephoneNumber}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="faculty"
-          placeholder="Faculty"
-          value={form.faculty}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="department"
-          placeholder="Department"
-          value={form.department}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="society"
-          placeholder="Society/Organization"
-          value={form.society}
-          onChange={handleChange}
-          required
-        />
-
-        {/* Activity ENUM */}
         <select
-          name="activity"
-          value={form.activity}
+          name="category"
+          value={form.category}
           onChange={handleChange}
           required
         >
-          <option value="">Select Activity</option>
-          <option value="Educational">Educational event</option>
-          <option value="Music">Music event</option>
+          <option value="">Select Category</option>
+          <option value="Educational">Educational</option>
+          <option value="Music">Music</option>
           <option value="Entertainment">Entertainment</option>
           <option value="Meeting">Meeting</option>
         </select>
 
-        {/* Hall ENUM */}
         <select
-          name="hall"
-          value={form.hall}
+          name="venue"
+          value={form.venue}
           onChange={handleChange}
           required
         >
-          <option value="">Select Hall/Ground</option>
-          <option value="Bandaranayake">Bandaranayake hall</option>
-          <option value="Sumangala">Sumangala hall</option>
-          <option value="GalPitiya">Gal pitaniya</option>
+          <option value="">Select Venue</option>
+          <option value="Bandaranayake Hall">Bandaranayake Hall</option>
+          <option value="Sumangala Hall">Sumangala Hall</option>
+          <option value="Gal pitiniya">Gal pitiniya</option>
         </select>
 
+        <label>Start Date</label>
         <input
           type="date"
-          name="date"
-          value={form.date}
+          name="startDate"
+          value={form.startDate}
+          onChange={handleChange}
+          required
+        />
+
+        <label>Start Time</label>
+        <input
+          type="time"
+          name="startTime"
+          value={form.startTime}
+          onChange={handleChange}
+          required
+        />
+
+        <label>End Date</label>
+        <input
+          type="date"
+          name="endDate"
+          value={form.endDate}
+          onChange={handleChange}
+          required
+        />
+
+        <label>End Time</label>
+        <input
+          type="time"
+          name="endTime"
+          value={form.endTime}
           onChange={handleChange}
           required
         />
 
         <input
           type="number"
-          name="participants"
+          name="participantsCount"
           placeholder="Number of Participants"
-          value={form.participants}
+          value={form.participantsCount}
           onChange={handleChange}
-          min="1"
-          required
         />
 
-        <label>Time (From – To)</label>
         <input
-          type="time"
-          name="timeFrom"
-          value={form.timeFrom}
+          name="organizationId"
+          placeholder="Organization ID"
+          value={form.organizationId}
           onChange={handleChange}
-          required
-        />
-        <input
-          type="time"
-          name="timeTo"
-          value={form.timeTo}
-          onChange={handleChange}
-          required
         />
 
         <button type="submit">Register Event</button>
@@ -184,4 +159,4 @@ function EventCreationForm() {
   );
 }
 
-export default EventCreationForm;
+export default EventRegistrationForm;
