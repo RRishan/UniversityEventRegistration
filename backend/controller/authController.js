@@ -425,7 +425,6 @@ const resetPassword = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        console.log(error)
         return res.status(400).send({success: false, message: error.message})
     }
 }

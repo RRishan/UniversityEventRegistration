@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --verbose",
     "dev": "nodemon server.js"
   },
   "author": "",
@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -27,6 +28,8 @@
     "supertest": "^7.1.4"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "clearMocks": true,
+    "restoreMocks": true
   }
 }
