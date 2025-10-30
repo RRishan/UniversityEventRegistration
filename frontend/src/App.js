@@ -5,23 +5,20 @@ import { UserProvider } from "./Context/UserContext";
 import "./App.css";
 
 // Banula
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom"; // ✅ removed BrowserRouter import
 import EventCreationForm from "./components/EventCreationForm";
 import Login from "./components/Login";
-
 
 function App() {
   return (
     <>
-      <Router>
-        <nav style={{ padding: "10px", background: "#eee" }}>
-          <Link to="/events/register">Register Event</Link>
-        </nav>
+      <nav style={{ padding: "10px", background: "#eee" }}>
+        <Link to="/events/register">Register Event</Link>
+      </nav>
 
-        <Routes>
-          <Route path="/events/register" element={<EventCreationForm />} />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/events/register" element={<EventCreationForm />} />
+      </Routes>
 
       <UserProvider>
         <DashboardPage />
@@ -33,4 +30,3 @@ function App() {
 }
 
 export default App;
-
