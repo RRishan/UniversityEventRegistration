@@ -29,13 +29,14 @@ function EventRegistrationForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
+    // ✅ Basic validation
     if (!form.title || !form.description || !form.category || !form.venue) {
       setError("Please fill all required fields ❌");
       return;
     }
 
     try {
+      // ✅ Send JSON to backend
       const res = await axios.post(
         "http://localhost:3001/api/event/register",
         form,

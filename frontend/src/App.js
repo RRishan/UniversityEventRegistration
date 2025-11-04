@@ -1,11 +1,10 @@
-// src/App.jsx
 import React from "react";
 import DashboardPage from "./Pages/DashboardPage";
 import { UserProvider } from "./Context/UserContext";
 import "./App.css";
 
 // Banula
-import { Routes, Route, Link } from "react-router-dom"; // ✅ removed BrowserRouter import
+import { Routes, Route, Link } from "react-router-dom"; 
 import EventCreationForm from "./components/EventCreationForm";
 import Login from "./components/Login";
 
