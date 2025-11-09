@@ -1,33 +1,84 @@
-import { useState } from "react";
-import api from "../api";
+import React, { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../Context/UserContext";
+import "./Login.css";
 
 function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { loginUser } = useContext(UserContext);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    try {
-      const res = await api.post("/login", form);
-      setMessage(res.data.message);
-    } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong");
-    }
+    const mockUser = { email };
+    loginUser(mockUser);
+    navigate("/dashboard");
   };
 
   return (
-    <div className="form-container">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
-        <button type="submit">Login</button>
-      </form>
-      <p>{message}</p>
+    <div className="login-page">
+      {/* Left Section */}
+      <div className="login-left">
+        <div className="nav">
+          <div className="logo">Eventraze</div>
+          <div className="nav-links">
+            <Link to="/">Home</Link>
+            <Link to="/login">Log In</Link>
+          </div>
+        </div>
+
+        <div className="hero-text">Welcome Back!</div>
+
+      </div>
+
+      {/* Right Section */}
+      <div className="login-right">
+        <div className="login-box">
+          <h2>Log in</h2>
+
+          <form onSubmit={handleLogin}>
+            <div className="input-field">
+              <span>👤</span>
+              <input
+                type="email"
+                placeholder="Username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="input-field">
+              <span>🔒</span>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="extra-options">
+              <label>
+                <input type="checkbox" /> Remember Me
+              </label>
+              <Link to="/forgot">Forgot Password?</Link>
+            </div>
+
+            <button className="login-btn">Log in</button>
+
+            <div className="divider">
+              <span>Or</span>
+            </div>
+
+            <Link to="/register" className="signup-btn">
+              Sign up
+            </Link>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

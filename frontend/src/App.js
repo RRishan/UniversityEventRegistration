@@ -1,31 +1,38 @@
 import React from "react";
-import DashboardPage from "./Pages/DashboardPage";
-import { UserProvider } from "./Context/UserContext";
-import "./App.css";
+import { Routes, Route } from "react-router-dom";
 
-import { Routes, Route, Link } from "react-router-dom";
-import EventCreationForm from "./components/EventCreationForm";
 import Login from "./components/Login";
-import Verifyotp from "./components/Verifyotp"; 
+import Register from "./components/Register";
+import Verifyotp from "./components/Verifyotp";
+import EventCreationForm from "./components/EventCreationForm";
+import DashboardPage from "./Pages/DashboardPage";
+import ProtectedRoute from "./ProtectedRoute";
+import { UserProvider } from "./Context/UserContext";
 
 function App() {
   return (
-    <>
-      <nav style={{ padding: "10px", background: "#eee" }}>
-        <Link to="/events/register">Register Event</Link>
-      </nav>
-
+    <UserProvider>
       <Routes>
-        <Route path="/events/register" element={<EventCreationForm />} />
+        {/* Auth */}
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<Verifyotp />} />
+
+        {/* Protected */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/events/register" element={
+          <ProtectedRoute>
+            <EventCreationForm />
+          </ProtectedRoute>
+        }/>
       </Routes>
-
-      <UserProvider>
-        <DashboardPage />
-      </UserProvider>
-
-      <Login />
-    </>
+    </UserProvider>
   );
 }
 
