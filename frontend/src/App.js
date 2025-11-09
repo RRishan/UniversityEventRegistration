@@ -3,8 +3,7 @@ import DashboardPage from "./Pages/DashboardPage";
 import { UserProvider } from "./Context/UserContext";
 import "./App.css";
 
-// Banula
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import EventCreationForm from "./components/EventCreationForm";
 import Login from "./components/Login";
 import Verifyotp from "./components/Verifyotp"; 
@@ -19,7 +18,6 @@ function App() {
       <Routes>
         <Route path="/events/register" element={<EventCreationForm />} />
         <Route path="/verify-otp" element={<Verifyotp />} />
-
       </Routes>
 
       <UserProvider>
