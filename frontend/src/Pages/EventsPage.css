@@ -1,0 +1,322 @@
+/* EventsPage.css */
+.events-page {
+    font-family: 'Inter', sans-serif;
+    color: #111827;
+    background-color: #f9fafb;
+}
+
+/* Reused Navbar Styles (Simplified match) */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background-color: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Featured Section */
+.featured-section {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    padding: 40px 5%;
+    color: white;
+}
+
+.featured-section h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.featured-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    color: #111827;
+}
+
+.featured-image {
+    height: 150px;
+    background-color: #d1d5db;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-size: cover;
+    background-position: center;
+}
+
+.featured-details h3 {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.featured-details p {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 5px 0;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.badge.academic {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+.badge.cultural {
+    background-color: #fce7f3;
+    color: #9d174d;
+}
+
+.badge.sports {
+    background-color: #ecfccb;
+    color: #365314;
+}
+
+/* Main Content Layout */
+.main-content {
+    display: flex;
+    padding: 40px 5%;
+    gap: 30px;
+}
+
+/* Sidebar */
+.filter-sidebar {
+    width: 250px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+}
+
+.filter-sidebar h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.apply-btn {
+    width: 100%;
+    background-color: #000;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Event List */
+.event-list-container {
+    flex: 1;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sort-options button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.events-grid-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.event-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: white;
+    font-weight: bold;
+}
+
+.status-badge.filling {
+    background-color: #22c55e;
+}
+
+.status-badge.registered {
+    background-color: #3b82f6;
+}
+
+/* Using as 'closed/registered' */
+.status-badge.closed {
+    background-color: #ef4444;
+}
+
+.event-list-details h4 {
+    margin: 10px 0;
+}
+
+.event-meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 15px;
+}
+
+.event-meta div {
+    margin-bottom: 4px;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.card-footer button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 5px;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+}
+
+.pagination button.active {
+    background: #111827;
+    color: white;
+}
+
+/* Register Banner */
+.register-banner {
+    background: url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070') no-repeat center center/cover;
+    position: relative;
+    padding: 80px 5%;
+    text-align: center;
+    color: white;
+}
+
+.register-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.banner-content {
+    position: relative;
+    z-index: 1;
+}
+
+.banner-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Process Flow */
+.process-flow {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    padding: 60px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.process-step {
+    text-align: center;
+    color: white;
+    z-index: 1;
+}
+
+.step-circle {
+    width: 100px;
+    height: 40px;
+    border: 2px solid white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.step-icon {
+    width: 30px;
+    height: 30px;
+    background: white;
+    color: #1e40af;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px auto;
+    font-weight: bold;
+}
+
+.flow-line {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: 0;
+}
