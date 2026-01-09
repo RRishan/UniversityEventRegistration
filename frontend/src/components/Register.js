@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import "./Register.css";
@@ -14,6 +14,22 @@ function Register() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [validation, setValidation] = useState({
+    minLength: false,
+    hasNumber: false,
+    hasSpecial: false,
+  });
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+
+  useEffect(() => {
+    const { password } = form;
+    setValidation({
+      minLength: password.length >= 8,
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$]/.test(password),
+    });
+  }, [form.password]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,6 +39,11 @@ function Register() {
     e.preventDefault(); // Fixed: prevent default form submission
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setError("Please fill in all fields");
+      return;
+    }
+
+    if (!validation.minLength || !validation.hasNumber || !validation.hasSpecial) {
+      setError("Please meet all password requirements");
       return;
     }
 
@@ -38,14 +59,16 @@ function Register() {
 
   return (
     <div className="register-container">
-      {/* Left Panel - Image with Logo */}
+      {/* Logo Overlay */}
+      <div className="register-logo-container">
+        <div className="register-logo">
+          <span>Eventraze</span>
+        </div>
+      </div>
+
+      {/* Left Panel - Image with Logo (Hidden now, but keeping structure if needed or just empty) */}
       <div className="register-image-section">
         <div className="register-overlay-gradient"></div>
-        <div className="register-logo-container">
-          <div className="register-logo">
-            <span>Eventraze</span>
-          </div>
-        </div>
       </div>
 
       {/* Right Panel - Form */}
@@ -56,7 +79,6 @@ function Register() {
           </div>
 
           {message && <div className="success-message">{message}</div>}
-          {error && <div className="error-message">{error}</div>}
 
           <form className="register-form" onSubmit={handleSubmit}>
             {/* Full Name */}
@@ -92,8 +114,24 @@ function Register() {
                   type="password"
                   value={form.password}
                   onChange={handleChange}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
                   required
                 />
+
+                {isPasswordFocused && (
+                  <div className="password-requirements">
+                    <div className={`requirement-item ${validation.minLength ? "valid" : "invalid"}`}>
+                      <span>{validation.minLength ? "✓" : "✕"}</span> At least 8 characters
+                    </div>
+                    <div className={`requirement-item ${validation.hasNumber ? "valid" : "invalid"}`}>
+                      <span>{validation.hasNumber ? "✓" : "✕"}</span> Include a number
+                    </div>
+                    <div className={`requirement-item ${validation.hasSpecial ? "valid" : "invalid"}`}>
+                      <span>{validation.hasSpecial ? "✓" : "✕"}</span> Include a special character (!, @, #, $)
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="input-group">
                 <label>Confirm Password</label>
@@ -108,6 +146,7 @@ function Register() {
             </div>
 
             {/* Create Account Button */}
+            {error && <div className="error-message">{error}</div>}
             <button type="submit" className="register-btn">
               Create Account
             </button>

@@ -1,7 +1,7 @@
 .register-container {
     display: flex;
-    min-height: 100vh;
-    width: 100vw;
+    height: 100vh;
+    width: 100%;
     font-family: 'Inter', sans-serif;
     background-image: url('../assets/images/Background.png');
     background-size: cover;
@@ -9,9 +9,11 @@
     align-items: center;
     justify-content: flex-end;
     /* Moved to right */
-    padding-right: 10%;
+    padding-right: 0;
     /* Spacing */
     position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Overlay for readability if needed (optional) */
@@ -27,11 +29,39 @@
     z-index: 0;
 }
 
-/* Remove Split Layout Elements */
+/* Remove Split Layout Elements (Keep Logo separate) */
 .register-image-section,
-.register-overlay-gradient,
-.register-logo-container {
+.register-overlay-gradient {
     display: none;
+}
+
+.register-logo-container {
+    position: absolute;
+    top: 36px;
+    left: 36px;
+    z-index: 10;
+    display: block;
+}
+
+.register-logo {
+    padding: 10px 30px;
+    border-radius: 50px;
+    /* Capsule shape */
+    background: linear-gradient(#000, #000) padding-box,
+        linear-gradient(to bottom, #60a5fa, #a855f7) border-box;
+    border: 3px solid transparent;
+    display: inline-block;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.6),
+        0 0 30px rgba(168, 85, 247, 0.4);
+}
+
+.register-logo span {
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: none;
+    display: block;
 }
 
 /* Right Panel - Form Section (Now Centered) */
@@ -44,7 +74,7 @@
     justify-content: flex-end;
     /* Moved to right */
     padding: 20px;
-    padding-right: 10%;
+    padding-right: 20px;
     /* Spacing */
     background-color: transparent;
     /* No background */
@@ -107,6 +137,36 @@
     /* text-red-700 */
     border-radius: 8px;
     font-size: 14px;
+}
+
+/* Password Requirements */
+.password-requirements {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #4b5563;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+}
+
+.requirement-item.valid {
+    color: #16a34a;
+    /* Green */
+}
+
+.requirement-item.invalid {
+    color: #dc2626;
+    /* Red */
+}
+
+.requirement-item span {
+    margin-right: 8px;
+    font-weight: bold;
 }
 
 /* Form Styles */

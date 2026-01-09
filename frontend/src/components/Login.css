@@ -1,7 +1,7 @@
 .login-container {
   display: flex;
-  min-height: 100vh;
-  width: 100vw;
+  height: 100vh;
+  width: 100%;
   font-family: 'Inter', sans-serif;
   background-image: url('../assets/images/Background.png');
   background-size: cover;
@@ -9,9 +9,11 @@
   align-items: center;
   justify-content: flex-end;
   /* Move to right */
-  padding-right: 10%;
+  padding-right: 0;
   /* Add spacing from edge */
   position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .login-container::before {
@@ -25,11 +27,39 @@
   z-index: 0;
 }
 
-/* Remove Split Layout Elements */
+/* Remove Split Layout Elements (Keep Logo separate) */
 .login-image-section,
-.login-overlay-gradient,
-.login-logo-container {
+.login-overlay-gradient {
   display: none;
+}
+
+.login-logo-container {
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  z-index: 10;
+  display: block;
+}
+
+.login-logo {
+  padding: 10px 30px;
+  border-radius: 50px;
+  /* Capsule shape */
+  background: linear-gradient(#000, #000) padding-box,
+    linear-gradient(to bottom, #60a5fa, #a855f7) border-box;
+  border: 3px solid transparent;
+  display: inline-block;
+  box-shadow: 0 0 15px rgba(96, 165, 250, 0.6),
+    0 0 30px rgba(168, 85, 247, 0.4);
+}
+
+.login-logo span {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: none;
+  display: block;
 }
 
 /* Left Panel - Image with Gradient */
@@ -54,25 +84,7 @@
   /* purple-900 to blue-900 opacity 0.5 */
 }
 
-.login-logo-container {
-  position: absolute;
-  top: 32px;
-  left: 32px;
-  z-index: 10;
-}
 
-.login-logo {
-  padding: 8px 24px;
-  border-radius: 9999px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(4px);
-}
-
-.login-logo span {
-  color: white;
-  font-size: 20px;
-  font-weight: 600;
-}
 
 /* Right Panel - Form Section (Now Aligned to Right) */
 .login-form-section {
@@ -83,7 +95,7 @@
   justify-content: flex-end;
   /* Move content to right */
   padding: 20px;
-  padding-right: 10%;
+  padding-right: 20px;
   /* Spacing from right edge */
   background-color: transparent;
   z-index: 1;
@@ -110,6 +122,22 @@
   font-weight: 700;
   color: #111827;
   margin: 0;
+}
+
+/* Messages */
+.error-message {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #fef2f2;
+  /* bg-red-50 */
+  border: 1px solid #fecaca;
+  /* border-red-200 */
+  color: #b91c1c;
+  /* text-red-700 */
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: pre-line;
+  text-align: center;
 }
 
 /* Form Styles */
