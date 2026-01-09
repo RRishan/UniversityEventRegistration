@@ -1,8 +1,83 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
 const LandingPage = () => {
+    const navigate = useNavigate();
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Calendar Helpers
+    const getDaysInMonth = (year, month) => {
+        return new Date(year, month + 1, 0).getDate();
+    };
+
+    const getFirstDayOfMonth = (year, month) => {
+        // 0 = Sunday, 1 = Monday... 6 = Saturday
+        // We want Monday = 0, Sunday = 6 for our grid which starts with Mo
+        let day = new Date(year, month, 1).getDay();
+        return day === 0 ? 6 : day - 1;
+    };
+
+    const handlePrevMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    };
+
+    const renderCalendarDays = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        const daysInMonth = getDaysInMonth(year, month);
+        const firstDay = getFirstDayOfMonth(year, month);
+
+        // Previous month padding
+        const daysInPrevMonth = getDaysInMonth(year, month - 1);
+        const paddingDays = [];
+        for (let i = 0; i < firstDay; i++) {
+            paddingDays.push(
+                <div key={`pad-${i}`} className="day muted">
+                    {daysInPrevMonth - firstDay + i + 1}
+                </div>
+            );
+        }
+
+        // Current month days
+        const monthDays = [];
+        const today = new Date();
+        const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const isToday = isCurrentMonth && today.getDate() === i;
+            monthDays.push(
+                <div key={`day-${i}`} className={`day ${isToday ? 'active' : ''}`}>
+                    {i}
+                </div>
+            );
+        }
+
+        // Next month padding (to fill 42 cells grid 6x7)
+        const totalSlots = paddingDays.length + monthDays.length;
+        const nextMonthPadding = [];
+        const remainingSlots = 42 - totalSlots; // Optional: Fixed height calendar
+
+        for (let i = 1; i <= remainingSlots; i++) {
+            nextMonthPadding.push(
+                <div key={`next-pad-${i}`} className="day muted">
+                    {i}
+                </div>
+            );
+        }
+
+        return [...paddingDays, ...monthDays, ...nextMonthPadding];
+    };
+
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     return (
         <div className="landing-page">
             <nav className="navbar">
@@ -22,31 +97,25 @@ const LandingPage = () => {
                         <h1>Discover and manage university events</h1>
                         <p>Streamline event registration and approval for students, organizers, and faculty. Find, create, and track events with ease.</p>
                         <div className="hero-buttons">
-                            <button className="btn-primary">Browse events</button>
-                            <button className="btn-secondary">Register</button>
+                            <button className="btn-primary" onClick={() => navigate('/events')}>Browse events</button>
+                            <button className="btn-secondary" onClick={() => navigate('/events/register')}>Register</button>
                         </div>
                     </div>
                 </div>
                 <div className="calendar-widget">
-                    <h3>Events dates</h3>
+                    <h3>{currentDate.getFullYear()}</h3>
                     <div className="month-selector">
-                        <span>&lt;</span>
-                        <span>Feburary</span>
-                        <span>&gt;</span>
+                        <span onClick={handlePrevMonth} style={{ cursor: 'pointer' }}>&lt;</span>
+                        <span>{monthNames[currentDate.getMonth()]}</span>
+                        <span onClick={handleNextMonth} style={{ cursor: 'pointer' }}>&gt;</span>
                     </div>
                     <div className="calendar-grid">
                         <div className="day-name">Mo</div><div className="day-name">Tu</div><div className="day-name">We</div><div className="day-name">Th</div><div className="day-name">Fr</div><div className="day-name">Sa</div><div className="day-name">Su</div>
-                        {/* Mock Calendar Data */}
-                        <div className="day muted">26</div><div className="day muted">27</div><div className="day muted">28</div><div className="day muted">29</div><div className="day muted">30</div>
-                        <div className="day">1</div><div className="day">2</div><div className="day">3</div><div className="day">4</div><div className="day">5</div><div className="day">6</div><div className="day">7</div><div className="day">8</div><div className="day">9</div>
-                        <div className="day">10</div><div className="day">11</div><div className="day">12</div><div className="day active">13</div><div className="day">14</div><div className="day">15</div><div className="day">16</div>
-                        <div className="day">17</div><div className="day">18</div><div className="day">19</div><div className="day">20</div><div className="day">21</div><div className="day">22</div><div className="day">23</div>
-                        <div className="day">24</div><div className="day">25</div><div className="day">26</div><div className="day">27</div><div className="day selected">28</div><div className="day">29</div><div className="day">30</div>
-                        <div className="day">31</div><div className="day muted">1</div><div className="day muted">2</div><div className="day muted">3</div><div className="day muted">4</div><div className="day muted">5</div><div className="day muted">6</div>
+                        {renderCalendarDays()}
                     </div>
                     <div className="calendar-events">
-                        <p>• Feb 13 - BIDWA NADEE</p>
-                        <p>• Feb 28 - NAGA</p>
+                        {/* Placeholder for real events linked to dates */}
+                        <p>• Select a date to view events</p>
                     </div>
                 </div>
             </header>
@@ -83,7 +152,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                 </div>
-                <button className="view-all-btn">View all events</button>
+                <button className="view-all-btn" onClick={() => navigate('/events')}>View all events</button>
             </section>
 
             <section className="cta-section">
@@ -91,7 +160,7 @@ const LandingPage = () => {
                     <h2>Start managing your events today</h2>
                     <p>Create, track, and engage with campus events through our streamlined platform.</p>
                     <div className="hero-buttons">
-                        <button className="btn-primary">Register now</button>
+                        <button className="btn-primary" onClick={() => navigate('/events/register')}>Register now</button>
                         <button className="btn-secondary">Learn more</button>
                     </div>
                 </div>

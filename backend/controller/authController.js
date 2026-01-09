@@ -15,19 +15,19 @@ require("dotenv").config();
 
 // User Registration
 const register = async (req, res) => {
-    
+
     try {
         //Get the attributes from request
-        const {name, email, regiNumber, contactNum, faculty, department ,password, confirmPassword} = req.body;
+        const { name, email, regiNumber, contactNum, faculty, department, password, confirmPassword } = req.body;
 
         console.log(confirmPassword == password)
 
         // Checking confirm password valid or not and the password and confirm password maches or not
-        if(!confirmPassword) {
-            return res.status(400).send({success: false, message: "Missing Confirm Password"})
+        if (!confirmPassword) {
+            return res.status(400).send({ success: false, message: "Missing Confirm Password" })
         }
-        else if(password != confirmPassword) {
-            return res.status(400).send({success: false, message: "Passwords do not match."})
+        else if (password != confirmPassword) {
+            return res.status(400).send({ success: false, message: "Passwords do not match." })
         }
 
         //Check the email , name, regiNumber, contactNum, faculty, department , password are exist and valid or not
@@ -41,74 +41,51 @@ const register = async (req, res) => {
             return res.status(400).send({ success: false, message: "Invalid Email" });
         }
 
-        if (!regiNumber) {
-            return res.status(400).send({success: false, message: "Missing Registration Number"})
-        }
-
-        if (!faculty) {
-            return res.status(400).send({success: false, message: "Missing faculty Name"})
-        }
-
-        if (!contactNum) {
-            return res.status(400).send({success: false, message: "Missing Contact Number"})
-        }else {
-            function isSriLankanPhone(number) {
-                // Matches either 07XXXXXXXX or +94XXXXXXXXX
-                return /^(?:\+94|0)(7\d{8})$/.test(number);
-            }
-            if(!isSriLankanPhone(contactNum)) {
-                return res.status(400).send({success: false, message: "Invalid contact number"})
-            }
-            
-        }
-
-        if (!department) {
-            return res.status(400).send({success: false, message: "Missing Department Name"})
-        }
-
         if (!password) {
             return res.status(400).send({ success: false, message: "Missing Password" });
-        }else if (!validator.isStrongPassword(password)) {
+        } else if (!validator.isStrongPassword(password)) {
             return res.status(400).send({ success: false, message: "Please create Strong password" });
         }
 
         //Check the user already registed or not
-        const existingUser = await User.findOne({email})
-        if(existingUser) {
-            return res.status(400).send({success: false, message: "User already exists"})
+        const existingUser = await User.findOne({ email })
+        if (existingUser) {
+            return res.status(400).send({ success: false, message: "User already exists" })
         }
 
         //hashed password using bcrypt
         const hashPassword = await bcrypt.hash(password, 10);
 
         //make the new User using User model
-        const user = new User({name,email, studentProfile : {
-            regiNumber,
-            contactNum,
-            faculty,
-            department
-        },password: hashPassword})
+        const user = new User({
+            name, email, studentProfile: {
+                regiNumber,
+                contactNum,
+                faculty,
+                department
+            }, password: hashPassword
+        })
 
         //Save the user
         await user.save();
 
         //Create token using jwt
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"})
-        
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" })
+
         //Save token to the cookie
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7*24*60*60*1000   // Milisecond
+            maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.status(201).send({message: "Succsfully Registered", success: true})
-        
+        return res.status(201).send({ message: "Succsfully Registered", success: true })
+
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: `Error : ${error.message}`})
+        return res.status(400).send({ success: false, message: `Error : ${error.message}` })
     }
 
 }
@@ -117,7 +94,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         //Get the attributes from request
-        const {email, password} = req.body;
+        const { email, password } = req.body;
 
         //Check the email , password are exist and valid or not
         if (!email) {
@@ -131,22 +108,22 @@ const login = async (req, res) => {
         }
 
         //Find the user from database
-        const user = await User.findOne({email});
+        const user = await User.findOne({ email });
 
         //Check the user is valid or not
         if (!user) {
-            return res.status(400).send({success: false, message: "User not found"})
+            return res.status(400).send({ success: false, message: "User not found" })
         }
 
         //Check with password is match or not
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(400).send({success: false, message: "Invalid Password"})
+            return res.status(400).send({ success: false, message: "Invalid Password" })
         }
 
         //Create token using jwt
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"})
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
 
         //Save token to the cookie
@@ -154,16 +131,16 @@ const login = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7*24*60*60*1000   // Milisecond
+            maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.status(200).send({success: true, message: `Login successful! Welcome back, ${user.name}.`})
+        return res.status(200).send({ success: true, message: `Login successful! Welcome back, ${user.name}.` })
 
 
     } catch (error) {
 
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -174,14 +151,14 @@ const logout = async (req, res) => {
         res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict' 
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
         })
 
-        return res.status(200).send({success: true, message: `Logged Out`})
+        return res.status(200).send({ success: true, message: `Logged Out` })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -189,24 +166,24 @@ const logout = async (req, res) => {
 const verifyOtp = async (req, res) => {
     try {
         //Get the attributes from request
-        const {userId} = req.body;
+        const { userId } = req.body;
 
         //Check user login or not
-        if(!userId) {
-            return res.status(400).send({success: false, message: "Please re-login"})
+        if (!userId) {
+            return res.status(400).send({ success: false, message: "Please re-login" })
         }
-        
+
         //Get the user details 
-        const  user = await User.findById(userId)
+        const user = await User.findById(userId)
 
         //Check if its verify or not
         if (user.isAccountVerified) {
-            return res.status(400).send({success: false, message: "Account already verified"})
+            return res.status(400).send({ success: false, message: "Account already verified" })
         }
 
         //Create the otp
         const otp = String(Math.floor(100000 + Math.random() * 900000))
-        
+
         //Setting the otp and the databases
         user.verifyOtp = otp
         user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
@@ -223,49 +200,49 @@ const verifyOtp = async (req, res) => {
         //Send mail to user
         await transporter.sendMail(mailOptions)
 
-        return res.status(200).send({success: true, message: "Check your emails"})
+        return res.status(200).send({ success: true, message: "Check your emails" })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
-    
+
 }
 
 // User OTP Verification function
 const verifyEmail = async (req, res) => {
     try {
         //Get the attributes from request
-        const {userId, otp} = req.body;
+        const { userId, otp } = req.body;
 
-        
+
 
         //Check if the user login or not
-        if(!userId) {
-            return res.status(400).send({success: false, message: "Please re-login"})
+        if (!userId) {
+            return res.status(400).send({ success: false, message: "Please re-login" })
         }
-        
+
         //Check if the OTP missing or not
         if (!otp) {
-            return res.status(400).send({success: false, message: "Missing OTP code"})
+            return res.status(400).send({ success: false, message: "Missing OTP code" })
         }
 
         //Get the user details using user id 
         const user = await User.findById(userId);
 
         //Check if the user if valid or not 
-        if(!user) {
-            return res.status(400).send({success: false, message: "User not found"})
+        if (!user) {
+            return res.status(400).send({ success: false, message: "User not found" })
         }
 
         //Check if otp is missing and valid or not
         if (user.verifyOtp == '' || user.verifyOtp !== otp) {
-            return res.status(400).send({success: false, message: "Invalid OTP"})
+            return res.status(400).send({ success: false, message: "Invalid OTP" })
         }
 
         //Check otp expire or not
-        if(user.verifyOtpExpireAt < Date.now()) {
-            return res.status(400).send({success: false, message: "OTP Expired"})
+        if (user.verifyOtpExpireAt < Date.now()) {
+            return res.status(400).send({ success: false, message: "OTP Expired" })
         }
 
         //make user verify
@@ -288,11 +265,11 @@ const verifyEmail = async (req, res) => {
         //Send the email for registration
         await transporter.sendMail(mailOptions);
 
-        return res.status(200).send({success: true, message: "Email verify succesfully "})
+        return res.status(200).send({ success: true, message: "Email verify succesfully " })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -300,31 +277,31 @@ const verifyEmail = async (req, res) => {
 const isAuthenticated = async (req, res) => {
     try {
         //Get the attributes from request
-        const {userId} = req.body;
+        const { userId } = req.body;
 
         //Check if the user login or not
-        if(!userId) {
-            return res.status(400).send({success: false, message: "Please re-login"})
+        if (!userId) {
+            return res.status(400).send({ success: false, message: "Please re-login" })
         }
 
         //Get the user details using user id 
         const user = await User.findById(userId);
 
         //Check if the user if valid or not 
-        if(!user) {
-            return res.status(400).send({success: false, message: "User not found"})
+        if (!user) {
+            return res.status(400).send({ success: false, message: "User not found" })
         }
 
         //Check is account is verify or not
         if (!user.isAccountVerified) {
-            return res.status(400).send({success: false, message: "Account is not authenticated"})
+            return res.status(400).send({ success: false, message: "Account is not authenticated" })
         }
 
-        return res.status(200).send({success: true, message: "Account is verfiy"})
+        return res.status(200).send({ success: true, message: "Account is verfiy" })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -332,25 +309,25 @@ const isAuthenticated = async (req, res) => {
 const sendResetOtp = async (req, res) => {
     try {
         //Get the attributes from request
-        const {email} = req.body;
+        const { email } = req.body;
 
         //Check the email is valid or not
         if (!email) {
-            return res.status(400).send({success: false, message: "Email is required"})
+            return res.status(400).send({ success: false, message: "Email is required" })
         } else if (!validator.isEmail(email)) {
             return res.status(400).send({ success: false, message: "Invalid Email" });
         }
 
         //Get user from databases
-        const user = await User.findOne({email})
+        const user = await User.findOne({ email })
 
         //Check if the user found or not
-        if(!user) {
-            return res.status(400).send({sccess: false,  message: "User not found"})
+        if (!user) {
+            return res.status(400).send({ sccess: false, message: "User not found" })
         }
 
         //Build the OTP and the send to database
-        const otp = String(Math.floor(100000+ Math.random() * 900000))
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
 
         user.resetOtp = otp
         user.resetOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
@@ -368,11 +345,11 @@ const sendResetOtp = async (req, res) => {
         //send emails
         await transporter.sendMail(mailOptions)
 
-        return res.status(200).send({success: true, message: "OTP sent to your email"})
+        return res.status(200).send({ success: true, message: "OTP sent to your email" })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -380,7 +357,7 @@ const sendResetOtp = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         //Get the attributes from request
-        const {email, otp, newPassword} = req.body;
+        const { email, otp, newPassword } = req.body;
 
         //Check if the Email missing or not and valid or not
         if (!email) {
@@ -391,40 +368,40 @@ const resetPassword = async (req, res) => {
 
         //Check if the OTP missing or not
         if (!otp) {
-            return res.status(400).send({success: false, message: "Missing OTP code"})
+            return res.status(400).send({ success: false, message: "Missing OTP code" })
         }
 
         //Check if the newPassword missing or not and valid or not
         if (!newPassword) {
             return res.status(400).send({ success: false, message: "Missing Password" });
-        }else if (!validator.isStrongPassword(newPassword)) {
+        } else if (!validator.isStrongPassword(newPassword)) {
             return res.status(400).send({ success: false, message: "Please create Strong password" });
         }
 
         //Get user from database
-        const user = await User.findOne({email})
+        const user = await User.findOne({ email })
 
         //Check user valid or not
-        if(!user) {
-            return res.status(400).send({success: false, message: "User not found"})
+        if (!user) {
+            return res.status(400).send({ success: false, message: "User not found" })
         }
 
         //Check resetOtp missing and valid or not
-        if(user.resetOtp == "" || user.resetOtp !== otp) {
-            return res.status(400).send({success: false, message: "Invalid OTP"})
+        if (user.resetOtp == "" || user.resetOtp !== otp) {
+            return res.status(400).send({ success: false, message: "Invalid OTP" })
         }
 
         //Check otp expire
         if (user.resetOtpExpireAt < Date.now()) {
-            return res.status(400).send({success: false,  message: "OTP Expired"})
+            return res.status(400).send({ success: false, message: "OTP Expired" })
         }
 
         //Check with password is match or not
         const isMatch = await bcrypt.compare(newPassword, user.password);
 
         // Chec password same as the old passowrd
-        if(!isMatch) {
-            return res.status(400).send({success: false, message: "New password cannot be the same as the old password"})
+        if (!isMatch) {
+            return res.status(400).send({ success: false, message: "New password cannot be the same as the old password" })
         }
 
 
@@ -439,12 +416,12 @@ const resetPassword = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).send({success: true, message: 'Password has been reset succesfully'})
+        return res.status(200).send({ success: true, message: 'Password has been reset succesfully' })
 
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 
@@ -452,21 +429,21 @@ const resetPassword = async (req, res) => {
 const getUserData = async (req, res) => {
     try {
         //Get the attributes from request
-        const {userId} = req.body;
+        const { userId } = req.body;
 
         //Get user from database
         const user = await User.findById(userId)
 
         //Check user valid or not
-        if(!user) {
-            return res.status(400).send({success: false, message: "User not found"})
+        if (!user) {
+            return res.status(400).send({ success: false, message: "User not found" })
         }
 
-        return res.status(200).send({success: true, userData: {name: user.name, email: user.email}})
+        return res.status(200).send({ success: true, userData: { name: user.name, email: user.email } })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.status(400).send({ success: false, message: error.message })
     }
 }
 

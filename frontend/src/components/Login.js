@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../api";
 import { UserContext } from "../Context/UserContext";
 import "./Login.css";
 
@@ -17,17 +17,22 @@ function Login() {
     setError(""); // Clear previous errors
 
     try {
-      const response = await axios.post("http://localhost:3001/api/auth/login", {
+      const loginRes = await api.post("/auth/login", {
         email,
         password,
       });
 
-      // Assuming the backend returns the user data or token
-      loginUser(response.data);
-      navigate("/dashboard");
+      if (loginRes.data.success) {
+        // Fetch user data
+        const userRes = await api.get("/auth/data");
+        if (userRes.data.success) {
+          loginUser(userRes.data.userData);
+          navigate("/");
+        }
+      }
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Your email or password are incorrect.\nPlease try again !");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     }
   };
 

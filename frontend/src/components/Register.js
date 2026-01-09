@@ -35,7 +35,7 @@ function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault(); // Fixed: prevent default form submission
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setError("Please fill in all fields");
@@ -52,9 +52,18 @@ function Register() {
       return;
     }
 
-    // Restored API call logic, though keeping the simplified success for now as per user stub
-    setMessage("Account created successfully!");
-    setError("");
+    // Final validation before submission
+    try {
+      const res = await api.post("/auth/register", form);
+      if (res.data.success) {
+        setMessage("Account created successfully! Redirecting to login...");
+        setError("");
+        setTimeout(() => navigate("/login"), 2000);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Registration failed");
+    }
   };
 
   return (

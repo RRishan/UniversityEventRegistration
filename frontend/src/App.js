@@ -7,6 +7,7 @@ import Verifyotp from "./components/Verifyotp";
 import EventCreationForm from "./components/EventCreationForm";
 import DashboardPage from "./Pages/DashboardPage";
 import LandingPage from "./Pages/LandingPage";
+import EventsPage from "./Pages/EventsPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { UserProvider } from "./Context/UserContext";
 
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         {/* Auth */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<Verifyotp />} />
