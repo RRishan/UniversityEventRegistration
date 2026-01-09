@@ -1,117 +1,152 @@
-/* ——— Full Page Background ——— */
-.login-page {
-  height: 100vh;
-  width: 100vw;
+.login-container {
   display: flex;
-  justify-content: flex-end;
+  min-height: 100vh;
+  width: 100vw;
+  font-family: 'Inter', sans-serif;
+  background-image: url('../assets/images/Background.png');
+  background-size: cover;
+  background-position: center;
   align-items: center;
-  background: url("../assets/images/LoginImage.png") top center/cover no-repeat;
+  justify-content: flex-end;
+  /* Move to right */
+  padding-right: 10%;
+  /* Add spacing from edge */
   position: relative;
-  color: white;
-  overflow: hidden;
-  font-family: "Poppins", sans-serif;
 }
 
-/* Overlay (light) — keep image visible */
-.login-page::before {
+.login-container::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 0;
+}
+
+/* Remove Split Layout Elements */
+.login-image-section,
+.login-overlay-gradient,
+.login-logo-container {
+  display: none;
+}
+
+/* Left Panel - Image with Gradient */
+.login-image-section {
+  display: none;
+  /* Hidden on mobile */
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-image: url('https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070');
+  background-size: cover;
+  background-position: center;
+}
+
+.login-overlay-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.5), rgba(30, 58, 138, 0.5));
+  /* purple-900 to blue-900 opacity 0.5 */
+}
+
+.login-logo-container {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  z-index: 10;
+}
+
+.login-logo {
+  padding: 8px 24px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.login-logo span {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Right Panel - Form Section (Now Aligned to Right) */
+.login-form-section {
+  flex: none;
   width: 100%;
-  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* Move content to right */
+  padding: 20px;
+  padding-right: 10%;
+  /* Spacing from right edge */
+  background-color: transparent;
   z-index: 1;
 }
 
-/* ——— Nav / Logo ——— */
-.nav {
-  position: absolute;
-  top: 25px;
-  left: 35px;
-  display: flex;
-  align-items: center;
-  z-index: 3;
-}
-
-.logo {
-  background: #000;
-  padding: 12px 22px;
-  border-radius: 30px;
-  font-weight: 700;
-  font-size: 20px;
-  color: white;
-  border: 2px solid #7e00ff;
-  box-shadow: 0 0 15px #8f00ff;
-  margin-right: 25px;
-}
-
-.nav-links a {
-  margin-right: 25px;
-  color: white;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* ——— Hero text (bottom left) ——— */
-.hero-text {
-  position: absolute;
-  bottom: 40px;
-  left: 40px;
-  font-size: 48px;
-  font-weight: 700;
-  z-index: 2;
-}
-
-/* ——— Login Section ——— */
-.login-right {
-  width: 40%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-right: 60px;
-  position: relative;
-  z-index: 2;
-}
-
-/* Login card */
-.login-box {
+/* Card */
+.login-card {
+  width: 100%;
+  max-width: 448px;
   background: white;
-  width: 75%;
-  padding: 40px;
-  border-radius: 30px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-  color: black;
-}
-
-.login-box h2 {
-  text-align: center;
-  font-size: 26px;
-  margin-bottom: 25px;
-}
-
-/* Input fields */
-.input-field {
+  border-radius: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  padding: 32px;
   display: flex;
-  align-items: center;
-  background: #eee;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 15px;
+  flex-direction: column;
 }
 
-.input-field span {
-  margin-right: 10px;
+.login-header {
+  margin-bottom: 32px;
 }
 
-.input-field input {
-  border: none;
-  outline: none;
-  background: none;
-  flex: 1;
+.login-header h2 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* Form Styles */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  display: block;
   font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #e5e7eb;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #a855f7;
+  background-color: #fff;
 }
 
 /* Remember + forgot row */
@@ -119,69 +154,63 @@
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  margin-bottom: 15px;
-  color: black;
+  margin-bottom: 5px;
+  color: #4b5563;
+  padding: 0 5px;
 }
 
 .extra-options a {
-  color: black;
+  color: #4b5563;
   font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
-/* Buttons */
+.extra-options a:hover {
+  color: #111827;
+}
+
 .login-btn {
   width: 100%;
   padding: 12px;
-  background: black;
+  background-color: black;
   color: white;
+  border-radius: 12px;
+  font-weight: 500;
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
   cursor: pointer;
-  margin-bottom: 15px;
+  margin-top: 8px;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #1f2937;
 }
 
 .signup-btn {
   width: 100%;
+  padding: 12px;
+  background-color: #e5e7eb;
+  color: #374151;
+  border-radius: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
   display: block;
   text-align: center;
-  padding: 12px;
-  background: #ddd;
-  border-radius: 10px;
-  color: black;
   text-decoration: none;
-  font-size: 15px;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
 }
 
-/* Divider — "Or" line */
-.divider {
-  text-align: center;
-  margin: 12px 0;
-  position: relative;
-  color: black;
+.signup-btn:hover {
+  background-color: #d1d5db;
 }
 
-.divider span {
-  background: white;
-  padding: 0 10px;
-  z-index: 2;
-  position: relative;
-}
-
-.divider::before {
-  content: "";
-  height: 1px;
-  width: 100%;
-  background: #bbb;
-  position: absolute;
-  top: 50%;
-  left: 0;
-  z-index: 1;
-}
-
-/* ——— Remove scrollbars ——— */
-body, html {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+@media (min-width: 1024px) {
+  .login-image-section {
+    display: block;
+  }
 }

@@ -1,0 +1,214 @@
+.register-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    font-family: 'Inter', sans-serif;
+    background-image: url('../assets/images/Background.png');
+    background-size: cover;
+    background-position: center;
+    align-items: center;
+    justify-content: flex-end;
+    /* Moved to right */
+    padding-right: 10%;
+    /* Spacing */
+    position: relative;
+}
+
+/* Overlay for readability if needed (optional) */
+.register-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    /* Darken background slightly */
+    z-index: 0;
+}
+
+/* Remove Split Layout Elements */
+.register-image-section,
+.register-overlay-gradient,
+.register-logo-container {
+    display: none;
+}
+
+/* Right Panel - Form Section (Now Centered) */
+/* Right Panel - Form Section (Now Aligned to Right) */
+.register-form-section {
+    flex: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Moved to right */
+    padding: 20px;
+    padding-right: 10%;
+    /* Spacing */
+    background-color: transparent;
+    /* No background */
+    z-index: 1;
+    /* Above overlay */
+}
+
+/* Card */
+.register-card {
+    width: 100%;
+    max-width: 448px;
+    /* max-w-md */
+    background: white;
+    border-radius: 24px;
+    /* rounded-3xl */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    /* shadow-xl */
+    padding: 32px;
+    /* p-8 */
+    display: flex;
+    /* Ensure content stacks correctly */
+    flex-direction: column;
+}
+
+.register-header {
+    margin-bottom: 32px;
+}
+
+.register-header h2 {
+    font-size: 30px;
+    /* text-3xl */
+    font-weight: 700;
+    color: #111827;
+    /* text-gray-900 */
+    margin: 0;
+}
+
+/* Messages */
+.success-message {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f0fdf4;
+    /* bg-green-50 */
+    border: 1px solid #bbf7d0;
+    /* border-green-200 */
+    color: #15803d;
+    /* text-green-700 */
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.error-message {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #fef2f2;
+    /* bg-red-50 */
+    border: 1px solid #fecaca;
+    /* border-red-200 */
+    color: #b91c1c;
+    /* text-red-700 */
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Form Styles */
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* space-y-5 approx */
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    /* text-sm */
+    color: #4b5563;
+    /* text-gray-600 */
+    margin-bottom: 8px;
+    /* mb-2 */
+    font-weight: normal;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    /* px-4 py-3 */
+    background-color: #e5e7eb;
+    /* bg-gray-200 */
+    border-radius: 12px;
+    /* rounded-xl */
+    border: none;
+    font-size: 16px;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #a855f7;
+    /* ring-purple-500 */
+    background-color: #fff;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: black;
+    color: white;
+    border-radius: 12px;
+    /* rounded-xl */
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+    /* mt-6 approx */
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.register-btn:hover {
+    background-color: #1f2937;
+    /* hover:bg-gray-800 */
+}
+
+.login-redirect-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #e5e7eb;
+    /* bg-gray-200 */
+    color: #374151;
+    /* text-gray-700 */
+    border-radius: 12px;
+    /* rounded-xl */
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    margin-top: 16px;
+    /* mt-4 */
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+}
+
+.login-redirect-btn:hover {
+    background-color: #d1d5db;
+    /* hover:bg-gray-300 */
+}
+
+@media (min-width: 1024px) {
+    .register-image-section {
+        display: block;
+    }
+}
