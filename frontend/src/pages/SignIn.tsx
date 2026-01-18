@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import concertBg from "@/assets/concert-bg.png";
+import concertStage from "@/assets/concert-stage.png";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -11,8 +11,8 @@ const SignIn = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login - navigate to create profile for demo
     if (email && password) {
+      setError("");
       navigate("/create-profile");
     } else {
       setError("Your email or password are incorrect. Please try again!");
@@ -25,8 +25,8 @@ const SignIn = () => {
         {/* Left side - Image */}
         <div className="auth-image-section">
           <img 
-            src={concertBg} 
-            alt="Concert" 
+            src={concertStage} 
+            alt="Concert Stage" 
             className="w-full h-full object-cover"
           />
           <div className="absolute top-6 left-6">
@@ -44,7 +44,7 @@ const SignIn = () => {
             <div>
               <input
                 type="email"
-                placeholder="jk@gmail.com"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-field"
@@ -54,7 +54,7 @@ const SignIn = () => {
             <div>
               <input
                 type="password"
-                placeholder="••••••••••••"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field"
@@ -62,22 +62,22 @@ const SignIn = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-border"
+                  className="rounded border-border w-4 h-4"
                 />
                 Remember Me
               </label>
-              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Forgot Password?
               </Link>
             </div>
 
             {error && (
-              <p className="text-destructive text-sm">{error}</p>
+              <p className="text-destructive text-sm bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>
             )}
 
             <button type="submit" className="btn-primary">
