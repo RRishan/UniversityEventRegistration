@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import concertStage from "@/assets/concert-stage.png";
+import { AppContext } from "@/context/AppContext";
+import axios from "axios";
+import { toast } from "sonner";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -9,13 +12,33 @@ const SignIn = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password) {
-      setError("");
-      navigate("/create-profile");
-    } else {
-      setError("Your email or password are incorrect. Please try again!");
+  const {backendUrl, setIsLoggedIn, isLoggedIn} = useContext(AppContext);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      if (email && password) {
+        setError("");
+        
+        axios.defaults.withCredentials = true;
+
+        const {data} = await axios.post(backendUrl + "/api/auth/login", { email, password });
+        console.log("Login successful:", data);
+        if (data.success) {
+          
+          navigate("/");
+          setIsLoggedIn(true);
+          toast.success("Login successful!");
+        }else {
+          toast.error(data.message);
+        }
+
+
+      } else {
+        setError("Your email or password are incorrect. Please try again!");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
     }
   };
 

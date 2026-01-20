@@ -1,16 +1,38 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { toast } from "sonner";
+import { AppContext } from "@/context/AppContext";
+import axios from "axios";
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
+  const {backendUrl, setIsLoggedIn} = useContext(AppContext);
+
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = () => {
-    navigate("/sign-in");
+  const handleLogout = async  (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+
+      const {data} = await axios.post(backendUrl + "/api/auth/logout");
+
+      if (data.success) {
+        toast.success("Logout successful!");
+        setIsLoggedIn(false);
+        navigate("/sign-in");
+      }else {
+        toast.error(data.message);
+      }
+      
+
+    } catch (error) {
+      toast.error("Logout failed. Please try again.");
+    }
+    
   };
 
   return (
@@ -22,7 +44,7 @@ const Header = () => {
 
         <nav className="flex items-center gap-2">
           <Link 
-            to="/home" 
+            to="/" 
             className={isActive("/home") ? "nav-link-active" : "nav-link"}
           >
             Home

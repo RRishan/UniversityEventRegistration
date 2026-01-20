@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { AppContextProvider } from "./context/AppContext";
+import ProtectedRoute from "./pages/protectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +31,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/sign-in" replace />} />
+            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/create-profile" element={<CreateProfile />} />
@@ -38,7 +39,6 @@ const App = () => (
             <Route path="/profile/organizer" element={<OrganizerProfile />} />
             <Route path="/profile/student" element={<StudentProfile />} />
             <Route path="/profile/lecturer" element={<LecturerProfile />} />
-            <Route path="/home" element={<Home />} />
             <Route path="/events" element={<Events />} />
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/event-registration" element={<EventRegistration />} />
