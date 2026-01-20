@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
+import { AppContext } from "@/context/AppContext";
+import axios from "axios";
+import { toast } from "sonner";
 
 const OrganizerProfile = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "john",
-    clubSociety: "Computer science department",
+    fullName: "organizer",
+    clubSociety: "Association of computer science",
     position: "",
     advisorName: "",
     advisorEmail: "",
-    universityEmail: "john",
-    registrationNumber: "john",
+    universityEmail: "organizer@gmail.com",
+    registrationNumber: "organizer",
     phoneNumber: "123115616",
     notificationTypes: {
       eventStatus: false,
@@ -25,9 +28,27 @@ const OrganizerProfile = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/home");
+  const {backendUrl} = useContext(AppContext);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+
+      const {data} = await axios.post(backendUrl + '/api/organizer/profile', formData);
+
+      if(data.success) {
+        toast.success("Profile updated successfully");
+        navigate("/");
+      }else {
+        console.log(data.message)
+        toast.error("Failed to update profile" + data.message);
+      }
+
+    
+    } catch (error) {
+      console.log(error.message)
+      toast.error("An error occurred while updating profile");
+    }
   };
 
   return (

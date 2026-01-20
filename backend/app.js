@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const authRouter = require('./routes/authRoutes.js')
 const eventRouter = require('./routes/eventRoutes.js')
 const studentRouter = require('./routes/studentRoutes.js')
+const orginzerRouter = require('./routes/orginzerRoutes.js')
 require('dotenv').config();
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRouter)
 app.use('/api/event', eventRouter)
 app.use('/api/student', studentRouter)
+app.use('/api/organizer', orginzerRouter)
 
 
 module.exports = app;
