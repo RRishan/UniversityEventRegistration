@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-  name: { type: String, required: true },
+  fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
 
   // 👨‍🎓 Student Profile (only for students)
@@ -10,7 +10,8 @@ const userSchema = new Schema({
     regiNumber: { type: String, unique: true, sparse: true }, // sparse = allow null for admins
     contactNum: { type: String, unique: true, sparse: true },
     faculty: { type: String },
-    department: { type: String }
+    department: { type: String },
+    universityEmail: { type: String, unique: true},
   },
 
   // 👨‍💼 Admin Profile (only for admins)

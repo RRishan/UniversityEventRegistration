@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import concertStage from "@/assets/concert-stage.png";
 import { Check, X } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ const SignUp = () => {
     confirmPassword: ""
   });
   const [error, setError] = useState("");
+  const {backendUrl, setIsLoggedIn} = useContext(AppContext);
 
   const passwordChecks = {
     minLength: formData.password.length >= 8,
@@ -20,17 +24,34 @@ const SignUp = () => {
     passwordsMatch: formData.password === formData.confirmPassword && formData.confirmPassword !== ""
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError("Please fill in all fields");
-      return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+        setError("Please fill in all fields");
+        return;
+      }
+      if (!passwordChecks.passwordsMatch) {
+        setError("Passwords do not match");
+        return;
+      }
+      
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.post(backendUrl + '/api/auth/register', formData);
+
+      if (data.success) {
+        setIsLoggedIn(true);
+        navigate("/create-profile");
+        toast.success("Account created successfully!");
+      }else {
+        toast.error(data.message);
+      }
+
+    } catch (error) {
+      toast.error("An unexpected error occurred. Please try again." + error);
+      
     }
-    if (!passwordChecks.passwordsMatch) {
-      setError("Passwords do not match");
-      return;
-    }
-    navigate("/create-profile");
   };
 
   const PasswordCheck = ({ passed, label }: { passed: boolean; label: string }) => (

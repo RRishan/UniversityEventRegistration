@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
+import { toast } from "sonner";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
 
 const StudentProfile = () => {
   const navigate = useNavigate();
+
+  const {backendUrl, setIsLoggedIn} = useContext(AppContext);
+
   const [formData, setFormData] = useState({
     fullName: "john",
-    universityEmail: "john",
-    phoneNumber: "123115616",
+    universityEmail: "uni@example.com",
+    phoneNumber: "0712311561",
     notificationTypes: {
       eventStatus: false,
       approvalRequests: false,
@@ -19,9 +25,25 @@ const StudentProfile = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/home");
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      
+
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.post(backendUrl + '/api/student/profile', formData);
+
+      if (data.success) {
+        toast.success("Profile updated successfully!");
+        navigate("/home");
+      } else {
+        toast.error(data.message);
+      }
+
+    } catch (error) {
+      toast.error("An unexpected error occurred. Please try again." + error);
+    }
   };
 
   return (
