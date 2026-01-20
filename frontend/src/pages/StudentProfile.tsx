@@ -36,7 +36,7 @@ const StudentProfile = () => {
 
       if (data.success) {
         toast.success("Profile updated successfully!");
-        navigate("/home");
+        navigate("/");
       } else {
         toast.error(data.message);
       }

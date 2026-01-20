@@ -37,7 +37,7 @@ const createOrinizerProfile = async (req, res) => {
             return res.send({ success: false, message: "User not found" });
         }
 
-        const response = await User.updateOne({_id: userId}, {$set: {fullName, adminProfile: {role: 'organizer'}, organizerProfile: {clubSociety, position, advisorName, advisorEmail, registrationNumber, contactNum: phoneNumber} }} );
+        const response = await User.updateOne({_id: userId}, {$set: {fullName, adminProfile: {role: 'organizer'}, organizerProfile: {clubSociety, position, advisorName, advisorEmail}, regiNumber: registrationNumber, contactNum: phoneNumber }} );
 
         if (!response) {
             return res.send({ success: false, message: "Failed to create organizer profile" });

@@ -2,8 +2,9 @@ import axios from "axios";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
 interface UserData {
-  fullName?: string;
+  name?: string;
   email?: string;
+  role: string;
 }
 
 interface AppContextType {
@@ -34,8 +35,8 @@ export const AppContextProvider =({ children }: AppContextProviderProps) => {
         axios.defaults.withCredentials = true;
 
         const {data} = await axios.post(backendUrl + "/api/auth/is-auth");
-
         if (data.isLoggedIn) {
+          setUserData(data.userData);
           setIsLoggedIn(true);
         }
       } catch (error) {

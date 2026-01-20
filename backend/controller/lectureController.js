@@ -1,18 +1,25 @@
 const User = require('../models/User.js')
 
-// create student profile
-const createStudentProfile = async (req, res) => {
+// create lecture profile
+const createLectureProfile = async (req, res) => {
     try {
-        const { fullName, universityEmail, phoneNumber, notificationTypes, deliveryChannels, userId } = req.body;
+        const { fullName, facultyName, position, universityEmail, registrationNumber, phoneNumber, notificationTypes, deliveryChannels, userId } = req.body;
 
         if (!fullName) {
             return res.send({ success: false, message: "Missing Full Name" });
         }
-
+        if (!facultyName) {
+            return res.send({ success: false, message: "Missing Faculty Name" });
+        }
+        if (!position) {
+            return res.send({ success: false, message: "Missing Position" });
+        }
         if (!universityEmail) {
             return res.send({ success: false, message: "Missing University Email" });
         }
-
+        if (!registrationNumber) {
+            return res.send({ success: false, message: "Missing Registration Number" });
+        }
         if (!phoneNumber) {
             return res.send({ success: false, message: "Missing Phone Number" });
         }
@@ -23,11 +30,7 @@ const createStudentProfile = async (req, res) => {
             return res.send({ success: false, message: "User not found" });
         }
 
-        const studentProfile = {
-            universityEmail: universityEmail,
-        }
-
-        const response = await User.updateOne({_id: userId}, {$set: {fullName, studentProfile, contactNum: phoneNumber}} );
+        const response = await User.updateOne({_id: userId}, {$set: {fullName, adminProfile: {role: 'lecture'} , lectureProfile: {facultyName, position, universityEmail}, regiNumber: registrationNumber,  contactNum: phoneNumber}} );
 
         if (!response) {
             return res.send({ success: false, message: "Failed to create student profile" });
@@ -42,4 +45,4 @@ const createStudentProfile = async (req, res) => {
     }
 }
 
-exports.createStudentProfile = createStudentProfile;
+exports.createLectureProfile = createLectureProfile;

@@ -5,30 +5,36 @@ const userSchema = new Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
 
-  // 👨‍🎓 Student Profile (only for students)
-  studentProfile: {
-    regiNumber: { type: String, unique: true, sparse: true }, // sparse = allow null for admins
-    contactNum: { type: String, unique: true, sparse: true },
-    faculty: { type: String },
-    department: { type: String },
-    universityEmail: { type: String, unique: true},
-  },
-
   // 👨‍💼 Admin Profile (only for admins)
   adminProfile: {
     department: { type: String },
     role: { type: String, enum: ["lecture", "organizer", 'student'], default: 'student' }
   },
 
+  // 👨‍🎓 Student Profile (only for students)
+  studentProfile: {
+    faculty: { type: String },
+    department: { type: String },
+    universityEmail: { type: String, unique: true},
+  },
+
   // 📅 Events organized (only for organizers)
   organizerProfile: {
     clubSociety: { type: String },
     position: { type: String },
-    advisorName: { type: String, unique: true },
-    advisorEmail: { type: String, unique: true },
-    registrationNumber: { type: String, unique: true  },
-    contactNum: { type: String, unique: true  },
+    advisorName: { type: String},
+    advisorEmail: { type: String},
   },
+
+  // lecture profile
+  lectureProfile: {
+    facultyName: { type: String },
+    position: { type: String },
+    universityEmail: { type: String, unique: true, sparse: true },
+  },
+
+  contactNum: { type: String, unique: true, sparse: true },
+  regiNumber: { type: String, unique: true, sparse: true }, // sparse = allow null for admins
 
   // 🔑 Auth fields
   password: { type: String, required: true },

@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
+import { toast } from "sonner";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
 
 const LecturerProfile = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "john",
-    position: "Deputy Director",
+    fullName: "Lecture",
+    facultyName: "Faculity of computing",
+    position: "Dean",
+    universityEmail: "lecture@gmail.com",
+    registrationNumber: "lecture",
+    phoneNumber: "0711234561",
     notificationTypes: {
       eventStatus: false,
       approvalRequests: false,
@@ -18,9 +25,25 @@ const LecturerProfile = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/approval-dashboard");
+  const {backendUrl} = useContext(AppContext);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      
+
+      const {data} = await axios.post(backendUrl + '/api/lecture/profile', formData);
+
+      if (data.success) {
+        toast.success("Profile updated successfully!");
+        navigate("/approval-dashboard");
+      } else {
+        toast.error(data.message);
+      }
+      
+    } catch (error) {
+      toast.error("An unexpected error occurred. Please try again." + error);
+    }
   };
 
   return (
@@ -30,19 +53,57 @@ const LecturerProfile = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-6">
-              {/* Profile Info */}
-              <div className="bg-white/90 rounded-2xl p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-3xl">👤</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{formData.fullName}</h3>
-                    <p className="text-sm text-muted-foreground">{formData.position}</p>
-                  </div>
+              <div className="card-white">
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
+                  <span className="text-3xl">👤</span>
                 </div>
+                <h3 className="font-semibold text-foreground">{formData.fullName}</h3>
+                <span className="px-3 py-1 bg-warning text-warning-foreground text-xs rounded mt-1">
+                  LECTURE
+                </span>
+                <p className="text-sm text-muted-foreground mt-1">{formData.facultyName}</p>
               </div>
 
+              <div className="space-y-4">
+                <div>
+                  <label className="form-label text-xs">Full Name</label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label text-xs">University Email</label>
+                  <input
+                    type="email"
+                    value={formData.universityEmail}
+                    onChange={(e) => setFormData({ ...formData, universityEmail: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label text-xs">Registration Number</label>
+                  <input
+                    type="text"
+                    value={formData.registrationNumber}
+                    onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label text-xs">Phone number</label>
+                  <input
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+              </div>
               {/* Notification Preferences */}
               <div className="bg-muted/50 rounded-2xl p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Notification Preferences</h3>
@@ -106,6 +167,29 @@ const LecturerProfile = () => {
 
             {/* Right Column - Security */}
             <div className="space-y-6">
+              <div className="bg-muted/50 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Lecture Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="form-label text-xs">Faculty Name</label>
+                    <input
+                      type="text"
+                      value={formData.facultyName}
+                      onChange={(e) => setFormData({ ...formData, facultyName: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label text-xs">Position</label>
+                    <input
+                      type="text"
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="bg-muted/50 rounded-2xl p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Security</h3>
                 

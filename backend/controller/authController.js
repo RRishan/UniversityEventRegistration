@@ -288,10 +288,10 @@ const isAuthenticated = async (req, res) => {
 
         //Check is account is verify or not
         if (!user.isAccountVerified) {
-            return res.send({ success: false, isLoggedIn: true, message: "Account is not authenticated" })
+            return res.send({ success: false, isLoggedIn: true, message: "Account is not authenticated", userData: { name: user.fullName, email: user.email, role: user.adminProfile.role}  })
         }
 
-        return res.send({ success: true, isLoggedIn: true, message: "Account is verfiy" })
+        return res.send({ success: true, isLoggedIn: true, message: "Account is verfiy", userData: { name: user.name, email: user.email, role: user.adminProfile.role} })
 
     } catch (error) {
         //Send error message when it is cause error

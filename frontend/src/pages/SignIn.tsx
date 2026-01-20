@@ -12,7 +12,7 @@ const SignIn = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
-  const {backendUrl, setIsLoggedIn, isLoggedIn} = useContext(AppContext);
+  const {backendUrl, setIsLoggedIn, checkAuth, userData} = useContext(AppContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     try {
@@ -23,10 +23,15 @@ const SignIn = () => {
         axios.defaults.withCredentials = true;
 
         const {data} = await axios.post(backendUrl + "/api/auth/login", { email, password });
-        console.log("Login successful:", data);
+
         if (data.success) {
           
-          navigate("/");
+          console.log(userData?.role == 'lecture')
+          if (userData?.role == 'lecture') {
+            navigate("/approval-dashboard");
+          }else {
+            navigate("/");
+          }
           setIsLoggedIn(true);
           toast.success("Login successful!");
         }else {

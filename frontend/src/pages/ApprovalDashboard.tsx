@@ -1,13 +1,17 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, Calendar, Eye, MessageCircle, X, Check, AlertTriangle, Clock, Download, FileText, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Calendar, Eye, MessageCircle, X, Check, AlertTriangle, Clock, Download, FileText, ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
 import crowdBg from "@/assets/crowd-bg.jpg";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
+import { toast } from "sonner";
 
 const ApprovalDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState<typeof events[0] | null>(null);
   const [comment, setComment] = useState("");
+  const navigate = useNavigate();
 
   const events = [
     {
@@ -118,6 +122,29 @@ const ApprovalDashboard = () => {
     }
   };
 
+  const {backendUrl, setIsLoggedIn} = useContext(AppContext);
+
+  const handleLogout = async  (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+
+      const {data} = await axios.post(backendUrl + "/api/auth/logout");
+
+      if (data.success) {
+        toast.success("Logout successful!");
+        setIsLoggedIn(false);
+        navigate("/sign-in");
+      }else {
+        toast.error(data.message);
+      }
+      
+
+    } catch (error) {
+      toast.error("Logout failed. Please try again.");
+    }
+    
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
@@ -189,7 +216,13 @@ const ApprovalDashboard = () => {
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm">
               2
             </div>
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">?</div>
+            <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
           </div>
         </header>
 
