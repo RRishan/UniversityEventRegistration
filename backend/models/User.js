@@ -17,7 +17,17 @@ const userSchema = new Schema({
   // 👨‍💼 Admin Profile (only for admins)
   adminProfile: {
     department: { type: String },
-    role: { type: String, enum: ["approver", "admin", 'member'], default: 'member' }
+    role: { type: String, enum: ["lecture", "organizer", 'student'], default: 'student' }
+  },
+
+  // 📅 Events organized (only for organizers)
+  organizerProfile: {
+    clubSociety: { type: String },
+    position: { type: String },
+    advisorName: { type: String, unique: true },
+    advisorEmail: { type: String, unique: true },
+    registrationNumber: { type: String, unique: true  },
+    contactNum: { type: String, unique: true  },
   },
 
   // 🔑 Auth fields
