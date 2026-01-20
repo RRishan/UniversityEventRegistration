@@ -92,13 +92,13 @@ const login = async (req, res) => {
 
         //Check the email , password are exist and valid or not
         if (!email) {
-            return res.status(400).send({ success: false, message: "Missing Email" });
+            return res.send({ success: false, message: "Missing Email" });
         } else if (!validator.isEmail(email)) {
-            return res.status(400).send({ success: false, message: "Invalid Email" });
+            return res.send({ success: false, message: "Invalid Email" });
         }
 
         if (!password) {
-            return res.status(400).send({ success: false, message: "Missing Password" });
+            return res.send({ success: false, message: "Missing Password" });
         }
 
         //Find the user from database
@@ -106,14 +106,14 @@ const login = async (req, res) => {
 
         //Check the user is valid or not
         if (!user) {
-            return res.status(400).send({ success: false, message: "User not found" })
+            return res.send({ success: false, message: "User not found" })
         }
 
         //Check with password is match or not
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(400).send({ success: false, message: "Invalid Password" })
+            return res.send({ success: false, message: "Invalid Password" })
         }
 
         //Create token using jwt
@@ -128,13 +128,13 @@ const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.status(200).send({ success: true, message: `Login successful! Welcome back, ${user.name}.` })
+        return res.send({ success: true, message: `Login successful! Welcome back, ${user.name}.` })
 
 
     } catch (error) {
 
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -152,7 +152,7 @@ const logout = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -164,7 +164,7 @@ const verifyOtp = async (req, res) => {
 
         //Check user login or not
         if (!userId) {
-            return res.status(400).send({ success: false, message: "Please re-login" })
+            return res.send({ success: false, message: "Please re-login" })
         }
 
         //Get the user details 
@@ -172,7 +172,7 @@ const verifyOtp = async (req, res) => {
 
         //Check if its verify or not
         if (user.isAccountVerified) {
-            return res.status(400).send({ success: false, message: "Account already verified" })
+            return res.send({ success: false, message: "Account already verified" })
         }
 
         //Create the otp
@@ -198,7 +198,7 @@ const verifyOtp = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 
 }
@@ -213,12 +213,12 @@ const verifyEmail = async (req, res) => {
 
         //Check if the user login or not
         if (!userId) {
-            return res.status(400).send({ success: false, message: "Please re-login" })
+            return res.send({ success: false, message: "Please re-login" })
         }
 
         //Check if the OTP missing or not
         if (!otp) {
-            return res.status(400).send({ success: false, message: "Missing OTP code" })
+            return res.send({ success: false, message: "Missing OTP code" })
         }
 
         //Get the user details using user id 
@@ -226,17 +226,17 @@ const verifyEmail = async (req, res) => {
 
         //Check if the user if valid or not 
         if (!user) {
-            return res.status(400).send({ success: false, message: "User not found" })
+            return res.send({ success: false, message: "User not found" })
         }
 
         //Check if otp is missing and valid or not
         if (user.verifyOtp == '' || user.verifyOtp !== otp) {
-            return res.status(400).send({ success: false, message: "Invalid OTP" })
+            return res.send({ success: false, message: "Invalid OTP" })
         }
 
         //Check otp expire or not
         if (user.verifyOtpExpireAt < Date.now()) {
-            return res.status(400).send({ success: false, message: "OTP Expired" })
+            return res.send({ success: false, message: "OTP Expired" })
         }
 
         //make user verify
@@ -263,7 +263,7 @@ const verifyEmail = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -275,7 +275,7 @@ const isAuthenticated = async (req, res) => {
 
         //Check if the user login or not
         if (!userId) {
-            return res.status(400).send({ success: false, message: "Please re-login" })
+            return res.send({ success: false, message: "Please re-login" })
         }
 
         //Get the user details using user id 
@@ -283,19 +283,19 @@ const isAuthenticated = async (req, res) => {
 
         //Check if the user if valid or not 
         if (!user) {
-            return res.status(400).send({ success: false, message: "User not found" })
+            return res.send({ success: false, message: "User not found" })
         }
 
         //Check is account is verify or not
         if (!user.isAccountVerified) {
-            return res.status(400).send({ success: false, message: "Account is not authenticated" })
+            return res.send({ success: false, isLoggedIn: true, message: "Account is not authenticated" })
         }
 
-        return res.status(200).send({ success: true, message: "Account is verfiy" })
+        return res.send({ success: true, isLoggedIn: true, message: "Account is verfiy" })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -307,9 +307,9 @@ const sendResetOtp = async (req, res) => {
 
         //Check the email is valid or not
         if (!email) {
-            return res.status(400).send({ success: false, message: "Email is required" })
+            return res.send({ success: false, message: "Email is required" })
         } else if (!validator.isEmail(email)) {
-            return res.status(400).send({ success: false, message: "Invalid Email" });
+            return res.send({ success: false, message: "Invalid Email" });
         }
 
         //Get user from databases
@@ -317,7 +317,7 @@ const sendResetOtp = async (req, res) => {
 
         //Check if the user found or not
         if (!user) {
-            return res.status(400).send({ sccess: false, message: "User not found" })
+            return res.send({ sccess: false, message: "User not found" })
         }
 
         //Build the OTP and the send to database
@@ -343,7 +343,7 @@ const sendResetOtp = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -355,21 +355,21 @@ const resetPassword = async (req, res) => {
 
         //Check if the Email missing or not and valid or not
         if (!email) {
-            return res.status(400).send({ success: false, message: "Missing Email" });
+            return res.send({ success: false, message: "Missing Email" });
         } else if (!validator.isEmail(email)) {
-            return res.status(400).send({ success: false, message: "Invalid Email" });
+            return res.send({ success: false, message: "Invalid Email" });
         }
 
         //Check if the OTP missing or not
         if (!otp) {
-            return res.status(400).send({ success: false, message: "Missing OTP code" })
+            return res.send({ success: false, message: "Missing OTP code" })
         }
 
         //Check if the newPassword missing or not and valid or not
         if (!newPassword) {
-            return res.status(400).send({ success: false, message: "Missing Password" });
+            return res.send({ success: false, message: "Missing Password" });
         } else if (!validator.isStrongPassword(newPassword)) {
-            return res.status(400).send({ success: false, message: "Please create Strong password" });
+            return res.send({ success: false, message: "Please create Strong password" });
         }
 
         //Get user from database
@@ -377,17 +377,17 @@ const resetPassword = async (req, res) => {
 
         //Check user valid or not
         if (!user) {
-            return res.status(400).send({ success: false, message: "User not found" })
+            return res.send({ success: false, message: "User not found" })
         }
 
         //Check resetOtp missing and valid or not
         if (user.resetOtp == "" || user.resetOtp !== otp) {
-            return res.status(400).send({ success: false, message: "Invalid OTP" })
+            return res.send({ success: false, message: "Invalid OTP" })
         }
 
         //Check otp expire
         if (user.resetOtpExpireAt < Date.now()) {
-            return res.status(400).send({ success: false, message: "OTP Expired" })
+            return res.send({ success: false, message: "OTP Expired" })
         }
 
         //Check with password is match or not
@@ -395,7 +395,7 @@ const resetPassword = async (req, res) => {
 
         // Chec password same as the old passowrd
         if (!isMatch) {
-            return res.status(400).send({ success: false, message: "New password cannot be the same as the old password" })
+            return res.send({ success: false, message: "New password cannot be the same as the old password" })
         }
 
 
@@ -415,7 +415,7 @@ const resetPassword = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 
@@ -430,14 +430,14 @@ const getUserData = async (req, res) => {
 
         //Check user valid or not
         if (!user) {
-            return res.status(400).send({ success: false, message: "User not found" })
+            return res.send({ success: false, message: "User not found" })
         }
 
         return res.status(200).send({ success: true, userData: { name: user.name, email: user.email } })
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: error.message })
+        return res.send({ success: false, message: error.message })
     }
 }
 

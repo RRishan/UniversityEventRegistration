@@ -27,12 +27,12 @@ const userAuth = async (req, res, next) => {
 
             next();
         }else {
-            return res.status(400).send({success: false, message: "Not Authorized. Login Again!"})
+            return res.send({success: false, message: "Not Authorized. Login Again!"})
         }
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error})
+        return res.send({success: false, message: error})
     }
 }
 

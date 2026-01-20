@@ -8,6 +8,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import Header from "@/components/layout/Header";
 
 const upcomingEvents = [
   {
@@ -155,31 +156,7 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header style={{ backgroundColor: "hsl(231 62% 45%)" }} className="text-white">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-white">
-            Eventraze
-          </Link>
-          <nav className="flex items-center gap-8">
-            <Link to="/home" className="text-sm text-white hover:opacity-80 transition-opacity">Home</Link>
-            <Link to="/events" className="text-sm text-white hover:opacity-80 transition-opacity">Events</Link>
-            <Link to="/my-events" className="text-sm text-white hover:opacity-80 transition-opacity">My Events</Link>
-            <button className="text-sm text-white hover:opacity-80 transition-opacity flex items-center gap-1">
-              More
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </nav>
-          <Link 
-            to="/sign-in" 
-            className="bg-white px-6 py-2 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-            style={{ color: "hsl(231 62% 45%)" }}
-          >
-            Login
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden" style={{ backgroundColor: "hsl(231 62% 45%)" }}>
