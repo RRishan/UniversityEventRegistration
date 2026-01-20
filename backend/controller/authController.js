@@ -18,39 +18,37 @@ const register = async (req, res) => {
 
     try {
         //Get the attributes from request
-        const { name, email, regiNumber, contactNum, faculty, department, password, confirmPassword } = req.body;
+        const { fullName, email, password, confirmPassword } = req.body;
 
-        console.log(confirmPassword == password)
+        if (!password) {
+            return res.send({ success: false, message: "Missing Password" });
+        } else if (!validator.isStrongPassword(password)) {
+            return res.send({ success: false, message: "Please create Strong password" });
+        }
 
         // Checking confirm password valid or not and the password and confirm password maches or not
         if (!confirmPassword) {
-            return res.status(400).send({ success: false, message: "Missing Confirm Password" })
+            return res.send({ success: false, message: "Missing Confirm Password" })
         }
         else if (password != confirmPassword) {
-            return res.status(400).send({ success: false, message: "Passwords do not match." })
+            return res.send({ success: false, message: "Passwords do not match." })
         }
 
         //Check the email , name, regiNumber, contactNum, faculty, department , password are exist and valid or not
-        if (!name) {
-            return res.status(400).send({ success: false, message: "Missing Name" });
+        if (!fullName) {
+            return res.send({ success: false, message: "Missing Name" });
         }
 
         if (!email) {
-            return res.status(400).send({ success: false, message: "Missing Email" });
+            return res.send({ success: false, message: "Missing Email" });
         } else if (!validator.isEmail(email)) {
-            return res.status(400).send({ success: false, message: "Invalid Email" });
-        }
-
-        if (!password) {
-            return res.status(400).send({ success: false, message: "Missing Password" });
-        } else if (!validator.isStrongPassword(password)) {
-            return res.status(400).send({ success: false, message: "Please create Strong password" });
+            return res.send({ success: false, message: "Invalid Email" });
         }
 
         //Check the user already registed or not
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            return res.status(400).send({ success: false, message: "User already exists" })
+            return res.send({ success: false, message: "User already exists" })
         }
 
         //hashed password using bcrypt
@@ -58,12 +56,8 @@ const register = async (req, res) => {
 
         //make the new User using User model
         const user = new User({
-            name, email, studentProfile: {
-                regiNumber,
-                contactNum,
-                faculty,
-                department
-            }, password: hashPassword
+            fullName, email, 
+            password: hashPassword
         })
 
         //Save the user
@@ -80,12 +74,12 @@ const register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.status(201).send({ message: "Succsfully Registered", success: true })
+        return res.send({ message: "Succsfully Registered", success: true })
 
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({ success: false, message: `Error : ${error.message}` })
+        return res.send({ success: false, message: `Error : ${error.message}` })
     }
 
 }
