@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import uploaded1 from "@/assets/uploaded-1.jpg";
@@ -7,8 +7,15 @@ import uploaded3 from "@/assets/uploaded-3.jpg";
 import uploaded4 from "@/assets/uploaded-4.jpg";
 import uploaded5 from "@/assets/uploaded-5.jpg";
 import event1 from "@/assets/event-1.jpg";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
+import { toast } from "@/components/ui/sonner";
 
-const allEvents = [
+const Events = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [allEvents, setAllEvents] = useState([
   {
     id: "1",
     title: "Music Festival 2024",
@@ -63,12 +70,7 @@ const allEvents = [
     category: "Festival",
     status: "approved"
   }
-];
-
-const Events = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+]);
 
   const filteredEvents = allEvents.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,6 +78,43 @@ const Events = () => {
     const matchesCategory = !selectedCategory || event.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
+
+  const {backendUrl} = useContext(AppContext);
+
+  const getAllEvents = async () => {
+    try {
+      
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.get(backendUrl + '/api/event/events');
+
+      if (data.success) {
+        console.log(data.message);
+        const formattedEvents = data.message.map((event: any) => ({
+          id: event._id,
+          title: event.eventTitle,
+          image: event.imageLink,
+          date: event.eventDate,
+          location: event.venue,
+          category: event.category.charAt(0).toUpperCase() + event.category.slice(1),
+          status: 'Approved'
+        }));
+
+        setAllEvents(formattedEvents);
+      }else {
+        toast.error(data.message);
+      }
+
+
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
+
+  useEffect(() => {
+    getAllEvents();
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const styles = {

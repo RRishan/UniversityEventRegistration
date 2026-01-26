@@ -10,35 +10,10 @@ import {
 } from "@/components/ui/hover-card";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "@/context/AppContext";
-
-const upcomingEvents = [
-  {
-    id: "1",
-    title: "Leadership development workshop",
-    description: "Join our interactive session on building professional skills and networking strategies.",
-    image: event1,
-    category: "Workshop",
-    readTime: "5 min read"
-  },
-  {
-    id: "2",
-    title: "Research innovation showcase",
-    description: "Discover groundbreaking student and faculty research projects across disciplines.",
-    image: event2,
-    category: "Seminars",
-    readTime: "5 min read"
-  },
-  {
-    id: "3",
-    title: "Cultural exchange night",
-    description: "Connect with international students and explore diverse cultural experiences.",
-    image: event3,
-    category: "Socials",
-    readTime: "5 min read"
-  }
-];
+import { toast } from "sonner";
+import axios from "axios";
 
 // Event data for calendar
 const calendarEvents: Record<string, { title: string; time: string; location: string }> = {
@@ -158,7 +133,67 @@ const CalendarDay = ({ day, highlighted }: { day: string; highlighted: boolean }
 const Home = () => {
 
 
-  const {isLoggedIn} = useContext(AppContext);
+  const {isLoggedIn, backendUrl} = useContext(AppContext);
+  const [upcomingEvents, setUpcomingEvents] = useState([
+  {
+    id: "1",
+    title: "Leadership development workshop",
+    description: "Join our interactive session on building professional skills and networking strategies.",
+    image: event1,
+    category: "Workshop",
+    readTime: "5 min read"
+  },
+  {
+    id: "2",
+    title: "Research innovation showcase",
+    description: "Discover groundbreaking student and faculty research projects across disciplines.",
+    image: event2,
+    category: "Seminars",
+    readTime: "5 min read"
+  },
+  {
+    id: "3",
+    title: "Cultural exchange night",
+    description: "Connect with international students and explore diverse cultural experiences.",
+    image: event3,
+    category: "Socials",
+    readTime: "5 min read"
+  }
+  ]);
+
+  const getAllEvents = async () => {
+    try {
+      
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.get(backendUrl + '/api/event/events');
+
+      if (data.success) {
+        console.log(data.message);
+        const formattedEvents = data.message.map((event: any) => ({
+          id: event._id,
+          title: event.eventTitle,
+          description: event.description,
+          image: event.imageLink,
+          category: event.category.charAt(0).toUpperCase() + event.category.slice(1),
+          readTime: `${Math.ceil(event.expectedAttendees / 10)} min read`
+        }));
+
+        setUpcomingEvents(formattedEvents);
+      }else {
+        toast.error(data.message);
+      }
+
+
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
+  useEffect(() =>{
+    getAllEvents();
+  }, [])
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

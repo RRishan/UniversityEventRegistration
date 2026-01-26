@@ -6,7 +6,9 @@ import uploaded1 from "@/assets/uploaded-1.jpg";
 import uploaded3 from "@/assets/uploaded-3.jpg";
 import uploaded4 from "@/assets/uploaded-4.jpg";
 
-const myEvents = [
+const MyEvents = () => {
+  const [filter, setFilter] = useState("all");
+  const [myEvents, setMyEvents] = useState([
   { 
     id: 1, 
     title: "Annual Company Retreat 2025", 
@@ -34,10 +36,11 @@ const myEvents = [
     image: uploaded4,
     attendees: 300
   },
-];
+  ]);
 
-const MyEvents = () => {
-  const [filter, setFilter] = useState("all");
+  const getAllEvents = () => {
+    
+  }
 
   const filteredEvents = myEvents.filter(event => {
     if (filter === "all") return true;
