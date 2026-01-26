@@ -5,71 +5,56 @@ const validator = require('validator')
 const addEvent = async (req, res) => {
     try {
         // Get the attributes from request
-        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount,userId} = req.body;
-
+        const {eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, userId} = req.body;
+        console.log(req.body);
         // Check attributes are valid or not
-        if(!title) {
-            return res.status(400).send({success: false, message: "Missing tittle"})
+        if(!eventTitle) {
+            return res.send({success: false, message: "Missing tittle"})
         }
 
         if(!description) {
-            return res.status(400).send({success: false, message: "Missing Description"})
+            return res.send({success: false, message: "Missing Description"})
         }
 
         if(!category) {
-            return res.status(400).send({success: false, message: "Missing Category"})
+            return res.send({success: false, message: "Missing Category"})
         }
 
-        if(!venue) {
-            return res.status(400).send({success: false, message: "Missing Venue"})
+        if(!expectedAttendees) {
+            return res.send({success: false, message: "Missing Expected Attendees"})
         }
 
-        if(!startDate) {
-            return res.status(400).send({success: false, message: "Missing Start Date"})
-        }else if (!validator.isDate(startDate)) {
-            return res.status(400).send({success: false, message: "Invlid Start Date"})
+        if(!eventDate) {
+            return res.send({success: false, message: "Missing Event Date"})
         }
 
         if(!startTime) {
-            return res.status(400).send({success: false, message: "Missing Start Time"})
+            return res.send({success: false, message: "Missing Start Time"})
         }else if (!validator.isTime(startTime)) {
-            return res.status(400).send({success: false, message: "Invlid Start Time"})
-        }
-
-        if(!endDate) {
-            return res.status(400).send({success: false, message: "Missing End Date"})
-        }else if (!validator.isDate(endDate)) {
-            return res.status(400).send({success: false, message: "Invlid End Date"})
+            return res.send({success: false, message: "Invlid Start Time"})
         }
 
         if(!endTime) {
-            return res.status(400).send({success: false, message: "Missing End Time"})
+            return res.send({success: false, message: "Missing End Time"})
         }else if (!validator.isTime(endTime)) {
-            return res.status(400).send({success: false, message: "Invlid End Time"})
+            return res.send({success: false, message: "Invlid End Time"})
         }
 
-        if(!participantsCount) {
-            return res.status(400).send({success: false, message: "Missing Participants Count"})
-        }
-
-        // Check if the same event name have
-        const exsistingEvent = await Event.findOne({title})
-
-        if(exsistingEvent) {
-            return res.status(400).send({success: false, message: "Event title exists"})
+        if(!imageLink) {
+            return res.send({success: false, message: "Missing Image Link"})
         }
 
         // Build the event model
-        const event = new Event({title, description, category, venue, startDate, startTime, endDate, endTime, participantsCount})
+        const event = new Event({eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, organizationId: userId})
 
         // Save event model
         await event.save();
 
-        return res.status(200).send({success: true, message: `Succsfully fill form`})
+        return res.send({success: true, message: `Succsfully fill form`})
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.send({success: false, message: error.message})
     }
 }
 
@@ -81,7 +66,7 @@ const getEvent = async (req, res) => {
 
         //Check event id valid or not
         if(!eventId) {
-            return res.status(400).send({success: false, message: "Invalid Event"})
+            return res.send({success: false, message: "Invalid Event"})
         }
 
         // Get event from database
@@ -89,7 +74,7 @@ const getEvent = async (req, res) => {
 
         // Check the event valid or not
         if (!event) {
-            return res.status(400).send({success: false, message: "Invalid Event"})
+            return res.send({success: false, message: "Invalid Event"})
         }
 
         // Send event
@@ -97,7 +82,7 @@ const getEvent = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.send({success: false, message: error.message})
     }
 }
 
@@ -109,7 +94,7 @@ const getAllEvent = async (req, res) => {
 
         // Check events invalid or not
         if(!events) {
-            return res.status(400).send({success: false, message: "Invalid Events"})
+            return res.send({success: false, message: "Invalid Events"})
         }
 
         // Send Events 
@@ -117,7 +102,7 @@ const getAllEvent = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.send({success: false, message: error.message})
     }
 }
 
@@ -129,47 +114,47 @@ const updateEvent = async (req, res) => {
 
         // Check attributes are valid or not
         if(!title) {
-            return res.status(400).send({success: false, message: "Missing tittle"})
+            return res.send({success: false, message: "Missing tittle"})
         }
 
         if(!description) {
-            return res.status(400).send({success: false, message: "Missing Description"})
+            return res.send({success: false, message: "Missing Description"})
         }
 
         if(!category) {
-            return res.status(400).send({success: false, message: "Missing Category"})
+            return res.send({success: false, message: "Missing Category"})
         }
 
         if(!venue) {
-            return res.status(400).send({success: false, message: "Missing Venue"})
+            return res.send({success: false, message: "Missing Venue"})
         }
 
         if(!startDate) {
-            return res.status(400).send({success: false, message: "Missing Start Date"})
+            return res.send({success: false, message: "Missing Start Date"})
         }else if (!validator.isDate(startDate)) {
-            return res.status(400).send({success: false, message: "Invlid Start Date"})
+            return res.send({success: false, message: "Invlid Start Date"})
         }
 
         if(!startTime) {
-            return res.status(400).send({success: false, message: "Missing Start Time"})
+            return res.send({success: false, message: "Missing Start Time"})
         }else if (!validator.isTime(startTime)) {
-            return res.status(400).send({success: false, message: "Invlid Start Time"})
+            return res.send({success: false, message: "Invlid Start Time"})
         }
 
         if(!endDate) {
-            return res.status(400).send({success: false, message: "Missing End Date"})
+            return res.send({success: false, message: "Missing End Date"})
         }else if (!validator.isDate(endDate)) {
-            return res.status(400).send({success: false, message: "Invlid End Date"})
+            return res.send({success: false, message: "Invlid End Date"})
         }
 
         if(!endTime) {
-            return res.status(400).send({success: false, message: "Missing End Time"})
+            return res.send({success: false, message: "Missing End Time"})
         }else if (!validator.isTime(endTime)) {
-            return res.status(400).send({success: false, message: "Invlid End Time"})
+            return res.send({success: false, message: "Invlid End Time"})
         }
 
         if(!participantsCount) {
-            return res.status(400).send({success: false, message: "Missing Participants Count"})
+            return res.send({success: false, message: "Missing Participants Count"})
         }
 
         // Update the event from database
@@ -177,7 +162,7 @@ const updateEvent = async (req, res) => {
 
         //Check event valid or not
         if(!event) {
-            return res.status(400).send({success: false, message: "Invalid Event"})
+            return res.send({success: false, message: "Invalid Event"})
         }
 
         //Send message
@@ -185,7 +170,7 @@ const updateEvent = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.send({success: false, message: error.message})
     }
 }
 
@@ -197,7 +182,7 @@ const deleteEvent = async (req, res) => {
 
         //Check event id valid or not
         if(!eventId) {
-            return res.status(400).send({success: false, message: "Invalid Event"})
+            return res.send({success: false, message: "Invalid Event"})
         }
 
         // get response form the database
@@ -205,7 +190,7 @@ const deleteEvent = async (req, res) => {
 
         // check the reponse
         if(!response) {
-            return res.status(400).send({success: false, message: "Invalid event Id"})
+            return res.send({success: false, message: "Invalid event Id"})
         }
 
         // send the response
@@ -213,7 +198,7 @@ const deleteEvent = async (req, res) => {
 
     } catch (error) {
         //Send error message when it is cause error
-        return res.status(400).send({success: false, message: error.message})
+        return res.send({success: false, message: error.message})
     }
 }
 

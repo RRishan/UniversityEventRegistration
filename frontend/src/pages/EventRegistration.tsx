@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import crowdBg from "@/assets/crowd-bg.jpg";
 import { ArrowLeft, ArrowRight, Calendar, Clock } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
 
 const EventRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const {backendUrl} = useContext(AppContext);
   const [formData, setFormData] = useState({
     // Step 1 - Event Details
     eventTitle: "",
@@ -23,6 +27,7 @@ const EventRegistration = () => {
     registrationNumber: "",
     emailAddress: "",
     telephoneNumber: "",
+    imageLink: "",
     // Step 2 - Venue
     venue: "",
     // Step 3 - Documents
@@ -37,11 +42,34 @@ const EventRegistration = () => {
     { id: 5, label: "Submission" },
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
-      navigate("/my-events");
+      try {
+        axios.defaults.withCredentials = true;
+        console.log(formData)
+        const {data} = await axios.post(backendUrl + "/api/event/register", {eventTitle: formData.eventTitle, description: formData.description,
+          category: formData.category, eventDate: formData.eventDate, expectedAttendees: formData.expectedAttendees,
+          startTime: formData.startTime, endTime: formData.endTime, faculty: formData.faculty, department: formData.department,
+          applicantName: formData.applicantName, registrationNumber: formData.registrationNumber,
+          emailAddress: formData.emailAddress, telephoneNumber: formData.telephoneNumber, venue: formData.venue,
+          imageLink: formData.imageLink
+        });
+        console.log(data);
+
+        if (data.success) {
+          toast.success("Event submitted successfully!");
+          setCurrentStep(5);
+          navigate("/my-events");
+        }else {
+          toast.error(data.message);
+        }
+
+      } catch (error) {
+        console.error(error.response?.data);
+        toast.error(error.message);
+      }
     }
   };
 
@@ -50,6 +78,28 @@ const EventRegistration = () => {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files[0];
+
+      if (!file) return toast.error("No file selected.");
+
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", "event-registration");
+
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/dadxdprtg/image/upload",
+        data, { withCredentials: false }
+      );
+
+      setFormData({ ...formData, imageLink: response.data.secure_url });
+
+    } catch (error) {
+      toast.error("File upload failed. Please try again.");
+    }
+  }
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -98,13 +148,12 @@ const EventRegistration = () => {
                 <label className="text-primary-foreground text-sm mb-1 block">Event Date *</label>
                 <div className="relative">
                   <input
-                    type="text"
+                    type="date"
                     placeholder="MM/DD/YYYY"
                     value={formData.eventDate}
                     onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                     className="form-input pr-10"
                   />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
               <div>
@@ -124,26 +173,24 @@ const EventRegistration = () => {
                 <label className="text-primary-foreground text-sm mb-1 block">Start Time *</label>
                 <div className="relative">
                   <input
-                    type="text"
+                    type="time"
                     placeholder="HH:MM AM"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                     className="form-input pr-10"
                   />
-                  <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
               <div>
                 <label className="text-primary-foreground text-sm mb-1 block">End Time *</label>
                 <div className="relative">
                   <input
-                    type="text"
+                    type="time"
                     placeholder="HH:MM PM"
                     value={formData.endTime}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     className="form-input pr-10"
                   />
-                  <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -170,7 +217,7 @@ const EventRegistration = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              {/* <div>
                 <label className="text-primary-foreground text-sm mb-1 block">applicants name *</label>
                 <input
                   type="text"
@@ -178,8 +225,8 @@ const EventRegistration = () => {
                   onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
                   className="form-input"
                 />
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <label className="text-primary-foreground text-sm mb-1 block">Registration number *</label>
                 <input
                   type="text"
@@ -187,7 +234,7 @@ const EventRegistration = () => {
                   onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
                   className="form-input"
                 />
-              </div>
+              </div> */}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -236,13 +283,15 @@ const EventRegistration = () => {
       case 3:
         return (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">Drag and drop files here or click to upload</p>
-              <input type="file" multiple className="hidden" />
-              <button type="button" className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg">
-                Choose Files
-              </button>
-            </div>
+            {
+              formData.imageLink != '' && (
+                <img src={formData.imageLink} alt="Uploaded Document" className="img max-w-[400px] rounded-lg" />
+              )
+            }
+            <form className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                <p className="text-muted-foreground text-white">Drag and drop files here or click to upload</p>
+                <input type="file" onChange={handleFileUpload} accept=".png, .jpg, .jpeg" className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg" />
+            </form>
           </div>
         );
 
