@@ -101,9 +101,9 @@ const login = async (req, res) => {
             return res.send({ success: false, message: "Missing Password" });
         }
 
+        
         //Find the user from database
         const user = await User.findOne({ email });
-
         //Check the user is valid or not
         if (!user) {
             return res.send({ success: false, message: "User not found" })
@@ -128,7 +128,7 @@ const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.send({ success: true, message: `Login successful! Welcome back, ${user.name}.` })
+        return res.send({ success: true, message: `Login successful! Welcome back, ${user.name}.`, role: user.adminProfile.role })
 
 
     } catch (error) {

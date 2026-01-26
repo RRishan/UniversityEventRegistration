@@ -25,9 +25,8 @@ const SignIn = () => {
         const {data} = await axios.post(backendUrl + "/api/auth/login", { email, password });
 
         if (data.success) {
-          
-          console.log(userData?.role == 'lecture')
-          if (userData?.role == 'lecture') {
+          await checkAuth();
+          if (data.role && data.role == 'lecture') {
             navigate("/approval-dashboard");
           }else {
             navigate("/");

@@ -15,7 +15,7 @@ const userSchema = new Schema({
   studentProfile: {
     faculty: { type: String },
     department: { type: String },
-    universityEmail: { type: String, unique: true},
+    universityEmail: { type: String, unique: true, sparse: true },
   },
 
   // 📅 Events organized (only for organizers)
