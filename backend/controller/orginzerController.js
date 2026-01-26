@@ -50,4 +50,33 @@ const createOrinizerProfile = async (req, res) => {
     }
 }
 
+const getAllOrginzers = async (req, res) => {
+    try {
+        
+        const {userId} = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.send({ success: false, message: "User not found" });
+        }
+
+        const organizer = {
+            fullName: user.fullName,
+            email: user.email,
+            adminProfile: user.adminProfile,
+            isAccountVerified: user.isAccountVerified,
+            contactNum: user.contactNum,
+            organizerProfile: user.organizerProfile,
+            regiNumber: user.regiNumber
+        }
+
+        return res.send({ success: true, message: organizer });
+
+    } catch (error) {
+        return res.send({ success: false, message: `Error : ${error.message}` })
+    }
+}
+
 exports.createOrinizerProfile = createOrinizerProfile;
+exports.getAllOrginzers = getAllOrginzers;

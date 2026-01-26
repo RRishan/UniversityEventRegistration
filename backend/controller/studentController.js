@@ -42,4 +42,32 @@ const createStudentProfile = async (req, res) => {
     }
 }
 
+const getStudentProfile = async (req, res) => {
+
+    try {
+        const { userId } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.send({ success: false, message: "User not found" });
+        }
+
+        const filtredUser = {
+            fullName: user.fullName,
+            email: user.email,
+            contactNum: user.contactNum,
+            adminProfile: user.adminProfile,
+            studentProfile: user.studentProfile,
+            isAccountVerified: user.isAccountVerified
+        }
+        
+        return res.send({message: filtredUser, success: true});
+
+    } catch (error) {
+        return res.send({ success: false, message: `Error : ${error.message}` })
+    }
+}
+
 exports.createStudentProfile = createStudentProfile;
+exports.getStudentProfile = getStudentProfile;

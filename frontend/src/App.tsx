@@ -20,6 +20,7 @@ import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { AppContextProvider } from "./context/AppContext";
 import ProtectedRoute from "./pages/protectedRoute";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +36,7 @@ const App = () => (
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/create-profile" element={<CreateProfile />} />
-            <Route path="/profile" element={<OrganizerProfile />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/profile/organizer" element={<OrganizerProfile />} />
             <Route path="/profile/student" element={<StudentProfile />} />
             <Route path="/profile/lecturer" element={<LecturerProfile />} />

@@ -45,4 +45,33 @@ const createLectureProfile = async (req, res) => {
     }
 }
 
+const getLectureProfile = async (req, res) => {
+    try {
+        const {userId} = req.body;
+        
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.send({ success: false, message: "User not found" });
+        }
+
+        const lectureProfile = {
+            fullName: user.fullName,
+            email: user.email,
+            adminProfile: user.adminProfile,
+            isAccountVerified: user.isAccountVerified,
+            contactNum: user.contactNum,
+            lectureProfile: user.lectureProfile,
+            regiNumber: user.regiNumber
+        };
+
+        return res.send({ success: true, message: lectureProfile });
+
+    } catch (error) {
+        return res.send({ success: false, message: `Error : ${error.message}` })
+    }
+}
+
 exports.createLectureProfile = createLectureProfile;
+exports.getLectureProfile = getLectureProfile;

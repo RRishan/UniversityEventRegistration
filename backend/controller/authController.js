@@ -125,7 +125,7 @@ const login = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000   // Milisecond
+            maxAge:   60 * 60 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
         return res.send({ success: true, message: `Login successful! Welcome back, ${user.name}.`, role: user.adminProfile.role })

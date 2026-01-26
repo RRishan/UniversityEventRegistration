@@ -10,7 +10,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
-  const {backendUrl, setIsLoggedIn} = useContext(AppContext);
+  const {backendUrl, setIsLoggedIn, userData} = useContext(AppContext);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -43,25 +43,42 @@ const Header = () => {
         </Link>
 
         <nav className="flex items-center gap-2">
+
           <Link 
             to="/" 
             className={isActive("/home") ? "nav-link-active" : "nav-link"}
           >
             Home
           </Link>
+
           <Link 
             to="/events" 
             className={isActive("/events") ? "nav-link-active" : "nav-link"}
           >
             Events
           </Link>
+          {
+            userData && userData.role === 'organizer' && (
+              <Link 
+                to="/my-events" 
+                className={isActive("/my-events") || isActive("/event-registration") ? "nav-link-active" : "nav-link"}
+              >
+                My Events
+              </Link>
+            )
+          }
+          
+          
           <Link 
-            to="/my-events" 
+            to="/profile" 
             className={isActive("/my-events") || isActive("/event-registration") ? "nav-link-active" : "nav-link"}
           >
-            My Events
+            My Profile
           </Link>
-          <div className="relative">
+          
+          {
+            (userData && (userData.role === 'admin' || userData.role === 'lecturer')) && (
+              <div className="relative">
             <button 
               onClick={() => setShowMoreDropdown(!showMoreDropdown)}
               className="nav-link flex items-center gap-1"
@@ -70,43 +87,47 @@ const Header = () => {
             </button>
             {showMoreDropdown && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-border py-2 z-50">
-                <Link 
-                  to="/profile" 
-                  className="block px-4 py-2 hover:bg-muted transition-colors"
-                  onClick={() => setShowMoreDropdown(false)}
-                >
-                  My Profile
-                </Link>
-                <Link 
-                  to="/approval-dashboard" 
-                  className="block px-4 py-2 hover:bg-muted transition-colors"
-                  onClick={() => setShowMoreDropdown(false)}
-                >
-                  Approval Dashboard
-                </Link>
-                <Link 
-                  to="/admin" 
-                  className="block px-4 py-2 hover:bg-muted transition-colors"
-                  onClick={() => setShowMoreDropdown(false)}
-                >
-                  Admin Panel
-                </Link>
-                <Link 
-                  to="/reports" 
-                  className="block px-4 py-2 hover:bg-muted transition-colors"
-                  onClick={() => setShowMoreDropdown(false)}
-                >
-                  Reports
-                </Link>
-              </div>
-            )}
-          </div>
+                  <Link 
+                    to="/profile" 
+                    className="block px-4 py-2 hover:bg-muted transition-colors"
+                    onClick={() => setShowMoreDropdown(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <Link 
+                    to="/approval-dashboard" 
+                    className="block px-4 py-2 hover:bg-muted transition-colors"
+                    onClick={() => setShowMoreDropdown(false)}
+                  >
+                    Approval Dashboard
+                  </Link>
+                  <Link 
+                    to="/admin" 
+                    className="block px-4 py-2 hover:bg-muted transition-colors"
+                    onClick={() => setShowMoreDropdown(false)}
+                  >
+                    Admin Panel
+                  </Link>
+                  <Link 
+                    to="/reports" 
+                    className="block px-4 py-2 hover:bg-muted transition-colors"
+                    onClick={() => setShowMoreDropdown(false)}
+                  >
+                    Reports
+                  </Link>
+                </div>
+              )}
+            </div>
+            )
+          }
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-lg">👤</span>
-          </div>
+          <Link to='/profile' >
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-lg">👤</span>
+            </div>
+          </Link>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
