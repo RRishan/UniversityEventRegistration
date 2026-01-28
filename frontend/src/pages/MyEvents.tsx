@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { Plus, Eye, Edit, X, Calendar, MapPin } from "lucide-react";
 import uploaded1 from "@/assets/uploaded-1.jpg";
 import uploaded3 from "@/assets/uploaded-3.jpg";
 import uploaded4 from "@/assets/uploaded-4.jpg";
+import { toast } from "sonner";
+import axios from "axios";
+import { AppContext } from "@/context/AppContext";
 
 const MyEvents = () => {
   const [filter, setFilter] = useState("all");
@@ -38,9 +41,42 @@ const MyEvents = () => {
   },
   ]);
 
-  const getAllEvents = () => {
-    
+  const {backendUrl} = useContext(AppContext);
+
+  const getAllEvents = async () => {
+    try {
+      
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.get(backendUrl + '/api/event/organization-events');
+      console.log(data);
+      if (data.success) {
+        
+        console.log(data.message);
+        const formattedEvents = data.message.map((event: any) => ({
+          id: event._id,
+          title: event.eventTitle,
+          image: event.imageLink,
+          date: event.eventDate,
+          location: event.venue,
+          status: event.isApproved,
+          attendance: event.expectedAttendees
+        }))
+
+        setMyEvents(formattedEvents);
+      }else {
+        toast.error(data.message);
+      }
+
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
+
+  useEffect(() => {
+    
+    getAllEvents();
+  }, [])
 
   const filteredEvents = myEvents.filter(event => {
     if (filter === "all") return true;
@@ -48,18 +84,18 @@ const MyEvents = () => {
   });
 
   const getStatusStyle = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "approved":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "in review":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "rejected":
-        return "bg-red-100 text-red-700 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    }
+    // switch (status.toLowerCase()) {
+    //   case "approved":
+    //     return "bg-green-100 text-green-700 border-green-200";
+    //   case "pending":
+    //     return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    //   case "in review":
+    //     return "bg-blue-100 text-blue-700 border-blue-200";
+    //   case "rejected":
+    //     return "bg-red-100 text-red-700 border-red-200";
+    //   default:
+    //     return "bg-gray-100 text-gray-700 border-gray-200";
+    // }
   };
 
   return (

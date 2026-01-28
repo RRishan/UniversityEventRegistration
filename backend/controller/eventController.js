@@ -202,8 +202,27 @@ const deleteEvent = async (req, res) => {
     }
 }
 
+// get event by organization id
+const getEventsByOrganization = async (req, res) => {
+    try {
+        const {userId} = req.body;
+        
+        const events = await Event.find({organizationId: userId});
+
+        if(!events) {
+            return res.send({success: false, message: "No events found"})
+        }
+
+        return res.send({success: true, message: events})
+
+    } catch (error) {
+        return res.send({success: false, message: error.message})
+    }
+}
+
 exports.addEvent = addEvent;
 exports.getEvent = getEvent;
 exports.getAllEvent = getAllEvent;
 exports.updateEvent = updateEvent;
 exports.deleteEvent = deleteEvent;
+exports.getEventsByOrganization = getEventsByOrganization;

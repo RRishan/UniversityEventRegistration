@@ -1,12 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
-import uploaded1 from "@/assets/uploaded-1.jpg";
-import uploaded2 from "@/assets/uploaded-2.jpg";
-import uploaded3 from "@/assets/uploaded-3.jpg";
-import uploaded4 from "@/assets/uploaded-4.jpg";
-import uploaded5 from "@/assets/uploaded-5.jpg";
-import event1 from "@/assets/event-1.jpg";
 import axios from "axios";
 import { AppContext } from "@/context/AppContext";
 import { toast } from "@/components/ui/sonner";
@@ -15,62 +9,7 @@ const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
-  const [allEvents, setAllEvents] = useState([
-  {
-    id: "1",
-    title: "Music Festival 2024",
-    image: uploaded1,
-    date: "Dec 20, 2024",
-    location: "Main Auditorium",
-    category: "Concert",
-    status: "approved"
-  },
-  {
-    id: "2",
-    title: "New Year Celebration",
-    image: uploaded3,
-    date: "Dec 31, 2024",
-    location: "Campus Ground",
-    category: "Festival",
-    status: "approved"
-  },
-  {
-    id: "3",
-    title: "Live Performance Night",
-    image: uploaded4,
-    date: "Jan 5, 2025",
-    location: "Open Theater",
-    category: "Performance",
-    status: "pending"
-  },
-  {
-    id: "4",
-    title: "EDM Night",
-    image: uploaded2,
-    date: "Jan 10, 2025",
-    location: "Student Center",
-    category: "Concert",
-    status: "approved"
-  },
-  {
-    id: "5",
-    title: "Rock Concert",
-    image: uploaded5,
-    date: "Jan 15, 2025",
-    location: "Main Hall",
-    category: "Concert",
-    status: "rejected"
-  },
-  {
-    id: "6",
-    title: "Cultural Fest",
-    image: event1,
-    date: "Jan 20, 2025",
-    location: "University Hall",
-    category: "Festival",
-    status: "approved"
-  }
-]);
+  const [allEvents, setAllEvents] = useState([]);
 
   const filteredEvents = allEvents.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -89,7 +28,6 @@ const Events = () => {
       const {data} = await axios.get(backendUrl + '/api/event/events');
 
       if (data.success) {
-        console.log(data.message);
         const formattedEvents = data.message.map((event: any) => ({
           id: event._id,
           title: event.eventTitle,
