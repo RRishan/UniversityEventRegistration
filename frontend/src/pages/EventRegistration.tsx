@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -41,6 +41,18 @@ const EventRegistration = () => {
     { id: 4, label: "Review" },
     { id: 5, label: "Submission" },
   ];
+
+  const getTheFacultydata = async () => {
+    try {
+      axios.defaults.withCredentials = true;
+
+      const {data} = await axios.get(backendUrl + "/api/faculty/get-all");
+      console.log(data);
+
+    } catch (error) {
+      toast.error("Failed to fetch faculty data. Please try again.");
+    }
+  }
 
   const handleNext = async () => {
     if (currentStep < 5) {
@@ -198,12 +210,17 @@ const EventRegistration = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-primary-foreground text-sm mb-1 block">Faculty *</label>
-                <input
-                  type="text"
+                <select
                   value={formData.faculty}
                   onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
-                  className="form-input"
-                />
+                  className="form-select"
+                >
+                  <option value="">Select a faculty</option>
+                  <option value="faculty-of-computing">Faculty of Computing</option>
+                  <option value="faculty-of-engineering">Faculty of Engineering</option>
+                  <option value="faculty-of-business">Faculty of Business</option>
+                  <option value="faculty-of-science">Faculty of Science</option>
+                </select>
               </div>
               <div>
                 <label className="text-primary-foreground text-sm mb-1 block">Department *</label>
@@ -324,6 +341,10 @@ const EventRegistration = () => {
         return null;
     }
   };
+
+  useEffect(() => {
+    getTheFacultydata();
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col">
