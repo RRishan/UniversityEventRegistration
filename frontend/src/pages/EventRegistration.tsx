@@ -12,6 +12,7 @@ const EventRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const {backendUrl} = useContext(AppContext);
+
   const [formData, setFormData] = useState({
     // Step 1 - Event Details
     eventTitle: "",
@@ -21,12 +22,8 @@ const EventRegistration = () => {
     expectedAttendees: 0,
     startTime: "",
     endTime: "",
-    faculty: "",
-    department: "",
     applicantName: "",
     registrationNumber: "",
-    emailAddress: "",
-    telephoneNumber: "",
     imageLink: "",
     // Step 2 - Venue
     venue: "",
@@ -42,18 +39,6 @@ const EventRegistration = () => {
     { id: 5, label: "Submission" },
   ];
 
-  const getTheFacultydata = async () => {
-    try {
-      axios.defaults.withCredentials = true;
-
-      const {data} = await axios.get(backendUrl + "/api/faculty/get-all");
-      console.log(data);
-
-    } catch (error) {
-      toast.error("Failed to fetch faculty data. Please try again.");
-    }
-  }
-
   const handleNext = async () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
@@ -63,9 +48,8 @@ const EventRegistration = () => {
         console.log(formData)
         const {data} = await axios.post(backendUrl + "/api/event/register", {eventTitle: formData.eventTitle, description: formData.description,
           category: formData.category, eventDate: formData.eventDate, expectedAttendees: formData.expectedAttendees,
-          startTime: formData.startTime, endTime: formData.endTime, faculty: formData.faculty, department: formData.department,
-          applicantName: formData.applicantName, registrationNumber: formData.registrationNumber,
-          emailAddress: formData.emailAddress, telephoneNumber: formData.telephoneNumber, venue: formData.venue,
+          startTime: formData.startTime, endTime: formData.endTime,
+          applicantName: formData.applicantName, registrationNumber: formData.registrationNumber, venue: formData.venue,
           imageLink: formData.imageLink
         });
         console.log(data);
@@ -206,74 +190,7 @@ const EventRegistration = () => {
                 </div>
               </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-primary-foreground text-sm mb-1 block">Faculty *</label>
-                <select
-                  value={formData.faculty}
-                  onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
-                  className="form-select"
-                >
-                  <option value="">Select a faculty</option>
-                  <option value="faculty-of-computing">Faculty of Computing</option>
-                  <option value="faculty-of-engineering">Faculty of Engineering</option>
-                  <option value="faculty-of-business">Faculty of Business</option>
-                  <option value="faculty-of-science">Faculty of Science</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-primary-foreground text-sm mb-1 block">Department *</label>
-                <input
-                  type="text"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* <div>
-                <label className="text-primary-foreground text-sm mb-1 block">applicants name *</label>
-                <input
-                  type="text"
-                  value={formData.applicantName}
-                  onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
-                  className="form-input"
-                />
-              </div> */}
-              {/* <div>
-                <label className="text-primary-foreground text-sm mb-1 block">Registration number *</label>
-                <input
-                  type="text"
-                  value={formData.registrationNumber}
-                  onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
-                  className="form-input"
-                />
-              </div> */}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-primary-foreground text-sm mb-1 block">Email address *</label>
-                <input
-                  type="email"
-                  value={formData.emailAddress}
-                  onChange={(e) => setFormData({ ...formData, emailAddress: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-              <div>
-                <label className="text-primary-foreground text-sm mb-1 block">Telephone number *</label>
-                <input
-                  type="tel"
-                  value={formData.telephoneNumber}
-                  onChange={(e) => setFormData({ ...formData, telephoneNumber: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-            </div>
+            
           </div>
         );
 
@@ -341,10 +258,6 @@ const EventRegistration = () => {
         return null;
     }
   };
-
-  useEffect(() => {
-    getTheFacultydata();
-  }, [])
 
   return (
     <div className="min-h-screen flex flex-col">
