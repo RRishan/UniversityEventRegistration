@@ -12,7 +12,8 @@ const eventSchema = new Schema({
     venue: {type: String, required: true},
     imageLink: {type: String, default: ''},
     isApproved: {type: Boolean, default: false},
-    organizationId: {type: String, default: ''}
+    organizationId: {type: String, default: ''},
+    classRoomName: {type: String, default: ''}
 })
 
 const Event = mongoose.model("Event", eventSchema)

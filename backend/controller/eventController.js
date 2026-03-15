@@ -1,12 +1,14 @@
-const Event = require('../models/Event')
-const validator = require('validator')
+const Event = require('../models/Event');
+const WorkFlow = require('../models/WorkFlow');
+const validator = require('validator');
+const User = require('../models/User');
 
 // Event Registration 
 const addEvent = async (req, res) => {
     try {
         // Get the attributes from request
-        const {eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, userId} = req.body;
-        console.log(req.body);
+        const {eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, userId, classRoomName} = req.body;
+        
         // Check attributes are valid or not
         if(!eventTitle) {
             return res.send({success: false, message: "Missing tittle"})
@@ -45,10 +47,20 @@ const addEvent = async (req, res) => {
         }
 
         // Build the event model
-        const event = new Event({eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, organizationId: userId})
+        const event = new Event({eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, organizationId: userId, classRoomName});
+
+
 
         // Save event model
-        await event.save();
+        const savedEvent = await event.save();
+
+        // Build the workflow model
+        const workFlow = new WorkFlow({eventId: savedEvent._id, workFlow: [
+            {role: "headOfSection"}
+        ]})
+        
+        // Save workflow model
+        await workFlow.save();
 
         return res.send({success: true, message: `Succsfully fill form`})
 
