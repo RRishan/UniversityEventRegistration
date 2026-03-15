@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { AppContext } from "@/context/AppContext";
+import { venueOptions } from "@/lib/data";
+import { VenuePlace } from "@/lib/types";
 
 const EventRegistration = () => {
   const navigate = useNavigate();
@@ -25,8 +27,8 @@ const EventRegistration = () => {
     applicantName: "",
     registrationNumber: "",
     imageLink: "",
-    // Step 2 - Venue
     venue: "",
+    classRoomName: "",
     // Step 3 - Documents
     documents: [] as File[],
   });
@@ -50,7 +52,7 @@ const EventRegistration = () => {
           category: formData.category, eventDate: formData.eventDate, expectedAttendees: formData.expectedAttendees,
           startTime: formData.startTime, endTime: formData.endTime,
           applicantName: formData.applicantName, registrationNumber: formData.registrationNumber, venue: formData.venue,
-          imageLink: formData.imageLink
+          imageLink: formData.imageLink, classRoomName: formData.classRoomName
         });
         console.log(data);
 
@@ -158,7 +160,9 @@ const EventRegistration = () => {
                   type="number"
                   placeholder="0"
                   value={formData.expectedAttendees}
-                  onChange={(e) => setFormData({ ...formData, expectedAttendees: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, expectedAttendees: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 0 })
+                  }}
                   className="form-input"
                 />
               </div>
@@ -205,11 +209,30 @@ const EventRegistration = () => {
                 className="form-select"
               >
                 <option value="">select a place</option>
-                <option value="auditorium">Main Auditorium</option>
-                <option value="conference">Conference Hall A</option>
-                <option value="outdoor">Outdoor Arena</option>
-                <option value="classroom">Classroom Block</option>
+                {
+                  venueOptions.map((venue, index) => 
+                    <option key={index} value={venue}>{venue}</option>
+                  )
+                }
               </select>
+
+                {
+                  formData.venue == VenuePlace.Faculty && (
+                    <div>
+                      <label className="text-primary-foreground text-sm mt-5 mb-1 block">Class Rooms *</label>
+                        <input
+                          type="text"
+                          placeholder="Enter class rooms"
+                          value={formData.classRoomName}
+                          onChange={(e) => setFormData({ ...formData, classRoomName: e.target.value })}
+                          className="form-input resize-none"
+                        />
+                    </div>
+                  )
+                }
+
+              
+
             </div>
           </div>
         );
