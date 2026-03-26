@@ -128,7 +128,7 @@ const login = async (req, res) => {
             maxAge:   60 * 60 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.send({ success: true, message: `Login successful! Welcome back, ${user.name}.`, role: user.adminProfile.role })
+        return res.send({ success: true, message: `Login successful! Welcome back, ${user.fullName}.`, role: user.adminProfile.role })
 
 
     } catch (error) {

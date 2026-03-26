@@ -26,7 +26,7 @@ const SignIn = () => {
 
         if (data.success) {
           await checkAuth();
-          if (data.role && data.role == 'lecture') {
+          if (data.role && (data.role == 'lecture' || data.role == 'headOfSection')) {
             navigate("/approval-dashboard");
           }else {
             navigate("/");

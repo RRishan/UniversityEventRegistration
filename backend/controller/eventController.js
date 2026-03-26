@@ -46,16 +46,29 @@ const addEvent = async (req, res) => {
             return res.send({success: false, message: "Missing Image Link"})
         }
 
+        if(!venue) {
+            return res.send({success: false, message: "Missing Venue"})
+        }
+
+        // Check user role
+        const user = await User.findById(userId);
+
+        if(!user) {
+            return res.send({success: false, message: "Invalid User"})
+        }
+
+        if(user.adminProfile.role !== "organizer") {
+            return res.send({success: false, message: "Unauthorized User"})
+        }
+
         // Build the event model
         const event = new Event({eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, organizationId: userId, classRoomName});
-
-
 
         // Save event model
         const savedEvent = await event.save();
 
         // Build the workflow model
-        const workFlow = new WorkFlow({eventId: savedEvent._id, workFlow: [
+        const workFlow = new WorkFlow({eventId: savedEvent._id, workFlowContent: [
             {role: "headOfSection"}
         ]})
         
