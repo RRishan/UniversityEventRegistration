@@ -4,7 +4,30 @@ import concertStage from "@/assets/concert-stage.png";
 import { AppContext } from "@/context/AppContext";
 import axios from "axios";
 import { toast } from "sonner";
+import { css } from "@/styles/signPage";
 
+// ── SVG Icons (inline, no extra dep) ──────────────────────────
+const IconMail = () => (
+  <svg className="er-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="3"/>
+    <path d="M2 7l10 7 10-7"/>
+  </svg>
+);
+const IconLock = () => (
+  <svg className="er-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="11" width="14" height="10" rx="2"/>
+    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+  </svg>
+);
+const IconAlert = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────
 const SignIn = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("jk@gmail.com");
@@ -12,32 +35,27 @@ const SignIn = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
-  const {backendUrl, setIsLoggedIn, checkAuth, userData} = useContext(AppContext);
+  const { backendUrl, setIsLoggedIn, checkAuth, userData } = useContext(AppContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
       if (email && password) {
         setError("");
-        
         axios.defaults.withCredentials = true;
-
-        const {data} = await axios.post(backendUrl + "/api/auth/login", { email, password });
-
+        const { data } = await axios.post(backendUrl + "/api/auth/login", { email, password });
         if (data.success) {
           await checkAuth();
-          if (data.role && (data.role == 'lecture' || data.role == 'headOfSection')) {
+          if (data.role && (data.role === "lecture" || data.role === "headOfSection")) {
             navigate("/approval-dashboard");
-          }else {
+          } else {
             navigate("/");
           }
           setIsLoggedIn(true);
           toast.success("Login successful!");
-        }else {
+        } else {
           toast.error(data.message);
         }
-
-
       } else {
         setError("Your email or password are incorrect. Please try again!");
       }
@@ -47,88 +65,104 @@ const SignIn = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card-wrapper">
-        {/* Left side - Image */}
-        <div className="auth-image-section">
-          <img 
-            src={concertStage} 
-            alt="Concert Stage" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-6 left-6">
-            <div className="neon-logo animate-glow">
-              Eventraze
-            </div>
+    <>
+      <style>{css}</style>
+
+      <div className="er-root">
+        {/* ── Left: Visual panel ── */}
+        <div className="er-visual">
+          <img src={concertStage} alt="Concert Stage" />
+
+          <div className="er-logo">Eventraze</div>
+
+          <div className="er-tagline">
+            <h2>Where every moment becomes a memory</h2>
+            <p>Discover · Book · Experience</p>
           </div>
         </div>
 
-        {/* Right side - Form */}
-        <div className="auth-form-section">
-          <h1 className="text-4xl font-bold text-foreground mb-8">Sign in</h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-              />
-            </div>
-            
-            <div>
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-              />
+        {/* ── Right: Form panel ── */}
+        <div className="er-form-panel">
+          {/* Mobile-only logo */}
+          <span className="er-mobile-logo">Eventraze</span>
+
+          <h1 className="er-heading">Welcome back</h1>
+          <p className="er-subheading">Sign in to your account</p>
+
+          <form onSubmit={handleSubmit}>
+            {/* Email */}
+            <div className="er-field">
+              <label className="er-label" htmlFor="email">Email address</label>
+              <div className="er-input-wrap">
+                <IconMail />
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="er-input"
+                  autoComplete="email"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            {/* Password */}
+            <div className="er-field">
+              <label className="er-label" htmlFor="password">Password</label>
+              <div className="er-input-wrap">
+                <IconLock />
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="er-input"
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
+            {/* Remember me + Forgot */}
+            <div className="er-row">
+              <label className="er-remember">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-border w-4 h-4"
                 />
-                Remember Me
+                Remember me
               </label>
-              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Forgot Password?
-              </Link>
+              <Link to="/forgot-password" className="er-forgot">Forgot password?</Link>
             </div>
 
+            {/* Error */}
             {error && (
-              <p className="text-destructive text-sm bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>
+              <div className="er-error">
+                <IconAlert />
+                {error}
+              </div>
             )}
 
-            <button type="submit" className="btn-primary">
-              sign in
+            {/* Primary CTA */}
+            <button type="submit" className="er-btn-primary">
+              Sign in
             </button>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-muted-foreground">or</span>
-              </div>
-            </div>
+            {/* Divider */}
+            <div className="er-divider"><span>or</span></div>
 
-            <Link to="/sign-up">
-              <button type="button" className="btn-secondary">
-                sign up
+            {/* Sign up */}
+            <Link to="/sign-up" style={{ textDecoration: "none" }}>
+              <button type="button" className="er-btn-secondary">
+                Create an account
               </button>
             </Link>
           </form>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
