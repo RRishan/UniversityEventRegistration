@@ -5,6 +5,140 @@ import { AppContext } from "@/context/AppContext";
 import axios from "axios";
 import { toast } from "sonner";
 
+/* ── Inline SVG icons (no new deps) ─────────────────────── */
+const IconUser = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  </svg>
+);
+const IconMail = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 7l10 7 10-7"/>
+  </svg>
+);
+const IconPhone = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 4.18 2 2 0 0 1 5.09 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+);
+const IconId = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2"/>
+    <path d="M16 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 15h4"/>
+  </svg>
+);
+const IconBell = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const IconShield = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+const IconBuilding = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 22V2h12v20"/><path d="M2 22h20"/><path d="M10 7h4M10 11h4M10 15h4"/>
+  </svg>
+);
+
+/* ── Reusable field component ───────────────────────────── */
+const Field = ({
+  label, icon, id, children,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  id: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-1.5">
+    <label htmlFor={id}
+      className="text-[10px] font-medium tracking-[0.1em] uppercase text-white/35 flex items-center gap-1.5">
+      {icon && <span className="opacity-60">{icon}</span>}
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
+/* ── Shared input classes ───────────────────────────────── */
+const inputCls = `
+  w-full bg-white/[0.04] border border-white/[0.09] rounded-[10px]
+  px-3.5 py-2.5 text-[13px] font-body text-[#f0ede8]
+  placeholder-white/20 outline-none
+  focus:border-[rgba(255,190,60,0.5)] focus:bg-white/[0.06]
+  focus:shadow-[0_0_0_3px_rgba(255,190,60,0.07)]
+  transition-all duration-200
+`.trim().replace(/\s+/g, " ");
+
+/* ── Section card wrapper ───────────────────────────────── */
+const SectionCard = ({
+  icon, title, children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="bg-white/[0.025] border border-white/[0.07] rounded-[18px] p-6">
+    <div className="flex items-center gap-2.5 mb-5">
+      <span className="w-8 h-8 rounded-[9px] bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.18)]
+        flex items-center justify-center text-[#ffbe3c]">
+        {icon}
+      </span>
+      <h3 className="font-display text-[1.05rem] font-normal text-[#f0ede8] tracking-[0.02em]">
+        {title}
+      </h3>
+    </div>
+    {children}
+  </div>
+);
+
+/* ── Toggle checkbox row ────────────────────────────────── */
+const ToggleRow = ({
+  label, checked, onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) => (
+  <label className="flex items-center justify-between gap-3 cursor-pointer group py-1">
+    <span className="text-[13px] text-white/50 group-hover:text-white/70 transition-colors duration-150">
+      {label}
+    </span>
+    {/* Custom toggle */}
+    <div
+      onClick={() => onChange(!checked)}
+      className={`relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 cursor-pointer
+        ${checked
+          ? "bg-gradient-to-r from-[#ffbe3c] to-[#ff8c00]"
+          : "bg-white/[0.08] border border-white/[0.1]"
+        }`}
+    >
+      <span
+        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm
+          transition-transform duration-200
+          ${checked ? "translate-x-4" : "translate-x-0.5"}`}
+      />
+      {/* Keep native input for form semantics */}
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only"
+      />
+    </div>
+  </label>
+);
+
+/* ══════════════════════════════════════════════════════════ */
 const Profile = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -28,285 +162,331 @@ const Profile = () => {
     },
   });
 
-  const {backendUrl, userData, isLoggedIn} = useContext(AppContext);
+  const { backendUrl, userData, isLoggedIn } = useContext(AppContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
-
-      const {data} = await axios.post(backendUrl + '/api/organizer/profile', formData);
-
-      if(data.success) {
+      const { data } = await axios.post(backendUrl + "/api/organizer/profile", formData);
+      if (data.success) {
         toast.success("Profile updated successfully");
         navigate("/");
-      }else {
-        console.log(data.message)
+      } else {
         toast.error("Failed to update profile" + data.message);
       }
-
-    
-    } catch (error) {
-      console.log(error.message)
+    } catch (error: any) {
       toast.error("An error occurred while updating profile");
     }
   };
 
   const getAllData = async () => {
-    
     try {
-        
-        axios.defaults.withCredentials = true;
-
-        if (userData?.role == 'student') {
-            const {data} = await axios.get(backendUrl + '/api/student/profile');
-            if (data.success) {
-                const {fullName, email, registrationNumber, phoneNumber} = data.message;
-                console.log(data.message);
-                setFormData({ ...formData, fullName, universityEmail: email, registrationNumber, phoneNumber });
-            }else {
-                toast.error("Error fetching profile data: " + data.message);
-            }
-        }else if (userData?.role == 'organizer') {
-            const {data} = await axios.get(backendUrl + '/api/organizer/profile');
-            if (data.success) {
-                const {fullName, email, contactNum, organizerProfile, regiNumber} = data.message;
-                setFormData({ ...formData, fullName, universityEmail: email, registrationNumber: regiNumber, phoneNumber: contactNum, clubSociety: organizerProfile.clubSociety, position: organizerProfile.position, advisorName: organizerProfile.advisorName, advisorEmail: organizerProfile.advisorEmail });
-            }else {
-                toast.error("Error fetching profile data: " + data.message);
-            }
-        }else if (userData?.role == 'lecture') {
-            
-            const {data} = await axios.get(backendUrl + '/api/lecture/profile');
-            if (data.success) {
-                const {fullName, email, contactNum, lectureProfile, regiNumber} = data.message;
-                console.log(data.message);
-                setFormData({ ...formData, fullName, universityEmail: email, registrationNumber: regiNumber, phoneNumber: contactNum, position: lectureProfile.position });
-            }else {
-                toast.error("Error fetching profile data: " + data.message);
-            }
+      axios.defaults.withCredentials = true;
+      if (userData?.role === "student") {
+        const { data } = await axios.get(backendUrl + "/api/student/profile");
+        if (data.success) {
+          const { fullName, email, registrationNumber, phoneNumber } = data.message;
+          setFormData({ ...formData, fullName, universityEmail: email, registrationNumber, phoneNumber });
+        } else {
+          toast.error("Error fetching profile data: " + data.message);
         }
-        
-    } catch (error) {
-        toast.error("Error fetching profile data " + error.message);
+      } else if (userData?.role === "organizer") {
+        const { data } = await axios.get(backendUrl + "/api/organizer/profile");
+        if (data.success) {
+          const { fullName, email, contactNum, organizerProfile, regiNumber } = data.message;
+          setFormData({
+            ...formData, fullName, universityEmail: email,
+            registrationNumber: regiNumber, phoneNumber: contactNum,
+            clubSociety: organizerProfile.clubSociety, position: organizerProfile.position,
+            advisorName: organizerProfile.advisorName, advisorEmail: organizerProfile.advisorEmail,
+          });
+        } else {
+          toast.error("Error fetching profile data: " + data.message);
+        }
+      } else if (userData?.role === "lecture") {
+        const { data } = await axios.get(backendUrl + "/api/lecture/profile");
+        if (data.success) {
+          const { fullName, email, contactNum, lectureProfile, regiNumber } = data.message;
+          setFormData({
+            ...formData, fullName, universityEmail: email,
+            registrationNumber: regiNumber, phoneNumber: contactNum,
+            position: lectureProfile.position,
+          });
+        } else {
+          toast.error("Error fetching profile data: " + data.message);
+        }
+      }
+    } catch (error: any) {
+      toast.error("Error fetching profile data " + error.message);
     }
-  }
+  };
 
-  useEffect(() => {
-    getAllData();
-  }, []);
+  useEffect(() => { getAllData(); }, []);
+
+  const isOrganizer = userData?.role === "organizer";
+  const roleLabel   = userData?.role?.toUpperCase() ?? "";
 
   return (
     <MainLayout title="My Profile" subtitle="Manage your account information and preferences">
-      <div className="container mx-auto px-6 pb-12">
+      <div className="max-w-[1100px] mx-auto px-5 pb-14">
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Personal Info */}
-            <div className="card-white">
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
-                  <span className="text-3xl">👤</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+            {/* ══════════════════════════════════
+                LEFT — Identity card
+            ══════════════════════════════════ */}
+            <div className="bg-white/[0.025] border border-white/[0.07] rounded-[18px] p-6 flex flex-col">
+
+              {/* Avatar + identity */}
+              <div className="flex flex-col items-center text-center pb-6 mb-6 border-b border-white/[0.06]">
+                {/* Avatar ring */}
+                <div className="w-[72px] h-[72px] rounded-full
+                  bg-[rgba(255,190,60,0.1)] border-2 border-[rgba(255,190,60,0.25)]
+                  flex items-center justify-center text-[#ffbe3c] mb-4
+                  shadow-[0_0_24px_rgba(255,190,60,0.1)]">
+                  <IconUser />
                 </div>
-                <h3 className="font-semibold text-foreground">{formData.fullName}</h3>
-                <span className="px-3 py-1 bg-warning text-warning-foreground text-xs rounded mt-1">
-                  {userData?.role.toUpperCase()}
+
+                <h3 className="font-display text-[1.15rem] font-normal text-[#f0ede8] mb-1.5">
+                  {formData.fullName}
+                </h3>
+
+                {/* Role badge */}
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full
+                  text-[10px] font-medium tracking-[0.1em] uppercase
+                  bg-[rgba(255,190,60,0.12)] border border-[rgba(255,190,60,0.22)] text-[#ffbe3c]
+                  mb-1.5">
+                  {roleLabel}
                 </span>
-                <p className="text-sm text-muted-foreground mt-1">{formData.clubSociety}</p>
+
+                {isOrganizer && formData.clubSociety && (
+                  <p className="text-[12px] text-white/35 leading-snug">
+                    {formData.clubSociety}
+                  </p>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="form-label text-xs">Full Name</label>
+              {/* Fields */}
+              <div className="flex flex-col gap-4 flex-1">
+                <Field label="Full Name" icon={<IconUser />} id="fullName">
                   <input
+                    id="fullName"
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="form-input"
+                    className={inputCls}
+                    autoComplete="name"
                   />
-                </div>
-                <div>
-                  <label className="form-label text-xs">University Email</label>
+                </Field>
+
+                <Field label="University Email" icon={<IconMail />} id="universityEmail">
                   <input
+                    id="universityEmail"
                     type="email"
                     value={formData.universityEmail}
                     onChange={(e) => setFormData({ ...formData, universityEmail: e.target.value })}
-                    className="form-input"
+                    className={inputCls}
+                    autoComplete="email"
                   />
-                </div>
-                <div>
-                  <label className="form-label text-xs">Registration Number</label>
+                </Field>
+
+                <Field label="Registration Number" icon={<IconId />} id="registrationNumber">
                   <input
+                    id="registrationNumber"
                     type="text"
                     value={formData.registrationNumber}
                     onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
-                    className="form-input"
+                    className={inputCls}
                   />
-                </div>
-                <div>
-                  <label className="form-label text-xs">Phone number</label>
+                </Field>
+
+                <Field label="Phone Number" icon={<IconPhone />} id="phoneNumber">
                   <input
+                    id="phoneNumber"
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className="form-input"
+                    className={inputCls}
+                    autoComplete="tel"
                   />
-                </div>
+                </Field>
               </div>
             </div>
 
-            {/* Right Columns */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* ══════════════════════════════════
+                RIGHT — Detail panels
+            ══════════════════════════════════ */}
+            <div className="lg:col-span-2 flex flex-col gap-5">
+
               {/* Organizer Details */}
-              {
-                userData && userData.role === 'organizer' && (
-                  <div className="bg-muted/50 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Organizer Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="form-label text-xs">Club/Society</label>
-                        <input
-                          type="text"
-                          value={formData.clubSociety}
-                          onChange={(e) => setFormData({ ...formData, clubSociety: e.target.value })}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label text-xs">Position</label>
-                        <input
-                          type="text"
-                          value={formData.position}
-                          onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label text-xs">Advisor Name</label>
-                        <input
-                          type="text"
-                          value={formData.advisorName}
-                          onChange={(e) => setFormData({ ...formData, advisorName: e.target.value })}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label text-xs">Advisor Email</label>
-                        <input
-                          type="email"
-                          value={formData.advisorEmail}
-                          onChange={(e) => setFormData({ ...formData, advisorEmail: e.target.value })}
-                          className="form-input"
-                        />
-                      </div>
-                    </div>
+              {isOrganizer && (
+                <SectionCard icon={<IconBuilding />} title="Organizer Details">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Club / Society" id="clubSociety">
+                      <input
+                        id="clubSociety"
+                        type="text"
+                        value={formData.clubSociety}
+                        onChange={(e) => setFormData({ ...formData, clubSociety: e.target.value })}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Position" id="position">
+                      <input
+                        id="position"
+                        type="text"
+                        value={formData.position}
+                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Advisor Name" id="advisorName">
+                      <input
+                        id="advisorName"
+                        type="text"
+                        value={formData.advisorName}
+                        onChange={(e) => setFormData({ ...formData, advisorName: e.target.value })}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Advisor Email" id="advisorEmail">
+                      <input
+                        id="advisorEmail"
+                        type="email"
+                        value={formData.advisorEmail}
+                        onChange={(e) => setFormData({ ...formData, advisorEmail: e.target.value })}
+                        className={inputCls}
+                      />
+                    </Field>
                   </div>
-                )
-              }
-              
+                </SectionCard>
+              )}
 
               {/* Notification Preferences */}
-              {
-                userData && userData.role === 'organizer' && (
-                  <div className="bg-muted/50 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Notification Preferences</h3>
-                    
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-3">Notification Types</p>
-                        <div className="space-y-2">
-                          {[
-                            { key: 'eventStatus', label: 'Event status updates' },
-                            { key: 'approvalRequests', label: 'Approval requests' },
-                            { key: 'commentsFeedback', label: 'Comments & feedback' },
-                            { key: 'systemAnnouncements', label: 'System announcements' },
-                          ].map((item) => (
-                            <label key={item.key} className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={formData.notificationTypes[item.key as keyof typeof formData.notificationTypes]}
-                                onChange={(e) => setFormData({
-                                  ...formData,
-                                  notificationTypes: {
-                                    ...formData.notificationTypes,
-                                    [item.key]: e.target.checked
-                                  }
-                                })}
-                                className="rounded border-border"
-                              />
-                              {item.label}
-                            </label>
-                          ))}
-                        </div>
+              {isOrganizer && (
+                <SectionCard icon={<IconBell />} title="Notification Preferences">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+
+                    {/* Types col */}
+                    <div>
+                      <p className="text-[10px] font-medium tracking-[0.1em] uppercase text-white/30 mb-3">
+                        Notification types
+                      </p>
+                      <div className="flex flex-col gap-0.5">
+                        {[
+                          { key: "eventStatus",         label: "Event status updates"   },
+                          { key: "approvalRequests",    label: "Approval requests"       },
+                          { key: "commentsFeedback",    label: "Comments & feedback"     },
+                          { key: "systemAnnouncements", label: "System announcements"    },
+                        ].map((item) => (
+                          <ToggleRow
+                            key={item.key}
+                            label={item.label}
+                            checked={formData.notificationTypes[item.key as keyof typeof formData.notificationTypes]}
+                            onChange={(v) => setFormData({
+                              ...formData,
+                              notificationTypes: { ...formData.notificationTypes, [item.key]: v },
+                            })}
+                          />
+                        ))}
                       </div>
-                      
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-3">Delivery Channels</p>
-                        <div className="space-y-2">
-                          {[
-                            { key: 'sms', label: 'sms' },
-                            { key: 'email', label: 'email' },
-                          ].map((item) => (
-                            <label key={item.key} className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={formData.deliveryChannels[item.key as keyof typeof formData.deliveryChannels]}
-                                onChange={(e) => setFormData({
-                                  ...formData,
-                                  deliveryChannels: {
-                                    ...formData.deliveryChannels,
-                                    [item.key]: e.target.checked
-                                  }
-                                })}
-                                className="rounded border-border"
-                              />
-                              {item.label}
-                            </label>
-                          ))}
-                        </div>
+                    </div>
+
+                    {/* Channels col */}
+                    <div>
+                      <p className="text-[10px] font-medium tracking-[0.1em] uppercase text-white/30 mb-3">
+                        Delivery channels
+                      </p>
+                      <div className="flex flex-col gap-0.5">
+                        {[
+                          { key: "sms",   label: "SMS"   },
+                          { key: "email", label: "Email" },
+                        ].map((item) => (
+                          <ToggleRow
+                            key={item.key}
+                            label={item.label}
+                            checked={formData.deliveryChannels[item.key as keyof typeof formData.deliveryChannels]}
+                            onChange={(v) => setFormData({
+                              ...formData,
+                              deliveryChannels: { ...formData.deliveryChannels, [item.key]: v },
+                            })}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
-                )
-              }
+                </SectionCard>
+              )}
 
               {/* Security */}
-              <div className="bg-muted/50 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Security</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+              <SectionCard icon={<IconShield />} title="Security">
+                <div className="flex flex-col gap-0">
+
+                  {/* Password row */}
+                  <div className="flex items-start justify-between gap-4 py-3">
                     <div>
-                      <p className="font-medium">Password Management</p>
-                      <p className="text-sm text-muted-foreground">Last password change: January 15, 2025</p>
+                      <p className="text-[13px] font-medium text-[#f0ede8] mb-0.5">
+                        Password Management
+                      </p>
+                      <p className="text-[12px] text-white/35">
+                        Last changed: January 15, 2025
+                      </p>
                     </div>
-                    <button type="button" className="text-sm text-primary underline">
-                      Manage security settings
+                    <button
+                      type="button"
+                      className="text-[12px] font-medium text-[#ffbe3c] hover:opacity-75
+                        transition-opacity duration-150 whitespace-nowrap shrink-0 mt-0.5"
+                    >
+                      Manage settings
                     </button>
                   </div>
-                  
-                  <div className="border-t border-border pt-4">
-                    <p className="font-medium">Two-Factor Authentication</p>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Add an extra layer of security to your account
-                    </p>
-                    <button type="button" className="text-sm text-primary underline">
+
+                  <div className="border-t border-white/[0.06]" />
+
+                  {/* 2FA row */}
+                  <div className="flex items-start justify-between gap-4 py-3">
+                    <div>
+                      <p className="text-[13px] font-medium text-[#f0ede8] mb-0.5">
+                        Two-Factor Authentication
+                      </p>
+                      <p className="text-[12px] text-white/35">
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-[12px] font-medium text-[#ffbe3c] hover:opacity-75
+                        transition-opacity duration-150 whitespace-nowrap shrink-0 mt-0.5"
+                    >
                       Enable 2FA
                     </button>
                   </div>
                 </div>
-              </div>
+              </SectionCard>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-4">
+              {/* ── Action buttons ── */}
+              <div className="flex justify-end gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="px-8 py-3 border border-border rounded-lg font-medium hover:bg-muted transition-colors"
+                  className="px-6 py-2.5
+                    bg-transparent text-white/50
+                    text-[12px] font-normal tracking-[0.08em] uppercase
+                    border border-white/[0.1] rounded-[10px]
+                    hover:border-white/20 hover:text-white/75 hover:bg-white/[0.03]
+                    transition-all duration-200"
                 >
-                  cancle
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-foreground text-background rounded-lg font-medium hover:bg-foreground/90 transition-colors"
+                  className="px-7 py-2.5
+                    bg-gradient-to-br from-[#ffbe3c] to-[#ff8c00] text-[#0a0a0b]
+                    text-[12px] font-medium tracking-[0.08em] uppercase
+                    border-none rounded-[10px] cursor-pointer
+                    shadow-[0_4px_20px_rgba(255,190,60,0.25)]
+                    hover:opacity-90 hover:-translate-y-px hover:shadow-[0_6px_28px_rgba(255,190,60,0.38)]
+                    transition-all duration-200"
                 >
                   Update profile
                 </button>
