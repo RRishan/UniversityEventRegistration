@@ -6,7 +6,6 @@ import { AppContext } from "@/context/AppContext";
 import axios from "axios";
 import { css } from "@/styles/Header";
 
-/* ══════════════════════════════════════════════════════════ */
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
