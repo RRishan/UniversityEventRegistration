@@ -1,10 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, LogOut, LayoutDashboard, ShieldCheck, BarChart3, User } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  LayoutDashboard,
+  ShieldCheck,
+  BarChart3,
+  User,
+} from "lucide-react";
 import { useContext, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { AppContext } from "@/context/AppContext";
 import axios from "axios";
-import { css } from "@/styles/Header";
 
 const Header = () => {
   const location = useLocation();
@@ -16,10 +22,12 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setShowMoreDropdown(false);
       }
     };
@@ -27,7 +35,6 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close dropdown on route change
   useEffect(() => {
     setShowMoreDropdown(false);
   }, [location.pathname]);
@@ -43,7 +50,7 @@ const Header = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Logout failed. Please try again.");
     }
   };
@@ -51,97 +58,93 @@ const Header = () => {
   const isAdminOrLecturer =
     userData && (userData.role === "admin" || userData.role === "lecturer");
 
+  const linkStyle = (path: string) =>
+    `relative px-3 py-1.5 rounded-lg text-[0.82rem] transition whitespace-nowrap ${
+      isActive(path)
+        ? "text-[#f0ede8] bg-white/10 after:absolute after:bottom-[4px] after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-[2px] after:bg-[#ffbe3c] after:rounded"
+        : "text-[#f0ede873] hover:text-[#f0ede8] hover:bg-white/5"
+    }`;
+
   return (
-    <header className="hd-header">
-      <style>{css}</style>
+    <header className="sticky top-0 z-[100] w-full bg-[#0a0a0bd1] backdrop-blur-xl backdrop-saturate-150 border-b border-white/10 font-sans">
+      <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
 
-      <div className="hd-inner">
+        {/* Logo */}
+        <Link
+          to="/"
+          className="font-serif text-[1.6rem] font-light tracking-[0.1em] text-[#f0ede8] drop-shadow-[0_0_30px_rgba(255,200,80,0.25)] hover:drop-shadow-[0_0_40px_rgba(255,200,80,0.45)]"
+        >
+          Eventraze
+        </Link>
 
-        {/* ── Logo ── */}
-        <Link to="/" className="hd-logo">Eventraze</Link>
-
-        {/* ── Nav ── */}
-        <nav className="hd-nav">
-          <Link
-            to="/"
-            className={`hd-link ${isActive("/") || isActive("/home") ? "hd-link--active" : ""}`}
-          >
+        {/* Nav */}
+        <nav className="hidden sm:flex items-center gap-1">
+          <Link to="/" className={linkStyle("/")}>
             Home
           </Link>
 
-          <Link
-            to="/events"
-            className={`hd-link ${isActive("/events") ? "hd-link--active" : ""}`}
-          >
+          <Link to="/events" className={linkStyle("/events")}>
             Events
           </Link>
 
           {userData?.role === "organizer" && (
-            <Link
-              to="/my-events"
-              className={`hd-link ${
-                isActive("/my-events") || isActive("/event-registration") ? "hd-link--active" : ""
-              }`}
-            >
+            <Link to="/my-events" className={linkStyle("/my-events")}>
               My Events
             </Link>
           )}
 
-          <Link
-            to="/profile"
-            className={`hd-link ${isActive("/profile") ? "hd-link--active" : ""}`}
-          >
+          <Link to="/profile" className={linkStyle("/profile")}>
             My Profile
           </Link>
 
-          {/* More dropdown — admin / lecturer only */}
           {isAdminOrLecturer && (
-            <div className="hd-more-wrap" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowMoreDropdown((p) => !p)}
-                className={`hd-more-btn ${showMoreDropdown ? "hd-more-btn--open" : ""}`}
-                aria-haspopup="true"
-                aria-expanded={showMoreDropdown}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[0.82rem] transition ${
+                  showMoreDropdown
+                    ? "bg-white/5 text-[#f0ede8]"
+                    : "text-[#f0ede873] hover:text-[#f0ede8] hover:bg-white/5"
+                }`}
               >
                 More
                 <ChevronDown
-                  className={`hd-chevron ${showMoreDropdown ? "hd-chevron--open" : ""}`}
                   size={14}
+                  className={`transition-transform duration-200 ${
+                    showMoreDropdown ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
               {showMoreDropdown && (
-                <div className="hd-dropdown" role="menu">
+                <div className="absolute right-0 top-full mt-2 min-w-[200px] bg-[#111113] border border-white/10 rounded-xl p-2 shadow-[0_20px_60px_rgba(0,0,0,0.55)] animate-[fadeIn_.18s_ease]">
+
                   <Link
                     to="/profile"
-                    className="hd-dropdown-item"
-                    onClick={() => setShowMoreDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-[0.82rem] text-[#f0ede880] hover:bg-white/5 hover:text-[#f0ede8]"
                   >
                     <User size={15} /> My Profile
                   </Link>
 
-                  <div className="hd-dropdown-sep" />
+                  <div className="h-px bg-white/10 my-1" />
 
                   <Link
                     to="/approval-dashboard"
-                    className="hd-dropdown-item"
-                    onClick={() => setShowMoreDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-[0.82rem] text-[#f0ede880] hover:bg-white/5 hover:text-[#f0ede8]"
                   >
                     <ShieldCheck size={15} /> Approval Dashboard
                   </Link>
 
                   <Link
                     to="/admin"
-                    className="hd-dropdown-item"
-                    onClick={() => setShowMoreDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-[0.82rem] text-[#f0ede880] hover:bg-white/5 hover:text-[#f0ede8]"
                   >
                     <LayoutDashboard size={15} /> Admin Panel
                   </Link>
 
                   <Link
                     to="/reports"
-                    className="hd-dropdown-item"
-                    onClick={() => setShowMoreDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-[0.82rem] text-[#f0ede880] hover:bg-white/5 hover:text-[#f0ede8]"
                   >
                     <BarChart3 size={15} /> Reports
                   </Link>
@@ -151,29 +154,31 @@ const Header = () => {
           )}
         </nav>
 
-        {/* ── Right: Avatar + Logout ── */}
-        <div className="hd-actions">
-          {/* User display name */}
+        {/* Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+
           {userData?.name && (
-            <span className="hd-user-name">{userData.name}</span>
+            <span className="hidden md:block text-[0.78rem] text-[#f0ede873] max-w-[100px] truncate">
+              {userData.name}
+            </span>
           )}
 
-          {/* Avatar */}
-          <Link to="/profile" className="hd-avatar-link" aria-label="My profile">
-            <div className="hd-avatar">
-              <User size={15} />
+          <Link to="/profile">
+            <div className="w-[34px] h-[34px] rounded-full border border-white/10 bg-[#ffbe3c1a] flex items-center justify-center hover:border-[#ffbe3c73] hover:shadow-[0_0_0_3px_rgba(255,190,60,0.08)] transition">
+              <User size={15} className="text-[#ffbe3cb3]" />
             </div>
           </Link>
 
-          <div className="hd-divider" />
+          <div className="w-px h-[22px] bg-white/10" />
 
-          {/* Logout */}
-          <button onClick={handleLogout} className="hd-logout" aria-label="Logout">
-            <LogOut />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[0.78rem] text-[#f0ede85c] hover:text-[#ff6b6b] hover:border hover:border-[#ff6b6b33] hover:bg-[#ff6b6b14] transition"
+          >
+            <LogOut size={13} />
             <span>Logout</span>
           </button>
         </div>
-
       </div>
     </header>
   );
