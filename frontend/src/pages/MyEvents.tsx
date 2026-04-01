@@ -6,192 +6,340 @@ import uploaded1 from "@/assets/uploaded-1.jpg";
 import uploaded3 from "@/assets/uploaded-3.jpg";
 import uploaded4 from "@/assets/uploaded-4.jpg";
 import { toast } from "sonner";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { AppContext } from "@/context/AppContext";
 
-const MyEvents = () => {
-  const [filter, setFilter] = useState("all");
-  const [myEvents, setMyEvents] = useState([
-  { 
-    id: 1, 
-    title: "Annual Company Retreat 2025", 
-    status: "In Review", 
+/* ============================================================
+ TYPES
+============================================================ */
+
+type EventStatus = "Approved" | "Pending" | "In Review" | "Rejected";
+
+interface MyEvent {
+  id: string | number;
+  title: string;
+  image: string;
+  date: string;
+  location: string;
+  status: EventStatus;
+  attendees?: number;
+}
+
+interface ApiEvent {
+  _id: string;
+  eventTitle: string;
+  imageLink: string;
+  eventDate: string;
+  venue: string;
+  isApproved: unknown; // 👈 IMPORTANT (runtime safe)
+  expectedAttendees: number;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: T;
+}
+
+interface StatusTokens {
+  pill: string;
+  dot: string;
+}
+
+interface StatItem {
+  label: string;
+  value: number;
+  accent: string;
+}
+
+/* ============================================================
+ STATUS NORMALIZER (🔥 FIX)
+============================================================ */
+
+const normalizeStatus = (status: unknown): EventStatus => {
+  if (typeof status === "string") {
+    const s = status.toLowerCase();
+
+    if (s.includes("approved")) return "Approved";
+    if (s.includes("review")) return "In Review";
+    if (s.includes("reject")) return "Rejected";
+    if (s.includes("pending")) return "Pending";
+  }
+
+  if (status === true) return "Approved";
+  if (status === false) return "Pending";
+
+  return "Pending";
+};
+
+/* ============================================================
+ STATUS STYLES (Theme Safe)
+============================================================ */
+
+const STATUS_CONFIG: Record<
+  Lowercase<EventStatus>,
+  StatusTokens
+> = {
+  approved: {
+    pill:
+      "bg-emerald-500/10 border-emerald-400/30 text-emerald-400",
+    dot: "bg-emerald-400",
+  },
+  pending: {
+    pill:
+      "bg-amber-400/10 border-amber-400/30 text-amber-400",
+    dot: "bg-amber-400",
+  },
+  "in review": {
+    pill:
+      "bg-sky-400/10 border-sky-400/30 text-sky-400",
+    dot: "bg-sky-400",
+  },
+  rejected: {
+    pill:
+      "bg-red-400/10 border-red-400/30 text-red-400",
+    dot: "bg-red-400",
+  },
+};
+
+const getStatusTokens = (status: EventStatus): StatusTokens =>
+  STATUS_CONFIG[status.toLowerCase() as Lowercase<EventStatus>];
+
+/* ============================================================
+ SEED DATA
+============================================================ */
+
+const SEED_EVENTS: MyEvent[] = [
+  {
+    id: 1,
+    title: "Annual Company Retreat 2025",
+    status: "In Review",
     date: "Mar 15-17, 2025",
     location: "Main Auditorium",
     image: uploaded1,
-    attendees: 150
+    attendees: 150,
   },
-  { 
-    id: 2, 
-    title: "Tech Workshop Series", 
-    status: "Pending", 
+  {
+    id: 2,
+    title: "Tech Workshop Series",
+    status: "Pending",
     date: "Feb 20, 2025",
     location: "Conference Hall A",
     image: uploaded3,
-    attendees: 75
+    attendees: 75,
   },
-  { 
-    id: 3, 
-    title: "Cultural Night 2025", 
-    status: "Approved", 
+  {
+    id: 3,
+    title: "Cultural Night 2025",
+    status: "Approved",
     date: "Apr 10, 2025",
     location: "Open Theater",
     image: uploaded4,
-    attendees: 300
+    attendees: 300,
   },
-  ]);
+];
 
-  const {backendUrl} = useContext(AppContext);
+/* ============================================================
+ STATS HOOK (Crash Proof)
+============================================================ */
+
+function useEventStats(events: MyEvent[]): StatItem[] {
+  return [
+    {
+      label: "Total",
+      value: events.length,
+      accent: "text-white",
+    },
+    {
+      label: "Approved",
+      value: events.filter(e => e.status === "Approved").length,
+      accent: "text-emerald-400",
+    },
+    {
+      label: "Pending",
+      value: events.filter(e => e.status === "Pending").length,
+      accent: "text-amber-400",
+    },
+    {
+      label: "In Review",
+      value: events.filter(e => e.status === "In Review").length,
+      accent: "text-sky-400",
+    },
+  ];
+}
+
+/* ============================================================
+ UI COMPONENTS
+============================================================ */
+
+const StatCard = ({ label, value, accent }: StatItem) => (
+  <div className="bg-white/5 border border-white/10 rounded-xl px-5 py-4">
+    <div className={`text-2xl font-semibold ${accent}`}>
+      {value}
+    </div>
+    <div className="text-xs uppercase text-white/40">
+      {label}
+    </div>
+  </div>
+);
+
+const EventCard = ({ event }: { event: MyEvent }) => {
+  const tokens = getStatusTokens(event.status);
+
+  return (
+    <div className="group bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-amber-400/30 transition">
+      <div className="relative h-44">
+        <img
+          src={event.image}
+          alt={event.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition"
+        />
+
+        <span
+          className={`absolute top-3 right-3 flex items-center gap-1 text-xs px-3 py-1 rounded-full border ${tokens.pill}`}
+        >
+          <span className={`w-2 h-2 rounded-full ${tokens.dot}`} />
+          {event.status}
+        </span>
+      </div>
+
+      <div className="p-5">
+        <h3 className="text-lg text-white mb-3">
+          {event.title}
+        </h3>
+
+        <div className="text-sm text-white/50 space-y-1 mb-4">
+          <div className="flex gap-2">
+            <Calendar size={14} /> {event.date}
+          </div>
+          <div className="flex gap-2">
+            <MapPin size={14} /> {event.location}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Link
+            to={`/event/${event.id}`}
+            className="flex-1 bg-amber-400 text-black text-xs py-2 rounded-md flex justify-center gap-1"
+          >
+            <Eye size={14} /> View
+          </Link>
+
+          <button className="flex-1 border border-white/20 text-white/60 text-xs py-2 rounded-md flex justify-center gap-1">
+            <Edit size={14} /> Edit
+          </button>
+
+          <button className="px-3 border border-red-400/30 text-red-400 rounded-md">
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ============================================================
+ PAGE
+============================================================ */
+
+type FilterValue = "all" | "approved" | "pending" | "in review" | "rejected";
+
+const FILTERS: FilterValue[] = [
+  "all",
+  "approved",
+  "pending",
+  "in review",
+  "rejected",
+];
+
+const MyEvents: React.FC = () => {
+  const [filter, setFilter] = useState<FilterValue>("all");
+  const [myEvents, setMyEvents] =
+    useState<MyEvent[]>(SEED_EVENTS);
+
+  const { backendUrl } = useContext(AppContext);
+  const stats = useEventStats(myEvents);
 
   const getAllEvents = async () => {
     try {
-      
-      axios.defaults.withCredentials = true;
+      const { data } =
+        await axios.get<ApiResponse<ApiEvent[]>>(
+          `${backendUrl}/api/event/organization-events`,
+          { withCredentials: true }
+        );
 
-      const {data} = await axios.get(backendUrl + '/api/event/organization-events');
-      console.log(data);
-      if (data.success) {
-        
-        console.log(data.message);
-        const formattedEvents = data.message.map((event: any) => ({
-          id: event._id,
-          title: event.eventTitle,
-          image: event.imageLink,
-          date: event.eventDate,
-          location: event.venue,
-          status: event.isApproved,
-          attendance: event.expectedAttendees
-        }))
+      if (!data.success) return;
 
-        setMyEvents(formattedEvents);
-      }else {
-        toast.error(data.message);
-      }
+      const formatted = data.message.map(event => ({
+        id: event._id,
+        title: event.eventTitle,
+        image: event.imageLink,
+        date: event.eventDate,
+        location: event.venue,
+        status: normalizeStatus(event.isApproved),
+        attendees: event.expectedAttendees,
+      }));
 
-    } catch (error) {
-      toast.error(error.message);
+      setMyEvents(formatted);
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      toast.error(error.response?.data?.message ?? error.message);
     }
-  }
-
-  useEffect(() => {
-    
-    getAllEvents();
-  }, [])
-
-  const filteredEvents = myEvents.filter(event => {
-    if (filter === "all") return true;
-    return event.status.toLowerCase().includes(filter.toLowerCase());
-  });
-
-  const getStatusStyle = (status: string) => {
-    // switch (status.toLowerCase()) {
-    //   case "approved":
-    //     return "bg-green-100 text-green-700 border-green-200";
-    //   case "pending":
-    //     return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    //   case "in review":
-    //     return "bg-blue-100 text-blue-700 border-blue-200";
-    //   case "rejected":
-    //     return "bg-red-100 text-red-700 border-red-200";
-    //   default:
-    //     return "bg-gray-100 text-gray-700 border-gray-200";
-    // }
   };
 
-  return (
-    <MainLayout title="My Events" subtitle="Manage your event submissions">
-      <div className="container mx-auto px-6 pb-12">
-        {/* Header Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex gap-2">
-            {["all", "approved", "pending", "in review"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                  filter === status
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-          <Link 
-            to="/event-registration" 
-            className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg"
-          >
-            <Plus className="w-5 h-5" /> Create Event
-          </Link>
-        </div>
+  useEffect(() => {
+    getAllEvents();
+  }, []);
 
-        {/* Events Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <div 
-              key={event.id} 
-              className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border/50 hover:shadow-xl transition-all duration-300"
-            >
-              <div className="relative aspect-video">
-                <img 
-                  src={event.image} 
-                  alt={event.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 right-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle(event.status)}`}>
-                    {event.status}
-                  </span>
-                </div>
-              </div>
-              <div className="p-5">
-                <h3 className="text-lg font-bold text-foreground mb-3">{event.title}</h3>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>{event.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{event.location}</span>
-                  </div>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Link 
-                    to={`/event/${event.id}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View
-                  </Link>
-                  <button className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary/10 transition-colors">
-                    <Edit className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button className="flex items-center justify-center px-3 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+  const filteredEvents = myEvents.filter(event =>
+    filter === "all"
+      ? true
+      : event.status.toLowerCase() === filter
+  );
+
+  return (
+    <MainLayout
+      title="My Events"
+      subtitle="Manage your event submissions"
+    >
+      <div className="max-w-6xl mx-auto px-5 pb-16">
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          {stats.map(stat => (
+            <StatCard key={stat.label} {...stat} />
           ))}
         </div>
 
-        {filteredEvents.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">No events found matching your filter.</p>
-            <Link 
-              to="/event-registration"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium"
+        {/* Filters */}
+        <div className="flex gap-2 mb-8 flex-wrap">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-md text-xs capitalize ${
+                filter === f
+                  ? "bg-amber-400 text-black"
+                  : "bg-white/5 text-white/60"
+              }`}
             >
-              <Plus className="w-5 h-5" />
-              Create Your First Event
-            </Link>
-          </div>
-        )}
+              {f}
+            </button>
+          ))}
+
+          <Link
+            to="/event-registration"
+            className="ml-auto bg-amber-400 text-black px-4 py-2 rounded-md flex gap-2 text-xs"
+          >
+            <Plus size={14} /> Create Event
+          </Link>
+        </div>
+
+        {/* Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredEvents.map(event => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
       </div>
     </MainLayout>
   );
