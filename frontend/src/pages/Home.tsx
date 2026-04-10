@@ -88,9 +88,7 @@ const IconTrophy = () => (
   </svg>
 );
 
-/* ─────────────────────────────────────────
-   CALENDAR DAY
-───────────────────────────────────────── */
+
 const CalendarDay = ({ day, highlighted }: { day: string; highlighted: boolean }) => {
   if (!day) return <div className="text-center py-2 text-sm" />;
 
@@ -149,9 +147,7 @@ const CalendarDay = ({ day, highlighted }: { day: string; highlighted: boolean }
   );
 };
 
-/* ─────────────────────────────────────────
-   MAIN HOME COMPONENT
-───────────────────────────────────────── */
+
 const Home = () => {
   const { isLoggedIn, backendUrl } = useContext(AppContext);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
