@@ -20,21 +20,39 @@ const calendarEvents: Record<string, { title: string; time: string; location: st
   "24": { title: "INNA",         time: "8:00 PM - 11:00 PM", location: "Campus Ground"   },
 };
 
-const calendarDays = [
-  {day:"",highlighted:false},{day:"",highlighted:false},
-  {day:"1",highlighted:false},{day:"2",highlighted:false},{day:"3",highlighted:false},
-  {day:"4",highlighted:false},{day:"5",highlighted:false},{day:"6",highlighted:false},
-  {day:"7",highlighted:false},{day:"8",highlighted:false},{day:"9",highlighted:false},
-  {day:"10",highlighted:false},{day:"11",highlighted:false},{day:"12",highlighted:false},
-  {day:"13",highlighted:true},{day:"14",highlighted:false},{day:"15",highlighted:false},
-  {day:"16",highlighted:false},{day:"17",highlighted:false},{day:"18",highlighted:false},
-  {day:"19",highlighted:false},{day:"20",highlighted:false},{day:"21",highlighted:false},
-  {day:"22",highlighted:false},{day:"23",highlighted:false},{day:"24",highlighted:true},
-  {day:"25",highlighted:false},{day:"26",highlighted:false},{day:"27",highlighted:false},
-  {day:"28",highlighted:false},{day:"29",highlighted:false},
-  {day:"",highlighted:false},{day:"",highlighted:false},
-  {day:"",highlighted:false},{day:"",highlighted:false},
-];
+function generateCalendarDays(
+  date: Date = new Date(),
+  highlightedDays: number[] = []
+): { day: string; highlighted: boolean }[] {
+  const year  = date.getFullYear();
+  const month = date.getMonth();
+
+  // weekday of the 1st (0=Sun … 6=Sat)
+  const startOffset = new Date(year, month, 1).getDay();
+
+  // total days in the month
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // trailing blanks to fill the last week row
+  const totalCells = startOffset + daysInMonth;
+  const trailingBlanks = (totalCells % 7 === 0) ? 0 : 7 - (totalCells % 7);
+
+  const blank = { day: "", highlighted: false };
+
+  return [
+    ...Array.from({ length: startOffset }, () => blank),
+    ...Array.from({ length: daysInMonth }, (_, i) => ({
+      day: `${i + 1}`,
+      highlighted: highlightedDays.includes(i + 1),
+    })),
+    ...Array.from({ length: trailingBlanks }, () => blank),
+  ];
+}
+
+const calendarDays = generateCalendarDays(
+  new Date(),       // today's month — updates automatically
+  [13, 24]          // days to highlight (optional)
+);
 
 /* ─────────────────────────────────────────
    ICONS
@@ -535,7 +553,7 @@ const Home = () => {
                     <ChevronLeft />
                   </button>
                   <span className="font-display text-[1.1rem] font-medium text-white tracking-wide">
-                    February
+                    {new Date().toLocaleString('default', { year: 'numeric', month: 'long' })}
                   </span>
                   <button aria-label="Next month"
                     className="w-8 h-8 rounded-xl flex items-center justify-center
@@ -557,7 +575,11 @@ const Home = () => {
                 {/* Days grid */}
                 <div className="grid grid-cols-7 gap-0.5">
                   {calendarDays.map((item, i) => (
-                    <CalendarDay key={i} day={item.day} highlighted={item.highlighted} />
+                    <CalendarDay
+                      key={i}
+                      day={item.day}
+                      highlighted={item.highlighted}
+                    />
                   ))}
                 </div>
               </div>
