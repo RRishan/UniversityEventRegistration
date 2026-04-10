@@ -5,61 +5,89 @@ import {
   Search, Bell, Menu,
 } from "lucide-react";
 
-/* ── Step status config ──────────────────────────────────── */
-const stepConfig: Record<
-  string,
-  { ring: string; bg: string; icon: React.ReactNode; badge: string }
-> = {
+/* ─────────────────────────────────────────
+   STEP STATUS CONFIG — light palette
+───────────────────────────────────────── */
+const stepConfig: Record<string, {
+  ring: string; bg: string; icon: React.ReactNode;
+  badge: string; bar: string; glow: string;
+}> = {
   Completed: {
-    ring:  "border-[rgba(74,222,128,0.5)]",
-    bg:    "bg-[rgba(74,222,128,0.12)]",
-    icon:  <Check size={16} className="text-[#4ade80]" />,
-    badge: "bg-[rgba(74,222,128,0.1)] border border-[rgba(74,222,128,0.25)] text-[#4ade80]",
+    ring:  "border-emerald-300",
+    bg:    "bg-emerald-50",
+    icon:  <Check size={15} className="text-emerald-600" />,
+    badge: "bg-emerald-50 border border-emerald-200 text-emerald-700",
+    bar:   "from-emerald-400 to-teal-400",
+    glow:  "rgba(52,211,153,0.25)",
   },
   "In Progress": {
-    ring:  "border-[rgba(255,190,60,0.5)]",
-    bg:    "bg-[rgba(255,190,60,0.1)]",
-    icon:  <Clock size={16} className="text-[#ffbe3c]" />,
-    badge: "bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.3)] text-[#ffbe3c]",
+    ring:  "border-blue-300",
+    bg:    "bg-blue-50",
+    icon:  <Clock size={15} className="text-blue-600" />,
+    badge: "bg-blue-50 border border-blue-200 text-blue-700",
+    bar:   "from-blue-400 to-indigo-400",
+    glow:  "rgba(59,130,246,0.25)",
   },
   Pending: {
-    ring:  "border-white/[0.15]",
-    bg:    "bg-white/[0.04]",
-    icon:  <Clock size={16} className="text-white/30" />,
-    badge: "bg-white/[0.05] border border-white/[0.1] text-white/35",
+    ring:  "border-slate-200",
+    bg:    "bg-slate-50",
+    icon:  <Clock size={15} className="text-slate-400" />,
+    badge: "bg-slate-100 border border-slate-200 text-slate-500",
+    bar:   "from-slate-300 to-slate-300",
+    glow:  "transparent",
   },
   Skipped: {
-    ring:  "border-[rgba(255,107,107,0.35)]",
-    bg:    "bg-[rgba(255,107,107,0.08)]",
-    icon:  <X size={16} className="text-[#ff6b6b]" />,
-    badge: "bg-[rgba(255,107,107,0.08)] border border-[rgba(255,107,107,0.2)] text-[#ff6b6b]",
+    ring:  "border-red-200",
+    bg:    "bg-red-50",
+    icon:  <X size={15} className="text-red-500" />,
+    badge: "bg-red-50 border border-red-200 text-red-600",
+    bar:   "from-red-300 to-rose-300",
+    glow:  "rgba(239,68,68,0.20)",
   },
 };
 
 const StepIcon = ({ status }: { status: string }) => {
   const cfg = stepConfig[status] ?? stepConfig.Pending;
   return (
-    <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 ${cfg.ring} ${cfg.bg}`}>
+    <div className={`step-icon-ring w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 ${cfg.ring} ${cfg.bg}`}
+      style={{ boxShadow: `0 0 0 4px ${cfg.glow}` }}>
       {cfg.icon}
     </div>
   );
 };
 
-/* ── Reusable section card ───────────────────────────────── */
+/* ─────────────────────────────────────────
+   REUSABLE CARD
+───────────────────────────────────────── */
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white/[0.025] border border-white/[0.07] rounded-[18px] p-6 ${className}`}>
+  <div className={`detail-card bg-white border border-slate-200/80 rounded-2xl p-6 ${className}`}>
     {children}
   </div>
 );
 
-/* ── Section heading ─────────────────────────────────────── */
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="font-display text-[1.25rem] font-normal text-[#f0ede8] mb-6 tracking-[0.01em]">
-    {children}
-  </h2>
+const SectionTitle = ({ children, accent = "blue" }: { children: React.ReactNode; accent?: string }) => (
+  <div className="flex items-center gap-2.5 mb-6">
+    <div className={`w-1 h-5 rounded-full bg-gradient-to-b ${accent === "blue" ? "from-blue-500 to-indigo-400" : "from-slate-300 to-slate-200"}`} />
+    <h2 className="font-display text-[1.1rem] font-medium text-slate-800 tracking-tight">{children}</h2>
+  </div>
 );
 
-/* ══════════════════════════════════════════════════════════ */
+/* ─────────────────────────────────────────
+   AVATAR MONOGRAM
+───────────────────────────────────────── */
+const Avatar = ({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) => {
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const colors = ["from-blue-400 to-indigo-500", "from-emerald-400 to-teal-500", "from-violet-400 to-purple-500", "from-amber-400 to-orange-500"];
+  const color = colors[name.charCodeAt(0) % colors.length];
+  const sz = size === "md" ? "w-10 h-10 text-sm" : "w-8 h-8 text-xs";
+  return (
+    <div className={`${sz} rounded-full bg-gradient-to-br ${color} flex items-center justify-center text-white font-bold flex-shrink-0`}>
+      {initials}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════ */
 const EventDetail = () => {
   const event = {
     id: "AC",
@@ -72,429 +100,554 @@ const EventDetail = () => {
     expectedAttendees: 120,
     currentStep: 2,
     steps: [
-      {
-        id: 1,
-        title: "Head of Section",
-        status: "Completed",
-        approver: "Michael Chen",
-        approvedAt: "Jan 16, 2025 at 10:30 AM",
-      },
-      {
-        id: 2,
-        title: "Deputy Director",
-        status: "In Progress",
-        assignee: "Jennifer Williams",
-        pendingSince: "Jan 16, 2025 at 2:15 PM",
-        note: "This approval step typically takes 2-3 business days",
-      },
-      {
-        id: 3,
-        title: "Welfare Unit",
-        status: "Pending",
-        note: "Will be assigned after Step 2 completion",
-      },
-      {
-        id: 4,
-        title: "Admin",
-        status: "Skipped",
-        reason: "Not applicable for internal events",
-      },
+      { id:1, title:"Head of Section",  status:"Completed",   approver:"Michael Chen",     approvedAt:"Jan 16, 2025 at 10:30 AM" },
+      { id:2, title:"Deputy Director",  status:"In Progress", assignee:"Jennifer Williams", pendingSince:"Jan 16, 2025 at 2:15 PM", note:"This approval step typically takes 2-3 business days" },
+      { id:3, title:"Welfare Unit",     status:"Pending",     note:"Will be assigned after Step 2 completion" },
+      { id:4, title:"Admin",            status:"Skipped",     reason:"Not applicable for internal events" },
     ],
     comments: [
-      {
-        author: "Michael Chen",
-        role: "Head of Section",
-        date: "Jan 16, 2025 at 10:30 AM",
-        status: "Approved",
-        text: "Excellent proposal! The retreat plan is well-structured and the budget allocation looks reasonable. Approved for next level review.",
-      },
-      {
-        author: "Sarah Johnson",
-        role: "Event Organizer",
-        date: "Jan 15, 2025 at 3:45 PM",
-        text: "Event submitted for approval. All documentation and budget breakdown attached.",
-      },
+      { author:"Michael Chen",  role:"Head of Section",  date:"Jan 16, 2025 at 10:30 AM", status:"Approved",
+        text:"Excellent proposal! The retreat plan is well-structured and the budget allocation looks reasonable. Approved for next level review." },
+      { author:"Sarah Johnson", role:"Event Organizer",  date:"Jan 15, 2025 at 3:45 PM",
+        text:"Event submitted for approval. All documentation and budget breakdown attached." },
     ],
   };
 
-  /* Progress percentage for the tracker */
-  const completedSteps = event.steps.filter((s) => s.status === "Completed").length;
+  const completedSteps = event.steps.filter(s => s.status === "Completed").length;
   const progressPct = Math.round((completedSteps / event.steps.length) * 100);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0b] font-body text-[#f0ede8]">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+        .font-display { font-family: 'Playfair Display', Georgia, serif; }
+        .font-body    { font-family: 'DM Sans', system-ui, sans-serif; }
 
-      {/* ══════════════════════════════════════
-          HEADER  (keeps original nav links)
-      ══════════════════════════════════════ */}
-      <header className="sticky top-0 z-50
-        bg-[rgba(10,10,11,0.82)] backdrop-blur-[18px]
-        border-b border-white/[0.06]">
-        <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+        .detail-root { font-family: 'DM Sans', system-ui, sans-serif; }
 
-          {/* Left */}
-          <div className="flex items-center gap-6">
-            <button aria-label="Menu" className="text-white/35 hover:text-[#f0ede8] transition-colors">
-              <Menu size={20} />
-            </button>
-            <nav className="hidden sm:flex items-center gap-1">
-              {[
-                { to: "/my-events", label: "Dashboard", active: true },
-                { to: "/my-events", label: "My Events",  active: false },
-                { to: "/calendar",  label: "Calendar",   active: false },
-              ].map(({ to, label, active }) => (
-                <Link key={label} to={to}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] transition-colors duration-150
-                    ${active
-                      ? "text-[#f0ede8] bg-white/[0.07]"
-                      : "text-white/40 hover:text-white/75 hover:bg-white/[0.05]"
+        /* Header glass */
+        .detail-header {
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(20px) saturate(180%);
+          border-bottom: 1px solid rgba(226,232,240,0.8);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(59,130,246,0.05);
+        }
+
+        /* Cards */
+        .detail-card {
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(59,130,246,0.05);
+          transition: box-shadow 0.22s, transform 0.22s;
+        }
+        .detail-card:hover {
+          box-shadow: 0 4px 8px rgba(0,0,0,0.05), 0 16px 32px rgba(59,130,246,0.08);
+        }
+
+        /* Progress bar */
+        .progress-track { height:6px; border-radius:99px; background:#e2e8f0; position:relative; overflow:hidden; }
+        .progress-fill {
+          position:absolute; left:0; top:0; bottom:0; border-radius:99px;
+          background: linear-gradient(90deg, #2563eb, #818cf8, #0ea5e9);
+          box-shadow: 0 0 10px rgba(59,130,246,0.35);
+          transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* Workflow connector */
+        .workflow-connector {
+          position: absolute;
+          left: 19px; top: 44px; bottom: 0;
+          width: 2px;
+          background: linear-gradient(to bottom, #e2e8f0 0%, #f1f5f9 100%);
+        }
+
+        /* Step card */
+        .step-card {
+          background: white;
+          border: 1.5px solid #f1f5f9;
+          border-radius: 16px;
+          transition: all 0.2s;
+        }
+        .step-card:hover { border-color: #bfdbfe; box-shadow: 0 4px 16px rgba(59,130,246,0.08); }
+        .step-card.active-step {
+          border-color: #bfdbfe;
+          box-shadow: 0 4px 20px rgba(59,130,246,0.12);
+          background: linear-gradient(135deg, #fafcff, #eff6ff);
+        }
+
+        /* Action buttons */
+        .btn-download {
+          background: linear-gradient(135deg, #2563eb, #3b82f6, #0ea5e9);
+          box-shadow: 0 4px 14px rgba(59,130,246,0.30);
+          transition: all 0.22s; position:relative; overflow:hidden;
+        }
+        .btn-download:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(59,130,246,0.40); }
+        .btn-download::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#1d4ed8,#2563eb); opacity:0; transition:opacity 0.22s; }
+        .btn-download:hover::before { opacity:1; }
+        .btn-download-label { position:relative; z-index:1; }
+        .btn-shine { position:absolute; inset:0; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.10) 50%,transparent 60%); background-size:200% 100%; animation:shine 3s linear infinite; }
+        @keyframes shine { from{background-position:200% 0} to{background-position:-200% 0} }
+
+        .btn-edit {
+          background:white; border:1.5px solid #e2e8f0;
+          transition:all 0.2s;
+        }
+        .btn-edit:hover { border-color:#3b82f6; color:#2563eb; background:#eff6ff; transform:translateY(-1px); }
+
+        .btn-cancel {
+          background:#fef2f2; border:1.5px solid #fecaca;
+          transition:all 0.2s;
+        }
+        .btn-cancel:hover { background:#fee2e2; border-color:#fca5a5; transform:translateY(-1px); }
+
+        /* Comment card */
+        .comment-card {
+          background:white; border:1.5px solid #f1f5f9; border-radius:16px;
+          transition:all 0.18s;
+        }
+        .comment-card:hover { border-color:#bfdbfe; box-shadow:0 4px 16px rgba(59,130,246,0.07); }
+
+        /* Stagger fade */
+        .fade-up { animation: fadeUp 0.55s cubic-bezier(0.4,0,0.2,1) both; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        .d1{animation-delay:0.05s} .d2{animation-delay:0.12s}
+        .d3{animation-delay:0.19s} .d4{animation-delay:0.26s}
+        .d5{animation-delay:0.32s}
+
+        /* Background */
+        .detail-bg {
+          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+          position:relative;
+        }
+        .dot-grid {
+          position:fixed; inset:0; pointer-events:none; opacity:0.018; z-index:0;
+          background-image: radial-gradient(#1e40af 1px, transparent 1px);
+          background-size: 28px 28px;
+        }
+
+        /* Status badge on event header */
+        .status-badge-review {
+          background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+          border: 1.5px solid #bfdbfe;
+          box-shadow: 0 2px 8px rgba(59,130,246,0.12);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb-sep { color:#cbd5e1; }
+
+        /* Monogram tile */
+        .monogram-tile {
+          background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+          border: 1.5px solid #bfdbfe;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.12);
+        }
+
+        /* Summary row */
+        .summary-row {
+          display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+          padding: 10px 0;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .summary-row:last-child { border-bottom:none; }
+
+        /* Nav link */
+        .nav-link-active { background:#eff6ff; color:#2563eb; }
+        .nav-link-inactive { color:#64748b; }
+        .nav-link-inactive:hover { background:#f8fafc; color:#334155; }
+
+        /* Quick action card */
+        .actions-card {
+          background: linear-gradient(160deg, #eff6ff 0%, #f0f9ff 100%);
+          border: 1.5px solid #bfdbfe;
+          box-shadow: 0 4px 20px rgba(59,130,246,0.10);
+        }
+
+        /* Pulse dot */
+        .pulse-dot { animation: pulseDot 2s ease infinite; }
+        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.6)} }
+
+        /* Footer */
+        .detail-footer {
+          background: white;
+          border-top: 1px solid #e2e8f0;
+        }
+      `}</style>
+
+      <div className="detail-root detail-bg min-h-screen flex flex-col">
+        <div className="dot-grid" />
+
+        {/* ══════════════════════════════════════
+            HEADER
+        ══════════════════════════════════════ */}
+        <header className="detail-header sticky top-0 z-50">
+          <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+
+            {/* Logo + nav */}
+            <div className="flex items-center gap-5">
+              <button aria-label="Menu" className="text-slate-400 hover:text-slate-700 transition-colors">
+                <Menu size={18} />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
+                  style={{ background:"linear-gradient(135deg,#1d4ed8,#3b82f6)" }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                  </svg>
+                </div>
+                <span className="font-display text-slate-800 text-base font-medium tracking-wide hidden sm:block">
+                  Eventraze
+                </span>
+              </div>
+              <nav className="hidden md:flex items-center gap-1">
+                {[
+                  { to:"/my-events", label:"Dashboard", active:true  },
+                  { to:"/my-events", label:"My Events",  active:false },
+                  { to:"/calendar",  label:"Calendar",   active:false },
+                ].map(({ to, label, active }) => (
+                  <Link key={label} to={to}
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                      active ? "nav-link-active" : "nav-link-inactive"
                     }`}>
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
 
-          {/* Right */}
-          <div className="flex items-center gap-3">
-            <span className="hidden md:block text-[11px] text-white/25 tracking-[0.04em]">
-              3:51 PM GMT+7
-            </span>
-            <Link to="/event-registration"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5
-                text-[12px] font-medium tracking-[0.06em] uppercase
-                bg-transparent text-white/50 border border-white/[0.1] rounded-[8px]
-                hover:border-[rgba(255,190,60,0.3)] hover:text-[#ffbe3c] hover:bg-[rgba(255,190,60,0.05)]
-                transition-all duration-150">
-              + Create Event
-            </Link>
-            <button aria-label="Search"  className="text-white/35 hover:text-[#f0ede8] transition-colors"><Search size={17} /></button>
-            <button aria-label="Notifications" className="text-white/35 hover:text-[#f0ede8] transition-colors"><Bell size={17} /></button>
-            <div className="w-8 h-8 rounded-full bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.22)]
-              flex items-center justify-center text-[#ffbe3c]">
-              <Users size={14} />
+            {/* Right actions */}
+            <div className="flex items-center gap-2.5">
+              <Link to="/event-registration"
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5
+                  text-xs font-semibold tracking-wide
+                  bg-white border border-slate-200 text-slate-600 rounded-xl
+                  hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50
+                  transition-all duration-150 shadow-sm">
+                + Create Event
+              </Link>
+              <button aria-label="Search" className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"><Search size={16} /></button>
+              <button aria-label="Notifications" className="relative w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
+                <Bell size={16} />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500 border-2 border-white" />
+              </button>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                SJ
+              </div>
             </div>
           </div>
+        </header>
+
+        {/* Breadcrumb */}
+        <div className="relative z-10 max-w-[1200px] mx-auto w-full px-6 py-3">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">Dashboard</Link>
+            <span className="breadcrumb-sep">›</span>
+            <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">My Events</Link>
+            <span className="breadcrumb-sep">›</span>
+            <span className="text-slate-600 font-medium truncate max-w-[200px]">{event.title}</span>
+          </div>
         </div>
-      </header>
 
-      {/* ══════════════════════════════════════
-          BREADCRUMB
-      ══════════════════════════════════════ */}
-      <div className="max-w-[1200px] mx-auto w-full px-6 py-4">
-        <div className="flex items-center gap-1.5 text-[12px] text-white/30">
-          <Link to="/my-events" className="hover:text-white/60 transition-colors">Dashboard</Link>
-          <span>›</span>
-          <Link to="/my-events" className="hover:text-white/60 transition-colors">My Events</Link>
-          <span>›</span>
-          <span className="text-white/55">{event.title}</span>
-        </div>
-      </div>
+        {/* ══════════════════════════════════════
+            PAGE BODY
+        ══════════════════════════════════════ */}
+        <main className="relative z-10 max-w-[1200px] mx-auto w-full px-6 pb-16 flex-1">
 
-      {/* ══════════════════════════════════════
-          PAGE BODY
-      ══════════════════════════════════════ */}
-      <main className="max-w-[1200px] mx-auto w-full px-6 pb-16 flex-1">
+          {/* ── Event header card ── */}
+          <div className="fade-up d1 detail-card bg-white border border-slate-200/80 rounded-2xl p-6 mb-5 overflow-hidden">
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-400 to-sky-400" />
 
-        {/* ── Event header card ── */}
-        <Card className="mb-5">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
+              <div className="flex items-start gap-4">
+                {/* Monogram */}
+                <div className="monogram-tile w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center">
+                  <span className="font-display text-xl font-semibold text-blue-600">{event.id}</span>
+                </div>
 
-            <div className="flex items-start gap-4">
-              {/* Monogram tile */}
-              <div className="w-14 h-14 rounded-[14px] shrink-0
-                bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.22)]
-                flex items-center justify-center
-                font-display text-lg font-normal text-[#ffbe3c]">
-                {event.id}
-              </div>
-
-              <div>
-                <h1 className="font-display text-[1.6rem] font-light leading-tight text-[#f0ede8] mb-2">
-                  {event.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px] text-white/38">
-                  <span className="flex items-center gap-1.5">
-                    <Users size={12} className="text-white/25" />
-                    Organized by {event.organizer}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Calendar size={12} className="text-white/25" />
-                    Submitted {event.submittedDate}
-                  </span>
+                <div>
+                  <h1 className="font-display text-[1.6rem] font-medium leading-tight text-slate-800 mb-2">
+                    {event.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-400">
+                    <span className="flex items-center gap-1.5">
+                      <Users size={12} className="text-blue-400" />
+                      Organized by <span className="font-medium text-slate-600 ml-1">{event.organizer}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Calendar size={12} className="text-blue-400" />
+                      Submitted <span className="font-medium text-slate-600 ml-1">{event.submittedDate}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Status badge */}
+              <div className="self-start status-badge-review flex items-center gap-2 px-3.5 py-2 rounded-xl">
+                <div className="w-2 h-2 rounded-full bg-blue-500 pulse-dot" />
+                <span className="text-xs font-bold tracking-wide text-blue-700">{event.status}</span>
+              </div>
             </div>
 
-            {/* Status pill */}
-            <span className="self-start inline-flex items-center gap-1.5
-              px-3 py-1.5 rounded-full text-[11px] font-medium tracking-[0.06em] uppercase
-              bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.25)] text-[#ffbe3c]">
-              <Clock size={11} /> {event.status}
-            </span>
+            {/* Progress */}
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Approval Progress</span>
+                  <span className="text-xs font-bold text-blue-500 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                    {progressPct}%
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400">
+                  Step <span className="font-semibold text-slate-700">{event.currentStep}</span> of {event.steps.length}
+                </span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width:`${progressPct}%` }} />
+              </div>
+              {/* Step labels */}
+              <div className="grid grid-cols-4 mt-2">
+                {event.steps.map((step) => (
+                  <div key={step.id} className={`text-center text-[10px] font-semibold uppercase tracking-wider ${
+                    step.status === "Completed"   ? "text-emerald-500" :
+                    step.status === "In Progress" ? "text-blue-500"    :
+                    step.status === "Skipped"     ? "text-red-400"     : "text-slate-300"
+                  }`}>
+                    {step.id}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mt-6 pt-5 border-t border-white/[0.06]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] text-white/30 tracking-[0.06em] uppercase">
-                Approval progress
-              </span>
-              <span className="text-[11px] text-white/40">
-                Step {event.currentStep} of {event.steps.length}
-              </span>
-            </div>
-            <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#ffbe3c] to-[#ff8c00]
-                  transition-all duration-700"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </div>
-        </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* ══════════════════════════════════
+                LEFT: Approval Workflow
+            ══════════════════════════════════ */}
+            <div className="lg:col-span-2 fade-up d2">
+              <Card>
+                <SectionTitle>Approval Workflow</SectionTitle>
 
-          {/* ══════════════════════════════════
-              LEFT: Approval Workflow
-          ══════════════════════════════════ */}
-          <div className="lg:col-span-2">
-            <Card>
-              <SectionTitle>Approval Workflow</SectionTitle>
+                <div className="relative">
+                  {/* Connector line */}
+                  <div className="workflow-connector" />
 
-              <div className="relative">
-                {/* Vertical connector line */}
-                <div className="absolute left-[17px] top-9 bottom-9 w-px bg-white/[0.06]" />
+                  <div className="flex flex-col gap-3">
+                    {event.steps.map((step, index) => {
+                      const cfg = stepConfig[step.status] ?? stepConfig.Pending;
+                      const isActive = step.status === "In Progress";
+                      const isDone   = step.status === "Completed";
+                      const isLast   = index === event.steps.length - 1;
 
-                <div className="flex flex-col gap-0">
-                  {event.steps.map((step, index) => {
-                    const cfg = stepConfig[step.status] ?? stepConfig.Pending;
-                    const isLast = index === event.steps.length - 1;
-                    return (
-                      <div key={step.id} className={`relative flex gap-5 ${isLast ? "" : "pb-7"}`}>
-
-                        {/* Step icon */}
-                        <div className="z-[1] mt-0.5">
-                          <StepIcon status={step.status} />
-                        </div>
-
-                        {/* Step content */}
-                        <div className="flex-1 min-w-0">
-                          {/* Title row */}
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className="text-[13px] font-medium text-[#f0ede8]">
-                              Step {step.id}: {step.title}
-                            </span>
-                            <span className={`text-[10px] font-medium tracking-[0.07em] uppercase
-                              px-2 py-0.5 rounded-full ${cfg.badge}`}>
-                              {step.status}
-                            </span>
+                      return (
+                        <div key={step.id} className={`relative flex gap-4 ${isLast ? "" : "pb-0"}`}>
+                          {/* Step icon */}
+                          <div className="z-[1] mt-3 flex-shrink-0">
+                            <StepIcon status={step.status} />
                           </div>
 
-                          {/* Meta lines */}
-                          <div className="flex flex-col gap-1 mb-2">
-                            {step.approver && (
-                              <p className="flex items-center gap-1.5 text-[12px] text-white/38">
-                                <Users size={11} className="text-white/25" />
-                                Approved by <span className="text-white/55">{step.approver}</span>
-                              </p>
-                            )}
-                            {step.assignee && (
-                              <p className="flex items-center gap-1.5 text-[12px] text-white/38">
-                                <Users size={11} className="text-white/25" />
-                                Assigned to <span className="text-white/55">{step.assignee}</span>
-                              </p>
-                            )}
-                            {step.approvedAt && (
-                              <p className="flex items-center gap-1.5 text-[12px] text-white/38">
-                                <Calendar size={11} className="text-white/25" />
-                                {step.approvedAt}
-                              </p>
-                            )}
-                            {step.pendingSince && (
-                              <p className="flex items-center gap-1.5 text-[12px] text-white/38">
-                                <Clock size={11} className="text-white/25" />
-                                Pending since {step.pendingSince}
-                              </p>
-                            )}
-                          </div>
+                          {/* Step card */}
+                          <div className={`flex-1 step-card p-4 ${isActive ? "active-step" : ""}`}>
+                            {/* Title row */}
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className={`text-sm font-semibold ${isActive ? "text-blue-800" : isDone ? "text-slate-700" : "text-slate-500"}`}>
+                                Step {step.id}: {step.title}
+                              </span>
+                              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold tracking-[0.08em] uppercase px-2.5 py-1 rounded-full ${cfg.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cfg.bar}`} />
+                                {step.status}
+                              </span>
+                            </div>
 
-                          {/* Note / awaiting box */}
-                          {step.note && step.status !== "Skipped" && (
-                            <div className="mt-1 mb-2 px-3 py-2.5
-                              bg-white/[0.03] border border-white/[0.06] rounded-[9px]">
-                              <p className="flex items-center gap-1.5 text-[12px] text-white/45">
-                                <AlertCircle size={12} className="text-white/30 shrink-0" />
-                                {step.status === "In Progress" ? "Awaiting Review" : step.note}
-                              </p>
-                              {step.status === "In Progress" && (
-                                <p className="text-[11px] text-white/28 mt-1 pl-[18px]">{step.note}</p>
+                            {/* Meta */}
+                            <div className="flex flex-col gap-1 mb-2">
+                              {step.approver && (
+                                <p className="flex items-center gap-2 text-xs text-slate-500">
+                                  <Users size={11} className="text-blue-400" />
+                                  Approved by <span className="font-semibold text-slate-700">{step.approver}</span>
+                                </p>
+                              )}
+                              {step.assignee && (
+                                <p className="flex items-center gap-2 text-xs text-slate-500">
+                                  <Users size={11} className="text-blue-400" />
+                                  Assigned to <span className="font-semibold text-slate-700">{step.assignee}</span>
+                                </p>
+                              )}
+                              {step.approvedAt && (
+                                <p className="flex items-center gap-2 text-xs text-slate-400">
+                                  <Calendar size={11} className="text-slate-300" />
+                                  {step.approvedAt}
+                                </p>
+                              )}
+                              {step.pendingSince && (
+                                <p className="flex items-center gap-2 text-xs text-slate-400">
+                                  <Clock size={11} className="text-blue-400" />
+                                  Pending since {step.pendingSince}
+                                </p>
                               )}
                             </div>
-                          )}
 
-                          {/* Skipped reason */}
-                          {step.reason && (
-                            <p className="flex items-center gap-1.5 text-[12px] text-white/30 mt-1">
-                              <AlertCircle size={11} />
-                              {step.reason}
-                            </p>
-                          )}
+                            {/* Note box */}
+                            {step.note && step.status !== "Skipped" && (
+                              <div className={`mt-1.5 px-3 py-2.5 rounded-xl text-xs leading-relaxed
+                                ${isActive
+                                  ? "bg-blue-50 border border-blue-100 text-blue-700"
+                                  : "bg-slate-50 border border-slate-100 text-slate-500"
+                                }`}>
+                                <div className="flex items-start gap-2">
+                                  <AlertCircle size={12} className={`mt-0.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-300"}`} />
+                                  <div>
+                                    {isActive && <p className="font-semibold mb-0.5">Awaiting Review</p>}
+                                    <p>{step.note}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
-                          {/* Expand comments */}
-                          <button className="mt-1.5 flex items-center gap-1 text-[11px] text-white/28
-                            hover:text-[#ffbe3c] transition-colors duration-150">
-                            <ChevronDown size={13} />
-                            View comments &amp; feedback
-                          </button>
+                            {/* Skipped reason */}
+                            {step.reason && (
+                              <p className="flex items-center gap-2 text-xs text-red-400 mt-1.5">
+                                <AlertCircle size={11} /> {step.reason}
+                              </p>
+                            )}
+
+                            {/* Expand comments */}
+                            <button className="mt-2 flex items-center gap-1 text-[11px] text-slate-400
+                              hover:text-blue-500 transition-colors duration-150 font-medium">
+                              <ChevronDown size={12} />
+                              View comments &amp; feedback
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* ══════════════════════════════════
-              RIGHT SIDEBAR
-          ══════════════════════════════════ */}
-          <div className="flex flex-col gap-5">
-
-            {/* Quick Actions */}
-            <div className="relative overflow-hidden rounded-[18px] p-6
-              bg-gradient-to-br from-[rgba(255,190,60,0.14)] to-[rgba(255,140,0,0.08)]
-              border border-[rgba(255,190,60,0.2)]">
-              {/* Subtle glow */}
-              <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full
-                bg-[rgba(255,190,60,0.08)] blur-2xl pointer-events-none" />
-
-              <h3 className="font-display text-[1rem] font-normal text-[#f0ede8] mb-4 relative z-[1]">
-                Quick Actions
-              </h3>
-
-              <div className="flex flex-col gap-2.5 relative z-[1]">
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4
-                  bg-gradient-to-r from-[#ffbe3c] to-[#ff8c00] text-[#0a0a0b]
-                  text-[12px] font-medium tracking-[0.06em] uppercase
-                  rounded-[9px] shadow-[0_3px_16px_rgba(255,190,60,0.28)]
-                  hover:opacity-90 hover:-translate-y-px transition-all duration-150">
-                  <Download size={14} /> Download Document
-                </button>
-
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4
-                  bg-white/[0.07] border border-white/[0.1] text-white/65
-                  text-[12px] font-medium tracking-[0.06em] uppercase
-                  rounded-[9px]
-                  hover:bg-white/[0.11] hover:text-[#f0ede8] hover:border-white/[0.18]
-                  transition-all duration-150">
-                  <Edit size={14} /> Edit Event
-                </button>
-
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4
-                  bg-[rgba(255,107,107,0.07)] border border-[rgba(255,107,107,0.15)] text-[#ff6b6b]/70
-                  text-[12px] font-medium tracking-[0.06em] uppercase
-                  rounded-[9px]
-                  hover:bg-[rgba(255,107,107,0.12)] hover:text-[#ff6b6b] hover:border-[rgba(255,107,107,0.28)]
-                  transition-all duration-150">
-                  <XCircle size={14} /> Cancel Event
-                </button>
-              </div>
+              </Card>
             </div>
 
-            {/* Event Summary */}
+            {/* ══════════════════════════════════
+                RIGHT SIDEBAR
+            ══════════════════════════════════ */}
+            <div className="flex flex-col gap-4">
+
+              {/* Quick Actions */}
+              <div className="fade-up d3 actions-card rounded-2xl p-6 relative overflow-hidden">
+                <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-30 pointer-events-none"
+                  style={{ background:"radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)" }} />
+
+                <SectionTitle>Quick Actions</SectionTitle>
+
+                <div className="flex flex-col gap-2.5">
+                  <button className="btn-download w-full flex items-center justify-center gap-2
+                    py-2.5 px-4 rounded-xl text-sm font-semibold text-white">
+                    <div className="btn-shine" />
+                    <span className="btn-download-label flex items-center gap-2">
+                      <Download size={14} /> Download Document
+                    </span>
+                  </button>
+
+                  <button className="btn-edit w-full flex items-center justify-center gap-2
+                    py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600">
+                    <Edit size={14} /> Edit Event
+                  </button>
+
+                  <button className="btn-cancel w-full flex items-center justify-center gap-2
+                    py-2.5 px-4 rounded-xl text-sm font-semibold text-red-600">
+                    <XCircle size={14} /> Cancel Event
+                  </button>
+                </div>
+              </div>
+
+              {/* Event Summary */}
+              <div className="fade-up d4">
+                <Card>
+                  <SectionTitle>Event Summary</SectionTitle>
+                  <div>
+                    {[
+                      { label:"Event Date",         icon:<Calendar size={13} />, value:event.eventDate },
+                      { label:"Location",           icon:<MapPin    size={13} />, value:event.location },
+                      { label:"Attendees",          icon:<Users     size={13} />, value:`${event.expectedAttendees} people` },
+                      { label:"Approval Status",    icon:<Clock     size={13} />, value:`Step ${event.currentStep} of ${event.steps.length}` },
+                    ].map(({ label, icon, value }) => (
+                      <div key={label} className="summary-row">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
+                          <span className="text-blue-400">{icon}</span>
+                          {label}
+                        </div>
+                        <span className="text-xs font-semibold text-slate-700 text-right">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════
+              COMMENTS & FEEDBACK
+          ══════════════════════════════════════ */}
+          <div className="fade-up d5 mt-5">
             <Card>
-              <h3 className="font-display text-[1rem] font-normal text-[#f0ede8] mb-4">
-                Event Summary
-              </h3>
+              <SectionTitle>Comments &amp; Feedback History</SectionTitle>
+
               <div className="flex flex-col gap-3">
-                {[
-                  { label: "Event Date",          icon: <Calendar size={12} />, value: event.eventDate },
-                  { label: "Location",             icon: <MapPin    size={12} />, value: event.location },
-                  { label: "Expected Attendees",   icon: <Users     size={12} />, value: `${event.expectedAttendees} people` },
-                  { label: "Approval Status",      icon: <Clock     size={12} />, value: `Step ${event.currentStep} of ${event.steps.length}` },
-                ].map(({ label, icon, value }) => (
-                  <div key={label} className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-1.5 text-[12px] text-white/35 shrink-0">
-                      <span className="text-white/20">{icon}</span>
-                      {label}
+                {event.comments.map((comment, idx) => (
+                  <div key={idx} className="comment-card p-4">
+                    <div className="flex gap-3">
+                      <Avatar name={comment.author} size="md" />
+
+                      <div className="flex-1 min-w-0">
+                        {/* Author row */}
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-800">{comment.author}</span>
+                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{comment.role}</span>
+                            {comment.status && (
+                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full
+                                bg-emerald-50 border border-emerald-200 text-emerald-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {comment.status}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-400">{comment.date}</span>
+                        </div>
+
+                        {/* Body */}
+                        <p className="text-sm leading-[1.7] text-slate-600">{comment.text}</p>
+                      </div>
                     </div>
-                    <span className="text-[12px] font-medium text-white/65 text-right">{value}</span>
                   </div>
                 ))}
               </div>
             </Card>
           </div>
-        </div>
+        </main>
 
         {/* ══════════════════════════════════════
-            COMMENTS & FEEDBACK HISTORY
+            FOOTER
         ══════════════════════════════════════ */}
-        <Card className="mt-5">
-          <SectionTitle>Comments &amp; Feedback History</SectionTitle>
-
-          <div className="flex flex-col gap-4">
-            {event.comments.map((comment, idx) => (
-              <div key={idx}
-                className="flex gap-4 p-4 bg-white/[0.02] border border-white/[0.05] rounded-[14px]">
-
-                {/* Avatar */}
-                <div className="w-9 h-9 rounded-full shrink-0
-                  bg-[rgba(255,190,60,0.1)] border border-[rgba(255,190,60,0.18)]
-                  flex items-center justify-center text-[#ffbe3c]">
-                  <Users size={14} />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  {/* Author row */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[13px] font-medium text-[#f0ede8]">{comment.author}</span>
-                      <span className="text-[11px] text-white/30">{comment.role}</span>
-                      {comment.status && (
-                        <span className="text-[10px] font-medium tracking-[0.07em] uppercase
-                          px-2 py-0.5 rounded-full
-                          bg-[rgba(74,222,128,0.1)] border border-[rgba(74,222,128,0.22)] text-[#4ade80]">
-                          {comment.status}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-white/25">{comment.date}</span>
-                  </div>
-
-                  {/* Body */}
-                  <p className="text-[13px] leading-[1.65] text-white/45">{comment.text}</p>
-                </div>
-              </div>
-            ))}
+        <footer className="detail-footer relative z-10 py-5 mt-auto">
+          <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-slate-400">
+              © {new Date().getFullYear()} <span className="text-blue-500 font-semibold">Eventraze</span> · Event Management Platform
+            </p>
+            <nav className="flex items-center gap-1">
+              {[
+                { to:"/help",    label:"Help Center"     },
+                { to:"/privacy", label:"Privacy Policy"  },
+                { to:"/terms",   label:"Terms of Service"},
+              ].map(({ to, label }) => (
+                <Link key={to} to={to}
+                  className="text-xs text-slate-400 hover:text-blue-500 transition-colors px-2 py-1 rounded-lg hover:bg-blue-50">
+                  {label}
+                </Link>
+              ))}
+            </nav>
           </div>
-        </Card>
-      </main>
-
-      {/* ══════════════════════════════════════
-          FOOTER
-      ══════════════════════════════════════ */}
-      <footer className="border-t border-white/[0.05] py-5 mt-auto">
-        <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-white/20 tracking-[0.04em]">
-            © {new Date().getFullYear()} <span className="text-[rgba(255,190,60,0.5)]">Eventraze</span> · Event Management Platform
-          </p>
-          <nav className="flex items-center gap-5">
-            {[
-              { to: "/help",    label: "Help Center"    },
-              { to: "/privacy", label: "Privacy Policy" },
-              { to: "/terms",   label: "Terms of Service" },
-            ].map(({ to, label }) => (
-              <Link key={to} to={to}
-                className="text-[11px] text-white/22 hover:text-white/50 transition-colors duration-150">
-                {label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </footer>
-    </div>
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-300/30 to-transparent" />
+        </footer>
+      </div>
+    </>
   );
 };
 
