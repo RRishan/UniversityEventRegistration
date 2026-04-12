@@ -4,6 +4,7 @@ import {
   XCircle, Calendar, MapPin, Users, ChevronDown,
   Search, Bell, Menu,
 } from "lucide-react";
+import MainLayout from "@/components/layout/MainLayout";
 
 /* ─────────────────────────────────────────
    STEP STATUS CONFIG — light palette
@@ -274,378 +275,298 @@ const EventDetail = () => {
       <div className="detail-root detail-bg min-h-screen flex flex-col">
         <div className="dot-grid" />
 
-        {/* ══════════════════════════════════════
-            HEADER
-        ══════════════════════════════════════ */}
-        <header className="detail-header sticky top-0 z-50">
-          <div className="max-w-[1200px] mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+        <MainLayout title="Event Detail" subtitle="Review and manage your event submission">
 
-            {/* Logo + nav */}
-            <div className="flex items-center gap-5">
-              <button aria-label="Menu" className="text-slate-400 hover:text-slate-700 transition-colors">
-                <Menu size={18} />
-              </button>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-                  style={{ background:"linear-gradient(135deg,#1d4ed8,#3b82f6)" }}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
-                  </svg>
-                </div>
-                <span className="font-display text-slate-800 text-base font-medium tracking-wide hidden sm:block">
-                  Eventraze
-                </span>
-              </div>
-              <nav className="hidden md:flex items-center gap-1">
-                {[
-                  { to:"/my-events", label:"Dashboard", active:true  },
-                  { to:"/my-events", label:"My Events",  active:false },
-                  { to:"/calendar",  label:"Calendar",   active:false },
-                ].map(({ to, label, active }) => (
-                  <Link key={label} to={to}
-                    className={`px-3.5 py-1.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                      active ? "nav-link-active" : "nav-link-inactive"
-                    }`}>
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-2.5">
-              <Link to="/event-registration"
-                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5
-                  text-xs font-semibold tracking-wide
-                  bg-white border border-slate-200 text-slate-600 rounded-xl
-                  hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50
-                  transition-all duration-150 shadow-sm">
-                + Create Event
-              </Link>
-              <button aria-label="Search" className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"><Search size={16} /></button>
-              <button aria-label="Notifications" className="relative w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
-                <Bell size={16} />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500 border-2 border-white" />
-              </button>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                SJ
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Breadcrumb */}
-        <div className="relative z-10 max-w-[1200px] mx-auto w-full px-6 py-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">Dashboard</Link>
-            <span className="breadcrumb-sep">›</span>
-            <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">My Events</Link>
-            <span className="breadcrumb-sep">›</span>
-            <span className="text-slate-600 font-medium truncate max-w-[200px]">{event.title}</span>
-          </div>
-        </div>
-
-        {/* ══════════════════════════════════════
-            PAGE BODY
-        ══════════════════════════════════════ */}
-        <main className="relative z-10 max-w-[1200px] mx-auto w-full px-6 pb-16 flex-1">
-
-          {/* ── Event header card ── */}
-          <div className="fade-up d1 detail-card bg-white border border-slate-200/80 rounded-2xl p-6 mb-5 overflow-hidden">
-            {/* Top accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-400 to-sky-400" />
-
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
-              <div className="flex items-start gap-4">
-                {/* Monogram */}
-                <div className="monogram-tile w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center">
-                  <span className="font-display text-xl font-semibold text-blue-600">{event.id}</span>
-                </div>
-
-                <div>
-                  <h1 className="font-display text-[1.6rem] font-medium leading-tight text-slate-800 mb-2">
-                    {event.title}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-400">
-                    <span className="flex items-center gap-1.5">
-                      <Users size={12} className="text-blue-400" />
-                      Organized by <span className="font-medium text-slate-600 ml-1">{event.organizer}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={12} className="text-blue-400" />
-                      Submitted <span className="font-medium text-slate-600 ml-1">{event.submittedDate}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status badge */}
-              <div className="self-start status-badge-review flex items-center gap-2 px-3.5 py-2 rounded-xl">
-                <div className="w-2 h-2 rounded-full bg-blue-500 pulse-dot" />
-                <span className="text-xs font-bold tracking-wide text-blue-700">{event.status}</span>
-              </div>
-            </div>
-
-            {/* Progress */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Approval Progress</span>
-                  <span className="text-xs font-bold text-blue-500 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
-                    {progressPct}%
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400">
-                  Step <span className="font-semibold text-slate-700">{event.currentStep}</span> of {event.steps.length}
-                </span>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width:`${progressPct}%` }} />
-              </div>
-              {/* Step labels */}
-              <div className="grid grid-cols-4 mt-2">
-                {event.steps.map((step) => (
-                  <div key={step.id} className={`text-center text-[10px] font-semibold uppercase tracking-wider ${
-                    step.status === "Completed"   ? "text-emerald-500" :
-                    step.status === "In Progress" ? "text-blue-500"    :
-                    step.status === "Skipped"     ? "text-red-400"     : "text-slate-300"
-                  }`}>
-                    {step.id}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-            {/* ══════════════════════════════════
-                LEFT: Approval Workflow
-            ══════════════════════════════════ */}
-            <div className="lg:col-span-2 fade-up d2">
-              <Card>
-                <SectionTitle>Approval Workflow</SectionTitle>
-
-                <div className="relative">
-                  {/* Connector line */}
-                  <div className="workflow-connector" />
-
-                  <div className="flex flex-col gap-3">
-                    {event.steps.map((step, index) => {
-                      const cfg = stepConfig[step.status] ?? stepConfig.Pending;
-                      const isActive = step.status === "In Progress";
-                      const isDone   = step.status === "Completed";
-                      const isLast   = index === event.steps.length - 1;
-
-                      return (
-                        <div key={step.id} className={`relative flex gap-4 ${isLast ? "" : "pb-0"}`}>
-                          {/* Step icon */}
-                          <div className="z-[1] mt-3 flex-shrink-0">
-                            <StepIcon status={step.status} />
-                          </div>
-
-                          {/* Step card */}
-                          <div className={`flex-1 step-card p-4 ${isActive ? "active-step" : ""}`}>
-                            {/* Title row */}
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <span className={`text-sm font-semibold ${isActive ? "text-blue-800" : isDone ? "text-slate-700" : "text-slate-500"}`}>
-                                Step {step.id}: {step.title}
-                              </span>
-                              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold tracking-[0.08em] uppercase px-2.5 py-1 rounded-full ${cfg.badge}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cfg.bar}`} />
-                                {step.status}
-                              </span>
-                            </div>
-
-                            {/* Meta */}
-                            <div className="flex flex-col gap-1 mb-2">
-                              {step.approver && (
-                                <p className="flex items-center gap-2 text-xs text-slate-500">
-                                  <Users size={11} className="text-blue-400" />
-                                  Approved by <span className="font-semibold text-slate-700">{step.approver}</span>
-                                </p>
-                              )}
-                              {step.assignee && (
-                                <p className="flex items-center gap-2 text-xs text-slate-500">
-                                  <Users size={11} className="text-blue-400" />
-                                  Assigned to <span className="font-semibold text-slate-700">{step.assignee}</span>
-                                </p>
-                              )}
-                              {step.approvedAt && (
-                                <p className="flex items-center gap-2 text-xs text-slate-400">
-                                  <Calendar size={11} className="text-slate-300" />
-                                  {step.approvedAt}
-                                </p>
-                              )}
-                              {step.pendingSince && (
-                                <p className="flex items-center gap-2 text-xs text-slate-400">
-                                  <Clock size={11} className="text-blue-400" />
-                                  Pending since {step.pendingSince}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Note box */}
-                            {step.note && step.status !== "Skipped" && (
-                              <div className={`mt-1.5 px-3 py-2.5 rounded-xl text-xs leading-relaxed
-                                ${isActive
-                                  ? "bg-blue-50 border border-blue-100 text-blue-700"
-                                  : "bg-slate-50 border border-slate-100 text-slate-500"
-                                }`}>
-                                <div className="flex items-start gap-2">
-                                  <AlertCircle size={12} className={`mt-0.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-300"}`} />
-                                  <div>
-                                    {isActive && <p className="font-semibold mb-0.5">Awaiting Review</p>}
-                                    <p>{step.note}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Skipped reason */}
-                            {step.reason && (
-                              <p className="flex items-center gap-2 text-xs text-red-400 mt-1.5">
-                                <AlertCircle size={11} /> {step.reason}
-                              </p>
-                            )}
-
-                            {/* Expand comments */}
-                            <button className="mt-2 flex items-center gap-1 text-[11px] text-slate-400
-                              hover:text-blue-500 transition-colors duration-150 font-medium">
-                              <ChevronDown size={12} />
-                              View comments &amp; feedback
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* ══════════════════════════════════
-                RIGHT SIDEBAR
-            ══════════════════════════════════ */}
-            <div className="flex flex-col gap-4">
-
-              {/* Quick Actions */}
-              <div className="fade-up d3 actions-card rounded-2xl p-6 relative overflow-hidden">
-                <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-30 pointer-events-none"
-                  style={{ background:"radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)" }} />
-
-                <SectionTitle>Quick Actions</SectionTitle>
-
-                <div className="flex flex-col gap-2.5">
-                  <button className="btn-download w-full flex items-center justify-center gap-2
-                    py-2.5 px-4 rounded-xl text-sm font-semibold text-white">
-                    <div className="btn-shine" />
-                    <span className="btn-download-label flex items-center gap-2">
-                      <Download size={14} /> Download Document
-                    </span>
-                  </button>
-
-                  <button className="btn-edit w-full flex items-center justify-center gap-2
-                    py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600">
-                    <Edit size={14} /> Edit Event
-                  </button>
-
-                  <button className="btn-cancel w-full flex items-center justify-center gap-2
-                    py-2.5 px-4 rounded-xl text-sm font-semibold text-red-600">
-                    <XCircle size={14} /> Cancel Event
-                  </button>
-                </div>
-              </div>
-
-              {/* Event Summary */}
-              <div className="fade-up d4">
-                <Card>
-                  <SectionTitle>Event Summary</SectionTitle>
-                  <div>
-                    {[
-                      { label:"Event Date",         icon:<Calendar size={13} />, value:event.eventDate },
-                      { label:"Location",           icon:<MapPin    size={13} />, value:event.location },
-                      { label:"Attendees",          icon:<Users     size={13} />, value:`${event.expectedAttendees} people` },
-                      { label:"Approval Status",    icon:<Clock     size={13} />, value:`Step ${event.currentStep} of ${event.steps.length}` },
-                    ].map(({ label, icon, value }) => (
-                      <div key={label} className="summary-row">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
-                          <span className="text-blue-400">{icon}</span>
-                          {label}
-                        </div>
-                        <span className="text-xs font-semibold text-slate-700 text-right">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
+          {/* Breadcrumb */}
+          <div className="relative z-10 max-w-[1200px] mx-auto w-full px-6 py-3">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">Dashboard</Link>
+              <span className="breadcrumb-sep">›</span>
+              <Link to="/my-events" className="hover:text-blue-600 transition-colors font-medium">My Events</Link>
+              <span className="breadcrumb-sep">›</span>
+              <span className="text-slate-600 font-medium truncate max-w-[200px]">{event.title}</span>
             </div>
           </div>
 
           {/* ══════════════════════════════════════
-              COMMENTS & FEEDBACK
+              PAGE BODY
           ══════════════════════════════════════ */}
-          <div className="fade-up d5 mt-5">
-            <Card>
-              <SectionTitle>Comments &amp; Feedback History</SectionTitle>
+          <main className="relative z-10 max-w-[1200px] mx-auto w-full px-6 pb-16 flex-1">
 
-              <div className="flex flex-col gap-3">
-                {event.comments.map((comment, idx) => (
-                  <div key={idx} className="comment-card p-4">
-                    <div className="flex gap-3">
-                      <Avatar name={comment.author} size="md" />
+            {/* ── Event header card ── */}
+            <div className="fade-up d1 detail-card bg-white border border-slate-200/80 rounded-2xl p-6 mb-5 overflow-hidden">
+              {/* Top accent bar */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-400 to-sky-400" />
 
-                      <div className="flex-1 min-w-0">
-                        {/* Author row */}
-                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-800">{comment.author}</span>
-                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{comment.role}</span>
-                            {comment.status && (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full
-                                bg-emerald-50 border border-emerald-200 text-emerald-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {comment.status}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] text-slate-400">{comment.date}</span>
-                        </div>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
+                <div className="flex items-start gap-4">
+                  {/* Monogram */}
+                  <div className="monogram-tile w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center">
+                    <span className="font-display text-xl font-semibold text-blue-600">{event.id}</span>
+                  </div>
 
-                        {/* Body */}
-                        <p className="text-sm leading-[1.7] text-slate-600">{comment.text}</p>
-                      </div>
+                  <div>
+                    <h1 className="font-display text-[1.6rem] font-medium leading-tight text-slate-800 mb-2">
+                      {event.title}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <Users size={12} className="text-blue-400" />
+                        Organized by <span className="font-medium text-slate-600 ml-1">{event.organizer}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={12} className="text-blue-400" />
+                        Submitted <span className="font-medium text-slate-600 ml-1">{event.submittedDate}</span>
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        </main>
+                </div>
 
-        {/* ══════════════════════════════════════
-            FOOTER
-        ══════════════════════════════════════ */}
-        <footer className="detail-footer relative z-10 py-5 mt-auto">
-          <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-slate-400">
-              © {new Date().getFullYear()} <span className="text-blue-500 font-semibold">Eventraze</span> · Event Management Platform
-            </p>
-            <nav className="flex items-center gap-1">
-              {[
-                { to:"/help",    label:"Help Center"     },
-                { to:"/privacy", label:"Privacy Policy"  },
-                { to:"/terms",   label:"Terms of Service"},
-              ].map(({ to, label }) => (
-                <Link key={to} to={to}
-                  className="text-xs text-slate-400 hover:text-blue-500 transition-colors px-2 py-1 rounded-lg hover:bg-blue-50">
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-300/30 to-transparent" />
-        </footer>
+                {/* Status badge */}
+                <div className="self-start status-badge-review flex items-center gap-2 px-3.5 py-2 rounded-xl">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 pulse-dot" />
+                  <span className="text-xs font-bold tracking-wide text-blue-700">{event.status}</span>
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="mt-6 pt-5 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Approval Progress</span>
+                    <span className="text-xs font-bold text-blue-500 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                      {progressPct}%
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Step <span className="font-semibold text-slate-700">{event.currentStep}</span> of {event.steps.length}
+                  </span>
+                </div>
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width:`${progressPct}%` }} />
+                </div>
+                {/* Step labels */}
+                <div className="grid grid-cols-4 mt-2">
+                  {event.steps.map((step) => (
+                    <div key={step.id} className={`text-center text-[10px] font-semibold uppercase tracking-wider ${
+                      step.status === "Completed"   ? "text-emerald-500" :
+                      step.status === "In Progress" ? "text-blue-500"    :
+                      step.status === "Skipped"     ? "text-red-400"     : "text-slate-300"
+                    }`}>
+                      {step.id}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+              {/* ══════════════════════════════════
+                  LEFT: Approval Workflow
+              ══════════════════════════════════ */}
+              <div className="lg:col-span-2 fade-up d2">
+                <Card>
+                  <SectionTitle>Approval Workflow</SectionTitle>
+
+                  <div className="relative">
+                    {/* Connector line */}
+                    <div className="workflow-connector" />
+
+                    <div className="flex flex-col gap-3">
+                      {event.steps.map((step, index) => {
+                        const cfg = stepConfig[step.status] ?? stepConfig.Pending;
+                        const isActive = step.status === "In Progress";
+                        const isDone   = step.status === "Completed";
+                        const isLast   = index === event.steps.length - 1;
+
+                        return (
+                          <div key={step.id} className={`relative flex gap-4 ${isLast ? "" : "pb-0"}`}>
+                            {/* Step icon */}
+                            <div className="z-[1] mt-3 flex-shrink-0">
+                              <StepIcon status={step.status} />
+                            </div>
+
+                            {/* Step card */}
+                            <div className={`flex-1 step-card p-4 ${isActive ? "active-step" : ""}`}>
+                              {/* Title row */}
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <span className={`text-sm font-semibold ${isActive ? "text-blue-800" : isDone ? "text-slate-700" : "text-slate-500"}`}>
+                                  Step {step.id}: {step.title}
+                                </span>
+                                <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold tracking-[0.08em] uppercase px-2.5 py-1 rounded-full ${cfg.badge}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cfg.bar}`} />
+                                  {step.status}
+                                </span>
+                              </div>
+
+                              {/* Meta */}
+                              <div className="flex flex-col gap-1 mb-2">
+                                {step.approver && (
+                                  <p className="flex items-center gap-2 text-xs text-slate-500">
+                                    <Users size={11} className="text-blue-400" />
+                                    Approved by <span className="font-semibold text-slate-700">{step.approver}</span>
+                                  </p>
+                                )}
+                                {step.assignee && (
+                                  <p className="flex items-center gap-2 text-xs text-slate-500">
+                                    <Users size={11} className="text-blue-400" />
+                                    Assigned to <span className="font-semibold text-slate-700">{step.assignee}</span>
+                                  </p>
+                                )}
+                                {step.approvedAt && (
+                                  <p className="flex items-center gap-2 text-xs text-slate-400">
+                                    <Calendar size={11} className="text-slate-300" />
+                                    {step.approvedAt}
+                                  </p>
+                                )}
+                                {step.pendingSince && (
+                                  <p className="flex items-center gap-2 text-xs text-slate-400">
+                                    <Clock size={11} className="text-blue-400" />
+                                    Pending since {step.pendingSince}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Note box */}
+                              {step.note && step.status !== "Skipped" && (
+                                <div className={`mt-1.5 px-3 py-2.5 rounded-xl text-xs leading-relaxed
+                                  ${isActive
+                                    ? "bg-blue-50 border border-blue-100 text-blue-700"
+                                    : "bg-slate-50 border border-slate-100 text-slate-500"
+                                  }`}>
+                                  <div className="flex items-start gap-2">
+                                    <AlertCircle size={12} className={`mt-0.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-300"}`} />
+                                    <div>
+                                      {isActive && <p className="font-semibold mb-0.5">Awaiting Review</p>}
+                                      <p>{step.note}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Skipped reason */}
+                              {step.reason && (
+                                <p className="flex items-center gap-2 text-xs text-red-400 mt-1.5">
+                                  <AlertCircle size={11} /> {step.reason}
+                                </p>
+                              )}
+
+                              {/* Expand comments */}
+                              <button className="mt-2 flex items-center gap-1 text-[11px] text-slate-400
+                                hover:text-blue-500 transition-colors duration-150 font-medium">
+                                <ChevronDown size={12} />
+                                View comments &amp; feedback
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* ══════════════════════════════════
+                  RIGHT SIDEBAR
+              ══════════════════════════════════ */}
+              <div className="flex flex-col gap-4">
+
+                {/* Quick Actions */}
+                <div className="fade-up d3 actions-card rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-30 pointer-events-none"
+                    style={{ background:"radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)" }} />
+
+                  <SectionTitle>Quick Actions</SectionTitle>
+
+                  <div className="flex flex-col gap-2.5">
+                    <button className="btn-download w-full flex items-center justify-center gap-2
+                      py-2.5 px-4 rounded-xl text-sm font-semibold text-white">
+                      <div className="btn-shine" />
+                      <span className="btn-download-label flex items-center gap-2">
+                        <Download size={14} /> Download Document
+                      </span>
+                    </button>
+
+                    <button className="btn-edit w-full flex items-center justify-center gap-2
+                      py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600">
+                      <Edit size={14} /> Edit Event
+                    </button>
+
+                    <button className="btn-cancel w-full flex items-center justify-center gap-2
+                      py-2.5 px-4 rounded-xl text-sm font-semibold text-red-600">
+                      <XCircle size={14} /> Cancel Event
+                    </button>
+                  </div>
+                </div>
+
+                {/* Event Summary */}
+                <div className="fade-up d4">
+                  <Card>
+                    <SectionTitle>Event Summary</SectionTitle>
+                    <div>
+                      {[
+                        { label:"Event Date",         icon:<Calendar size={13} />, value:event.eventDate },
+                        { label:"Location",           icon:<MapPin    size={13} />, value:event.location },
+                        { label:"Attendees",          icon:<Users     size={13} />, value:`${event.expectedAttendees} people` },
+                        { label:"Approval Status",    icon:<Clock     size={13} />, value:`Step ${event.currentStep} of ${event.steps.length}` },
+                      ].map(({ label, icon, value }) => (
+                        <div key={label} className="summary-row">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
+                            <span className="text-blue-400">{icon}</span>
+                            {label}
+                          </div>
+                          <span className="text-xs font-semibold text-slate-700 text-right">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+
+            {/* ══════════════════════════════════════
+                COMMENTS & FEEDBACK
+            ══════════════════════════════════════ */}
+            <div className="fade-up d5 mt-5">
+              <Card>
+                <SectionTitle>Comments &amp; Feedback History</SectionTitle>
+
+                <div className="flex flex-col gap-3">
+                  {event.comments.map((comment, idx) => (
+                    <div key={idx} className="comment-card p-4">
+                      <div className="flex gap-3">
+                        <Avatar name={comment.author} size="md" />
+
+                        <div className="flex-1 min-w-0">
+                          {/* Author row */}
+                          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold text-slate-800">{comment.author}</span>
+                              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{comment.role}</span>
+                              {comment.status && (
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full
+                                  bg-emerald-50 border border-emerald-200 text-emerald-700">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  {comment.status}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-400">{comment.date}</span>
+                          </div>
+
+                          {/* Body */}
+                          <p className="text-sm leading-[1.7] text-slate-600">{comment.text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          </main>
+
+        </MainLayout>
       </div>
     </>
   );
