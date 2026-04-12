@@ -8,6 +8,7 @@ const orginzerRouter = require('./routes/orginzerRoutes.js')
 const lectureRouter = require('./routes/lectureRoutes.js')
 const facultyRouter = require('./routes/facultyRoutes.js')
 const workFlowRouter = require('./routes/workFlowRoutes.js')
+const userRouter = require('./routes/userRoutes.js')
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/organizer', orginzerRouter)
 app.use('/api/lecture', lectureRouter)
 app.use('/api/faculty', facultyRouter)
 app.use('/api/workflow', workFlowRouter)
+app.use('/api/user', userRouter)
 
 
 module.exports = app;
