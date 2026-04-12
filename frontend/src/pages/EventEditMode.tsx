@@ -35,6 +35,13 @@ type EditForm = {
   _id: string;
 };
 
+type WorkflowItem = {
+  _id: string;
+  role: string;
+  status: string;
+  message?: string;
+};
+
 const EventEditMode = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -49,6 +56,8 @@ const EventEditMode = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [eventPreview, setEventPreview] = useState<EventDetails | null>(null);
+  const [canEditRejectedEvent, setCanEditRejectedEvent] = useState(false);
+  const [editGuardMessage, setEditGuardMessage] = useState("");
   const [formData, setFormData] = useState<EditForm>({
     title: "",
     description: "",
@@ -97,9 +106,33 @@ const EventEditMode = () => {
           participantsCount: event.expectedAttendees || 0,
           _id: event._id,
         });
+
+        const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, {
+          eventId: id,
+        });
+
+        if (workflowResponse.data?.success) {
+          const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent as WorkflowItem[] | undefined;
+          const items = Array.isArray(workflowContent) ? workflowContent : [];
+          const lastItem = items.length > 0 ? items[items.length - 1] : null;
+          const rejectedItem = [...items].reverse().find((item) => item.status === "rejected");
+
+          const allowed = Boolean(lastItem?.role === "organizer" && lastItem?.status === "pending" && rejectedItem);
+          setCanEditRejectedEvent(allowed);
+          setEditGuardMessage(
+            allowed
+              ? ""
+              : "Editing is only allowed when a reviewer rejects the event and workflow returns to organizer."
+          );
+        } else {
+          setCanEditRejectedEvent(false);
+          setEditGuardMessage("Unable to verify workflow status for editing.");
+        }
       } catch (error: any) {
         toast.error(error?.message || "Failed to load event details.");
         setEventPreview(null);
+        setCanEditRejectedEvent(false);
+        setEditGuardMessage("Unable to verify workflow status for editing.");
       } finally {
         setIsLoading(false);
       }
@@ -115,6 +148,10 @@ const EventEditMode = () => {
   const submitUpdate = async () => {
     if (!formData._id) {
       toast.error("Invalid event ID.");
+      return;
+    }
+    if (!canEditRejectedEvent) {
+      toast.error("This event can only be edited after rejection.");
       return;
     }
 
@@ -173,6 +210,11 @@ const EventEditMode = () => {
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
               <h2 className="text-xl font-semibold text-slate-900">Edit event details</h2>
               <p className="mt-1 text-sm text-slate-500">Change details and save to move forward in the workflow.</p>
+              {!canEditRejectedEvent && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {editGuardMessage}
+                </div>
+              )}
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
@@ -180,6 +222,7 @@ const EventEditMode = () => {
                   <input
                     value={formData.title}
                     onChange={(event) => updateField("title", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -190,6 +233,7 @@ const EventEditMode = () => {
                     rows={4}
                     value={formData.description}
                     onChange={(event) => updateField("description", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -199,6 +243,7 @@ const EventEditMode = () => {
                   <input
                     value={formData.category}
                     onChange={(event) => updateField("category", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -208,6 +253,7 @@ const EventEditMode = () => {
                   <input
                     value={formData.venue}
                     onChange={(event) => updateField("venue", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -218,6 +264,7 @@ const EventEditMode = () => {
                     type="date"
                     value={formData.startDate}
                     onChange={(event) => updateField("startDate", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -228,6 +275,7 @@ const EventEditMode = () => {
                     type="time"
                     value={formData.startTime}
                     onChange={(event) => updateField("startTime", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -238,6 +286,7 @@ const EventEditMode = () => {
                     type="date"
                     value={formData.endDate}
                     onChange={(event) => updateField("endDate", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -248,6 +297,7 @@ const EventEditMode = () => {
                     type="time"
                     value={formData.endTime}
                     onChange={(event) => updateField("endTime", event.target.value)}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -259,6 +309,7 @@ const EventEditMode = () => {
                     min={1}
                     value={formData.participantsCount}
                     onChange={(event) => updateField("participantsCount", Math.max(1, Number(event.target.value) || 1))}
+                    disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -268,7 +319,7 @@ const EventEditMode = () => {
                 <button
                   type="button"
                   onClick={submitUpdate}
-                  disabled={isSaving}
+                  disabled={isSaving || !canEditRejectedEvent}
                   className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSaving ? "Saving..." : "Save event details"}

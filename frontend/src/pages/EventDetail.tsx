@@ -341,9 +341,20 @@ const EventDetail = () => {
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">Quick links</h2>
                   <div className="mt-4 space-y-2">
-                    <Link to={`/event-edit/${eventData._id}`} className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-                      Open event edit mode
-                    </Link>
+                    {showOrganizerAction ? (
+                      <Link to={`/event-edit/${eventData._id}`} className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+                        Open event edit mode
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex w-full cursor-not-allowed justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
+                        title="Editing is available only when workflow is returned to organizer after rejection"
+                      >
+                        Edit available after rejection
+                      </button>
+                    )}
                     <Link to="/my-events" className="inline-flex w-full justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                       Back to my events
                     </Link>

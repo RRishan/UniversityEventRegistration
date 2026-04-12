@@ -135,7 +135,7 @@ const getAllEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
     try {
         // Get the attributes from request
-        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount,_id} = req.body;
+        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount,_id, userId} = req.body;
 
         // Check attributes are valid or not
         if(!title) {
@@ -180,6 +180,25 @@ const updateEvent = async (req, res) => {
 
         if(!participantsCount) {
             return res.send({success: false, message: "Missing Participants Count"})
+        }
+
+        const eventRecord = await Event.findOne({_id, organizationId: userId});
+
+        if(!eventRecord) {
+            return res.send({success: false, message: "Invalid Event or Unauthorized organizer"})
+        }
+
+        const workflow = await WorkFlow.findOne({eventId: _id});
+
+        if(!workflow || !Array.isArray(workflow.workFlowContent) || workflow.workFlowContent.length === 0) {
+            return res.send({success: false, message: "Workflow not found for this event"})
+        }
+
+        const latestWorkflowItem = workflow.workFlowContent[workflow.workFlowContent.length - 1];
+        const hasRejectedStep = workflow.workFlowContent.some(item => item.status === "rejected");
+
+        if(!(latestWorkflowItem.role === "organizer" && latestWorkflowItem.status === "pending" && hasRejectedStep)) {
+            return res.send({success: false, message: "Event can only be edited after rejection and when returned to organizer"})
         }
 
         // Update the event from database
