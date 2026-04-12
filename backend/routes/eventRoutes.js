@@ -9,6 +9,7 @@ router.get('/event', eventController.getEvent)
 router.get('/events', eventController.getAllEvent)
 router.get('/events', eventController.getAllEvent)
 router.put('/update', eventController.updateEvent)
+router.post('/update', eventController.updateEvent)
 router.delete('/delete', eventController.deleteEvent)
 router.get('/organization-events', userAuth, eventController.getEventsByOrganization)
 

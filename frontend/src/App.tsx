@@ -14,6 +14,7 @@ import Events from "./pages/Events";
 import MyEvents from "./pages/MyEvents";
 import EventRegistration from "./pages/EventRegistration";
 import EventDetail from "./pages/EventDetail";
+import EventEditMode from "./pages/EventEditMode";
 import ApprovalDashboard from "./pages/ApprovalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Reports from "./pages/Reports";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/event-registration" element={<EventRegistration />} />
             <Route path="/event/:id" element={<ProtectedRoute><EventProfile /></ProtectedRoute>} />
             <Route path="/event-detail/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
+            <Route path="/event-edit/:id" element={<ProtectedRoute><EventEditMode /></ProtectedRoute>} />
             <Route path="/approval-dashboard" element={<ApprovalDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/reports" element={<Reports />} />

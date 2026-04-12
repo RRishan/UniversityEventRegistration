@@ -87,7 +87,7 @@ const addEvent = async (req, res) => {
 const getEvent = async (req, res) => {
     try {
         //Get attributes
-        const {eventId} = req.body;
+        const eventId = req.body?.eventId || req.query?.eventId;
 
         //Check event id valid or not
         if(!eventId) {
@@ -183,7 +183,21 @@ const updateEvent = async (req, res) => {
         }
 
         // Update the event from database
-        const event = await Event.updateOne({_id}, {$set: {title, description, category, venue, startDate, startTime, endDate, endTime, participantsCount}})
+        const eventDateToSave = startDate || endDate;
+
+        const event = await Event.updateOne(
+            {_id},
+            {$set: {
+                eventTitle: title,
+                description,
+                category,
+                venue,
+                eventDate: eventDateToSave,
+                startTime,
+                endTime,
+                expectedAttendees: participantsCount
+            }}
+        )
 
         //Check event valid or not
         if(!event) {
