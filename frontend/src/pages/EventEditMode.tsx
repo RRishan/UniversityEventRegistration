@@ -1,4 +1,4 @@
-﻿import { useContext, useEffect, useState } from "react";
+﻿import { type ChangeEvent, useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ type EditForm = {
   endDate: string;
   endTime: string;
   participantsCount: number;
+  imageLink: string;
   _id: string;
 };
 
@@ -55,6 +56,7 @@ const EventEditMode = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [eventPreview, setEventPreview] = useState<EventDetails | null>(null);
   const [canEditRejectedEvent, setCanEditRejectedEvent] = useState(false);
   const [editGuardMessage, setEditGuardMessage] = useState("");
@@ -68,6 +70,7 @@ const EventEditMode = () => {
     endDate: "",
     endTime: "",
     participantsCount: 0,
+    imageLink: "",
     _id: "",
   });
 
@@ -104,6 +107,7 @@ const EventEditMode = () => {
           endDate: event.eventDate || "",
           endTime: event.endTime || "",
           participantsCount: event.expectedAttendees || 0,
+          imageLink: event.imageLink || "",
           _id: event._id,
         });
 
@@ -145,6 +149,46 @@ const EventEditMode = () => {
     setFormData((previous) => ({ ...previous, [key]: value }));
   };
 
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!canEditRejectedEvent) {
+      toast.error("This event can only be edited after rejection.");
+      return;
+    }
+
+    try {
+      const file = e.target.files?.[0];
+      if (!file) {
+        toast.error("No file selected.");
+        return;
+      }
+
+      setIsUploadingImage(true);
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", "event-registration");
+
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/dadxdprtg/image/upload",
+        data,
+        { withCredentials: false },
+      );
+
+      const uploadedLink = response.data?.secure_url;
+      if (!uploadedLink) {
+        toast.error("Image upload failed.");
+        return;
+      }
+
+      updateField("imageLink", uploadedLink);
+      setEventPreview((previous) => (previous ? { ...previous, imageLink: uploadedLink } : previous));
+      toast.success("Event image updated.");
+    } catch (error: any) {
+      toast.error(error?.message || "Image upload failed. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const submitUpdate = async () => {
     if (!formData._id) {
       toast.error("Invalid event ID.");
@@ -169,6 +213,7 @@ const EventEditMode = () => {
         endDate: formData.endDate,
         endTime: formData.endTime,
         participantsCount: formData.participantsCount,
+        imageLink: formData.imageLink,
         _id: formData._id,
       });
 
@@ -236,6 +281,29 @@ const EventEditMode = () => {
                     disabled={!canEditRejectedEvent}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Event image</label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                      <img
+                        src={formData.imageLink || eventPreview.imageLink}
+                        alt={formData.title || "Event image"}
+                        className="h-48 w-full object-cover"
+                      />
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                      {isUploadingImage ? "Uploading..." : "Change image"}
+                      <input
+                        type="file"
+                        accept=".png,.jpg,.jpeg"
+                        onChange={handleFileUpload}
+                        disabled={!canEditRejectedEvent || isUploadingImage}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 <div>
@@ -343,13 +411,13 @@ const EventEditMode = () => {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              {/* <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-lg font-semibold text-slate-900">Backend contract</h2>
                 <p className="mt-2 text-sm text-slate-600">This page sends exactly:</p>
                 <code className="mt-2 block rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
                   {`{ title, description, category, venue, startDate, startTime, endDate, endTime, participantsCount, _id }`}
                 </code>
-              </section>
+              </section> */}
             </aside>
           </div>
         )}
@@ -359,3 +427,4 @@ const EventEditMode = () => {
 };
 
 export default EventEditMode;
+

@@ -135,7 +135,7 @@ const getAllEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
     try {
         // Get the attributes from request
-        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount,_id, userId} = req.body;
+        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount, imageLink, _id, userId} = req.body;
 
         // Check attributes are valid or not
         if(!title) {
@@ -214,7 +214,8 @@ const updateEvent = async (req, res) => {
                 eventDate: eventDateToSave,
                 startTime,
                 endTime,
-                expectedAttendees: participantsCount
+                expectedAttendees: participantsCount,
+                ...(imageLink ? { imageLink } : {})
             }}
         )
 
