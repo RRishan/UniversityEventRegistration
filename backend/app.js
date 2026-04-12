@@ -27,7 +27,6 @@ app.use('/api/organizer', orginzerRouter)
 app.use('/api/lecture', lectureRouter)
 app.use('/api/faculty', facultyRouter)
 app.use('/api/workflow', workFlowRouter)
-app.use('/api/workflow', workFlowRouter)
 
 
 module.exports = app;

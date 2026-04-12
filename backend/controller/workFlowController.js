@@ -266,6 +266,37 @@ const updateWorkFlowStatus = async (req, res) => {
     }
 }
 
+const getWorkFlowByOrganizer = async (req, res) => {
+    try {
+        const {userId, eventId} = req.body;
+
+        const user = await User.findById(userId);
+
+        if(!user) {
+            return res.send({success: false, message: "Invalid User"})
+        }
+
+        const role = user.adminProfile.role;
+
+        if(role !== "organizer") {
+            return res.send({success: false, message: "User is not an organizer"})
+        }
+
+        console.log("Fetching workflow for eventId:", eventId);
+
+        const workflow = await WorkFlow.findOne({eventId});
+
+
+        return res.send({success: true, message: {
+            workflow
+        }})
+
+    } catch (error) {
+        return res.send({success: false, message: "Error fetching workflow: " + error.message})
+    }
+}
+
 
 exports.getWorkFlowByRole = getWorkFlowByRole;
 exports.updateWorkFlowStatus = updateWorkFlowStatus;
+exports.getWorkFlowByOrganizer = getWorkFlowByOrganizer;
