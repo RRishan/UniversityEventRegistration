@@ -29,17 +29,43 @@ const HERO_PARTICLES: HeroParticle[] = [
   { size: 3, x: 48, delay: 5, duration: 15 },
 ];
 
-const CALENDAR_EVENT_MAP: CalendarEventMap = {
-  "13": {
-    title: "KIZUNA KIOKO",
-    time: "7:00 PM - 10:00 PM",
-    location: "Main Auditorium",
-  },
-  "24": {
-    title: "INNA",
-    time: "8:00 PM - 11:00 PM",
-    location: "Campus Ground",
-  },
+type ApiEvent = {
+  _id: string;
+  eventTitle: string;
+  description: string;
+  category: string;
+  eventDate: string;
+  expectedAttendees: number;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  imageLink: string;
+};
+
+const FEATURED_DATE_COLORS = [
+  "from-blue-500 to-indigo-500",
+  "from-sky-500 to-blue-500",
+  "from-cyan-500 to-sky-500",
+  "from-indigo-500 to-blue-500",
+];
+
+const formatTime12Hour = (time24: string) => {
+  const [hoursRaw, minutesRaw] = time24.split(":");
+  const hours = Number(hoursRaw);
+  const minutes = Number(minutesRaw);
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return time24;
+  }
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 };
 
 const getCalendarDays = (date: Date, highlightedDays: number[]): CalendarDay[] => {
@@ -70,32 +96,73 @@ const getCalendarDays = (date: Date, highlightedDays: number[]): CalendarDay[] =
 const HomeContainer = () => {
   const { isLoggedIn, backendUrl } = useContext(AppContext);
 
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
   const [isEventsLoading, setIsEventsLoading] = useState(true);
 
-  const calendarEventMap = useMemo(() => CALENDAR_EVENT_MAP, []);
   const heroParticles = useMemo(() => HERO_PARTICLES, []);
   const heroStats = useMemo(() => HERO_STATS, []);
 
-  const monthYearLabel = useMemo(
-    () => new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" }).format(new Date()),
-    [],
-  );
+  const activeMonthDate = useMemo(() => new Date(), []);
+
+  const monthYearLabel = useMemo(() => {
+    return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" }).format(activeMonthDate);
+  }, [activeMonthDate]);
+
+  const eventsForActiveMonth = useMemo(() => {
+    return apiEvents.filter((event) => {
+      const date = new Date(event.eventDate);
+      return date.getFullYear() === activeMonthDate.getFullYear() && date.getMonth() === activeMonthDate.getMonth();
+    });
+  }, [apiEvents, activeMonthDate]);
+
+  const upcomingEvents = useMemo<UpcomingEvent[]>(() => {
+    return apiEvents.map((event) => ({
+      id: event._id,
+      title: event.eventTitle,
+      description: event.description,
+      image: event.imageLink,
+      category: `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`,
+      readTime: `${Math.ceil(event.expectedAttendees / 10)} min read`,
+    }));
+  }, [apiEvents]);
+
+  const calendarEventMap = useMemo<CalendarEventMap>(() => {
+    return eventsForActiveMonth.reduce<CalendarEventMap>((accumulator, event) => {
+      const day = new Date(event.eventDate).getDate().toString();
+      const startTime = formatTime12Hour(event.startTime);
+      const endTime = formatTime12Hour(event.endTime);
+
+      accumulator[day] = {
+        title: event.eventTitle,
+        time: `${startTime} - ${endTime}`,
+        location: event.venue || "TBA",
+      };
+
+      return accumulator;
+    }, {});
+  }, [eventsForActiveMonth]);
 
   const highlightedDays = useMemo(
     () => Object.keys(calendarEventMap).map((day) => Number(day)),
     [calendarEventMap],
   );
 
-  const calendarDays = useMemo(() => getCalendarDays(new Date(), highlightedDays), [highlightedDays]);
+  const calendarDays = useMemo(() => getCalendarDays(activeMonthDate, highlightedDays), [activeMonthDate, highlightedDays]);
 
-  const featuredDates = useMemo<FeaturedDate[]>(
-    () => [
-      { date: "Feb 13", name: "KIZUNA KIOKO", color: "from-blue-500 to-indigo-500" },
-      { date: "Feb 24", name: "INNA", color: "from-sky-500 to-blue-500" },
-    ],
-    [],
-  );
+  const featuredDates = useMemo<FeaturedDate[]>(() => {
+    return eventsForActiveMonth
+      .slice()
+      .sort((left, right) => new Date(left.eventDate).getTime() - new Date(right.eventDate).getTime())
+      .slice(0, 4)
+      .map((event, index) => ({
+        date: new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "2-digit",
+        }).format(new Date(event.eventDate)),
+        name: event.eventTitle,
+        color: FEATURED_DATE_COLORS[index % FEATURED_DATE_COLORS.length],
+      }));
+  }, [eventsForActiveMonth]);
 
   const fetchUpcomingEvents = useCallback(async () => {
     setIsEventsLoading(true);
@@ -103,26 +170,20 @@ const HomeContainer = () => {
     try {
       axios.defaults.withCredentials = true;
       const response = await axios.get(`${backendUrl}/api/event/events`);
+      const payload = response.data;
 
-      if (!response.data.success) {
-        toast.error(response.data.message || "Failed to load events.");
-        setUpcomingEvents([]);
+      if (!payload?.success) {
+        toast.error(payload?.message || "Failed to load events.");
+        setApiEvents([]);
         return;
       }
 
-      const normalizedEvents: UpcomingEvent[] = response.data.message.map((event: any) => ({
-        id: event._id,
-        title: event.eventTitle,
-        description: event.description,
-        image: event.imageLink,
-        category: `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`,
-        readTime: `${Math.ceil(event.expectedAttendees / 10)} min read`,
-      }));
+      const eventsFromApi = Array.isArray(payload.message) ? payload.message : [];
 
-      setUpcomingEvents(normalizedEvents);
+      setApiEvents(eventsFromApi);
     } catch (error: any) {
       toast.error(error?.message || "Something went wrong while loading events.");
-      setUpcomingEvents([]);
+      setApiEvents([]);
     } finally {
       setIsEventsLoading(false);
     }
