@@ -161,7 +161,12 @@ const HomePresenter = ({
             <h2 id="home-cta-title" className="text-4xl font-semibold">Start managing your events today</h2>
             <p className="mt-3 text-sm text-white/80">Create, track, and engage with campus events through our streamlined platform.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link to="/event-registration" className="rounded-lg bg-blue-500 px-5 py-2.5 text-sm font-semibold">Register now</Link>
+              {
+                !isLoggedIn && (
+                  <Link to="/event-registration" className="rounded-lg bg-blue-500 px-5 py-2.5 text-sm font-semibold">Register now</Link>
+                )
+              }
+              
               <Link to="/events" className="rounded-lg border border-white/40 px-5 py-2.5 text-sm">Browse events</Link>
             </div>
           </div>
