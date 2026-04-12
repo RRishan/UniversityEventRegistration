@@ -139,6 +139,12 @@ const Header = () => {
                 {isActive("/my-events") && <span className="nav-link-active-bar" />}
               </Link>
             )}
+            {(userData?.role !== "organizer" && userData.role !== "student") && (
+              <Link to="/approval-dashboard" className={navLink("/approval-dashboard")}>
+                Dashboard
+                  {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
+              </Link>
+            )}
 
             <Link to="/profile" className={navLink("/profile")}>
               My Profile

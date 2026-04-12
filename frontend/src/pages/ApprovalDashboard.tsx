@@ -4,10 +4,12 @@ import {
   Search, Calendar, Eye, MessageCircle, X, Check,
   AlertTriangle, Clock, Download, FileText,
   ChevronLeft, ChevronRight, Settings, LogOut,
+  Home,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { AppContext } from "@/context/AppContext";
+import { set } from "date-fns";
 
 /* ─────────────────────────────────────────
    STATUS CONFIG
@@ -149,6 +151,8 @@ const ApprovalDashboard = () => {
   const [activeNav,      setActiveNav]      = useState("pending");
   const [events,         setEvents]         = useState<DashboardEvent[]>([]);
   const [isLoadingData,  setIsLoadingData]  = useState(true);
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
 
   const navigate = useNavigate();
 
@@ -248,8 +252,29 @@ const ApprovalDashboard = () => {
     }
   };
 
+  const getUserProfile = async () => {
+    try {
+      axios.defaults.withCredentials = true;
+
+      const { data } = await axios.get(`${backendUrl}/api/user/profile`);
+      if(!data?.success) {
+        toast.error(data?.message || "Failed to fetch user profile.");
+        return;
+      }
+
+      setName(data.user.fullName || "");
+
+      console.log("User profile data:", data.user.role);
+      setRole(data.user.role ? formatRole(data.user.role) : "User");
+
+    }catch (error: any) {
+      toast.error(error?.message || "Failed to fetch user profile.");
+    }
+  }
+
   useEffect(() => {
     fetchWorkflowQueue();
+    getUserProfile();
   }, [backendUrl]);
 
   const handleWorkflowAction = async (status: "approved" | "rejected") => {
@@ -432,8 +457,8 @@ const ApprovalDashboard = () => {
             <Link to="/profile" className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
               <Avatar name="Dr. Sarah Mitchell" size="md" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-700 truncate">Dr. Sarah Mitchell</p>
-                <p className="text-[11px] text-slate-400 truncate">Dean of Faculty</p>
+                <p className="text-sm font-semibold text-slate-700 truncate">{name}</p>
+                <p className="text-[11px] text-slate-400 truncate">{role}</p>
               </div>
               <Settings size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
             </Link>
@@ -449,7 +474,7 @@ const ApprovalDashboard = () => {
           <header className="dash-header sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h1 className="font-display text-xl font-medium text-slate-800">Approval Dashboard</h1>
-              <span className="stat-pill text-xs font-bold text-blue-700 px-3 py-1 rounded-full">Dean of Faculty</span>
+              <span className="stat-pill text-xs font-bold text-blue-700 px-3 py-1 rounded-full">{role}</span>
             </div>
             <div className="flex items-center gap-3">
               {/* Notification bell */}
@@ -458,6 +483,15 @@ const ApprovalDashboard = () => {
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
+              </button>
+
+              <button
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-500
+                  bg-white border border-slate-200 hover:border-green-200 hover:text-green-600 hover:bg-green-50
+                  transition-all duration-200 shadow-sm">
+                <Home size={14} />
+                Home
               </button>
 
               <button

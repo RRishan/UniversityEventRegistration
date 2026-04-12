@@ -203,6 +203,18 @@ const Profile = () => {
         } else {
           toast.error("Error fetching profile data: " + data.message);
         }
+      }else {
+        const { data } = await axios.get(backendUrl + "/api/user/profile");
+        if (!data.success) {
+          toast.error("Error fetching profile data: " + data.message);
+        }
+
+        const { fullName, email, contactNum, regiNumber } = data.user;
+        setFormData({
+          ...formData, fullName, universityEmail: email,
+          registrationNumber: regiNumber, phoneNumber: contactNum,
+        });
+
       }
     } catch (error: any) {
       toast.error("Error fetching profile data " + error.message);

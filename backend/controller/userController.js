@@ -12,6 +12,7 @@ const getUserProfile = async (req, res) => {
             fullName: user.fullName,
             email: user.email,
             department: user.adminProfile?.department || user.studentProfile?.department || user.lectureProfile?.facultyName || "",
+            role: user.adminProfile?.role || (user.studentProfile ? "student" : user.lectureProfile ? "lecture" : ""),
             studentProfile: user?.studentProfile,
             lectureProfile: user?.lectureProfile,
             regiNumber: user.regiNumber,
