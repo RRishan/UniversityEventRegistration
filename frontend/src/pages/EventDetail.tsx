@@ -1,4 +1,4 @@
-﻿import { useContext, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -97,50 +97,48 @@ const EventDetail = () => {
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
+  const [organizerResponseMessage, setOrganizerResponseMessage] = useState("");
+
+  const fetchEventAndWorkflow = useCallback(async () => {
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      axios.defaults.withCredentials = true;
+
+      const eventResponse = await axios.get(`${backendUrl}/api/event/organization-events`);
+      if (eventResponse.data?.success && Array.isArray(eventResponse.data?.message)) {
+        const matchedEvent = (eventResponse.data.message as EventData[]).find((event) => event._id === id) || null;
+        setEventData(matchedEvent);
+      } else {
+        setEventData(null);
+      }
+
+      const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, { eventId: id });
+      if (workflowResponse.data?.success) {
+        const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent;
+        setWorkflowItems(Array.isArray(workflowContent) ? workflowContent : []);
+      } else {
+        setWorkflowItems([]);
+        toast.error(workflowResponse.data?.message || "Failed to load workflow.");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to load event details.");
+      setEventData(null);
+      setWorkflowItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [backendUrl, id]);
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      if (!id) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-
-      try {
-        axios.defaults.withCredentials = true;
-
-        const eventResponse = await axios.get(`${backendUrl}/api/event/organization-events`);
-        console.log(eventResponse.data)
-        if (eventResponse.data?.success && Array.isArray(eventResponse.data?.message)) {
-          console.log((eventResponse.data.message as EventData[]));
-          const matchedEvent = (eventResponse.data.message as EventData[]).find((event) => event._id === id) || null;
-          
-          setEventData(matchedEvent);
-        } else {
-          setEventData(null);
-        }
-
-        const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, { eventId: id });
-        
-        if (workflowResponse.data?.success) {
-          const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent;
-          setWorkflowItems(Array.isArray(workflowContent) ? workflowContent : []);
-        } else {
-          setWorkflowItems([]);
-          toast.error(workflowResponse.data?.message || "Failed to load workflow.");
-        }
-      } catch (error: any) {
-        toast.error(error?.message || "Failed to load event details.");
-        setEventData(null);
-        setWorkflowItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [backendUrl, id]);
+    fetchEventAndWorkflow();
+  }, [fetchEventAndWorkflow]);
 
   const approvedCount = useMemo(() => workflowItems.filter((item) => item.status === "approved").length, [workflowItems]);
   const progress = workflowItems.length > 0 ? Math.round((approvedCount / workflowItems.length) * 100) : 0;
@@ -152,6 +150,53 @@ const EventDetail = () => {
     if (workflowItems.length > 0) return "Pending";
     return "Not Started";
   }, [workflowItems]);
+
+  const latestWorkflowItem = useMemo(() => {
+    if (workflowItems.length === 0) return null;
+    return workflowItems[workflowItems.length - 1];
+  }, [workflowItems]);
+
+  const latestRejectedItem = useMemo(() => {
+    for (let index = workflowItems.length - 1; index >= 0; index -= 1) {
+      if (workflowItems[index].status === "rejected") {
+        return workflowItems[index];
+      }
+    }
+    return null;
+  }, [workflowItems]);
+
+  const showOrganizerAction = latestWorkflowItem?.role === "organizer" && latestWorkflowItem?.status === "pending";
+
+  const handleSubmitOrganizerResponse = async () => {
+    const trimmedMessage = organizerResponseMessage.trim();
+    if (!trimmedMessage) {
+      toast.error("Please add your update message before continuing.");
+      return;
+    }
+
+    try {
+      setIsSubmittingResponse(true);
+      axios.defaults.withCredentials = true;
+
+      const response = await axios.post(`${backendUrl}/api/workflow/update`, {
+        status: "approved",
+        message: trimmedMessage,
+      });
+
+      if (!response.data?.success) {
+        toast.error(response.data?.message || "Failed to submit workflow update.");
+        return;
+      }
+
+      toast.success("Update sent successfully. Workflow moved to the next step.");
+      setOrganizerResponseMessage("");
+      await fetchEventAndWorkflow();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to submit workflow update.");
+    } finally {
+      setIsSubmittingResponse(false);
+    }
+  };
 
   return (
     <MainLayout title="Event Detail" subtitle="Real-time event and approval workflow details">
@@ -242,6 +287,47 @@ const EventDetail = () => {
               </section>
 
               <aside className="space-y-5">
+                {showOrganizerAction && (
+                  <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
+                    <h2 className="text-lg font-semibold text-slate-900">Action required from organizer</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      This event was sent back for changes. Update your event details, then confirm below to continue the workflow.
+                    </p>
+
+                    {latestRejectedItem?.message?.trim() && (
+                      <div className="mt-4 rounded-xl border border-amber-200 bg-white p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700">
+                          Rejection note from {formatRole(latestRejectedItem.role)}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-700">{latestRejectedItem.message}</p>
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <label htmlFor="organizer-response" className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        Your message
+                      </label>
+                      <textarea
+                        id="organizer-response"
+                        value={organizerResponseMessage}
+                        onChange={(event) => setOrganizerResponseMessage(event.target.value)}
+                        rows={4}
+                        placeholder="I changed the date. Please continue the workflow."
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSubmitOrganizerResponse}
+                      disabled={isSubmittingResponse}
+                      className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmittingResponse ? "Submitting..." : "Submit update and continue workflow"}
+                    </button>
+                  </section>
+                )}
+
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">Event summary</h2>
                   <div className="mt-4 space-y-3 text-sm">

@@ -87,7 +87,7 @@ const addEvent = async (req, res) => {
 const getEvent = async (req, res) => {
     try {
         //Get attributes
-        const {eventId} = req.query
+        const {eventId} = req.body;
 
         //Check event id valid or not
         if(!eventId) {
