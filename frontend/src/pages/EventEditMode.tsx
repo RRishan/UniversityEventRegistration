@@ -74,6 +74,8 @@ const EventEditMode = () => {
     _id: "",
   });
 
+  const isFullyCompleted = eventPreview?.isApproved === true;
+
   useEffect(() => {
     const fetchEventDetails = async () => {
       if (!id) {
@@ -110,6 +112,13 @@ const EventEditMode = () => {
           imageLink: event.imageLink || "",
           _id: event._id,
         });
+
+        if (event.isApproved === true) {
+          setCanEditRejectedEvent(false);
+          setEditGuardMessage("This event is fully completed (approved) and can no longer be edited.");
+          setIsLoading(false);
+          return;
+        }
 
         const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, {
           eventId: id,
@@ -255,6 +264,11 @@ const EventEditMode = () => {
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
               <h2 className="text-xl font-semibold text-slate-900">Edit event details</h2>
               <p className="mt-1 text-sm text-slate-500">Change details and save to move forward in the workflow.</p>
+              {isFullyCompleted && (
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                  This event is fully completed because <span className="font-semibold">isApproved = true</span>.
+                </div>
+              )}
               {!canEditRejectedEvent && (
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                   {editGuardMessage}

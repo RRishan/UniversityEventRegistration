@@ -144,12 +144,13 @@ const EventDetail = () => {
   const progress = workflowItems.length > 0 ? Math.round((approvedCount / workflowItems.length) * 100) : 0;
 
   const workflowStatus = useMemo(() => {
+    if (eventData?.isApproved === true) return "Fully Completed";
     if (workflowItems.some((item) => item.status === "rejected")) return "Rejected";
     if (workflowItems.length > 0 && workflowItems.every((item) => item.status === "approved")) return "Completed";
     if (workflowItems.length > 0 && workflowItems.some((item) => item.status === "approved")) return "In Progress";
     if (workflowItems.length > 0) return "Pending";
     return "Not Started";
-  }, [workflowItems]);
+  }, [eventData?.isApproved, workflowItems]);
 
   const latestWorkflowItem = useMemo(() => {
     if (workflowItems.length === 0) return null;
@@ -165,7 +166,10 @@ const EventDetail = () => {
     return null;
   }, [workflowItems]);
 
-  const showOrganizerAction = latestWorkflowItem?.role === "organizer" && latestWorkflowItem?.status === "pending";
+  const showOrganizerAction =
+    eventData?.isApproved !== true &&
+    latestWorkflowItem?.role === "organizer" &&
+    latestWorkflowItem?.status === "pending";
 
   const handleSubmitOrganizerResponse = async () => {
     const trimmedMessage = organizerResponseMessage.trim();
@@ -219,7 +223,7 @@ const EventDetail = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
                   <p className="inline-flex rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]">
-                    {eventData.isApproved ? "Approved Event" : "Pending Approval"}
+                    {eventData.isApproved ? "Fully Completed Event" : "Pending Approval"}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold">{eventData.eventTitle}</h1>
                   <p className="mt-2 max-w-3xl text-sm text-white/90">{eventData.description}</p>
