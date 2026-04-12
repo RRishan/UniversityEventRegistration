@@ -3,6 +3,10 @@ import crowdBg from "@/assets/crowd-bg.jpg";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import FeaturesSection from "@/components/ui/FeaturesSection";
+import CategoriesSection from "@/components/ui/CategoriesSection";
+import HowItWorksSection from "@/components/ui/HowItWorksSection";
+import TestimonialsSection from "@/components/ui/TestimonialsSection";
 
 export type CalendarEvent = { title: string; time: string; location: string };
 export type CalendarEventMap = Record<string, CalendarEvent>;
@@ -26,6 +30,39 @@ type HomePresenterProps = {
 };
 
 const Arrow = () => <span aria-hidden="true">-&gt;</span>;
+
+const featureItems = [
+  {
+    title: "Fast Discovery",
+    description: "Find relevant workshops, talks, and activities in seconds with a clean event feed.",
+  },
+  {
+    title: "Smooth Registration",
+    description: "Register quickly and track your participation without jumping across multiple systems.",
+  },
+  {
+    title: "Organizer Friendly",
+    description: "Create events, monitor attendees, and manage approvals from one place.",
+  },
+];
+
+const processSteps = [
+  {
+    step: "01",
+    title: "Browse",
+    description: "Explore upcoming events by category and date to find what matches your interests.",
+  },
+  {
+    step: "02",
+    title: "Register",
+    description: "Sign up with a few clicks and receive clear event details right away.",
+  },
+  {
+    step: "03",
+    title: "Participate",
+    description: "Attend, engage, and keep track of your campus activity journey over time.",
+  },
+];
 
 const CalendarCell = ({ day, highlighted, event }: { day: string; highlighted: boolean; event?: CalendarEvent }) => {
   if (!day) return <div className="h-9" aria-hidden="true" />;
@@ -154,6 +191,52 @@ const HomePresenter = ({
             </div>
           )}
         </section>
+
+        <FeaturesSection />
+        <CategoriesSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+
+        {/* <section className="mx-auto max-w-6xl px-6 pb-14" aria-labelledby="why-use-title">
+          <div className="mb-7 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-blue-600">Platform benefits</p>
+              <h2 id="why-use-title" className="text-3xl font-semibold text-slate-900">Built for campus life</h2>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {featureItems.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
+                  <span aria-hidden="true">*</span>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden bg-slate-900 px-6 py-14 text-white" aria-labelledby="how-it-works-title">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-xs uppercase tracking-[0.12em] text-blue-300">Simple flow</p>
+            <h2 id="how-it-works-title" className="mt-2 text-3xl font-semibold">How it works</h2>
+
+            <div className="mt-8 grid gap-5 md:grid-cols-3">
+              {processSteps.map((item) => (
+                <article key={item.step} className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
+                  <p className="text-xs font-semibold tracking-[0.12em] text-blue-300">{item.step}</p>
+                  <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/80">{item.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section> */}
 
         <section className="relative overflow-hidden bg-slate-900 px-6 py-16 text-center text-white" aria-labelledby="home-cta-title">
           <img src={crowdBg} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" />

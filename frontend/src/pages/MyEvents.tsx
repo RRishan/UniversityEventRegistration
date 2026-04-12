@@ -244,7 +244,7 @@ const EventCard = ({ event }: { event: MyEvent }) => {
 
         {/* Actions */}
         <div className="flex gap-2 pt-3 border-t border-slate-100">
-          <Link to={`/event/${event.id}`}
+          <Link to={`/event-detail/${event.id}`}
             className="flex-1 btn-view inline-flex items-center justify-center gap-1.5
               py-2.5 px-3 rounded-xl text-xs font-semibold text-white">
             <div className="btn-shine" />
