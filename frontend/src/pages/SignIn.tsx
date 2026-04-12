@@ -175,7 +175,7 @@ const SignIn = () => {
 
       if (data.success) {
         await checkAuth();
-        if (data.role === "lecture" || data.role === "headOfSection") {
+        if (data.role !== "student" && data.role !== "organizer") {
           navigate("/approval-dashboard");
         } else {
           navigate("/");

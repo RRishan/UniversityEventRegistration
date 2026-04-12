@@ -1,14 +1,13 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search, Calendar, Eye, MessageCircle, X, Check,
   AlertTriangle, Clock, Download, FileText,
   ChevronLeft, ChevronRight, Settings, LogOut,
 } from "lucide-react";
-import crowdBg from "@/assets/crowd-bg.jpg";
 import axios from "axios";
-import { AppContext } from "@/context/AppContext";
 import { toast } from "sonner";
+import { AppContext } from "@/context/AppContext";
 
 /* ─────────────────────────────────────────
    STATUS CONFIG
@@ -73,35 +72,94 @@ const SideNavItem = ({
   </button>
 );
 
+type WorkflowApiItem = {
+  _id: string;
+  role: string;
+  status: string;
+  updatedAt?: string;
+  message?: string;
+};
+
+type WorkflowApiEvent = {
+  _id: string;
+  eventTitle: string;
+  description: string;
+  eventDate: string;
+  expectedAttendees: number;
+  venue: string;
+  classRoomName?: string;
+  isApproved: boolean;
+  organizerProfile?: {
+    clubSociety?: string;
+    advisorName?: string;
+  };
+};
+
+type DashboardComment = {
+  author: string;
+  role: string;
+  time: string;
+  text: string;
+};
+
+type DashboardEvent = {
+  id: string;
+  workflowId: string;
+  title: string;
+  organizer: string;
+  submissionDate: string;
+  status: string;
+  eventDate: string;
+  location: string;
+  expectedAttendees: number;
+  description: string;
+  documents: string[];
+  comments: DashboardComment[];
+  workflowContent: WorkflowApiItem[];
+};
+
+const formatRole = (role: string) =>
+  role
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatDateTime = (value?: string) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+};
+
 /* ═══════════════════════════════════════════════════════ */
 const ApprovalDashboard = () => {
   const [searchQuery,    setSearchQuery]    = useState("");
   const [statusFilter,   setStatusFilter]   = useState("all");
-  const [selectedEvent,  setSelectedEvent]  = useState<typeof events[0] | null>(null);
+  const [selectedEvent,  setSelectedEvent]  = useState<DashboardEvent | null>(null);
   const [comment,        setComment]        = useState("");
   const [activeNav,      setActiveNav]      = useState("pending");
+  const [events,         setEvents]         = useState<DashboardEvent[]>([]);
+  const [isLoadingData,  setIsLoadingData]  = useState(true);
+
   const navigate = useNavigate();
 
-  const events = [
-    { id:1, title:"Annual Research Symposium 2025",  organizer:"Dr. Nayana",           submissionDate:"Dec 28, 2024", status:"Overdue",   dueDate:"Jan 15, 2025", eventDate:"March 15-17, 2025", location:"University Conference Center", expectedAttendees:250,
-      description:"Annual symposium showcasing faculty and graduate student research across all departments. Features keynote speakers, poster sessions, and networking opportunities.",
-      documents:["Event_Proposal.pdf"],
-      comments:[
-        { author:"Dr. Sarah Mitchell", role:"Dean of Faculty",   time:"2 days ago",   text:"Please provide more details on the catering arrangements and accessibility accommodations." },
-        { author:"Dr. James Wilson",   role:"",                  time:"1 day ago",    text:"Updated documentation has been attached with the requested information." },
-        { author:"Prof. Michael Torres",role:"",                 time:"5 hours ago",  text:"Budget seems reasonable for this scale of event." },
-      ],
-    },
-    { id:2, title:"Spring Career Fair 2025",         organizer:"Prof. Emily Chen",      submissionDate:"Jan 02, 2025", status:"Pending",   eventDate:"April 5, 2025",    location:"Main Hall",                    expectedAttendees:500, description:"Annual career fair connecting students with employers.",               documents:[], comments:[] },
-    { id:3, title:"Guest Lecture Series: AI Ethics", organizer:"Dr. Michael Brown",     submissionDate:"Jan 03, 2025", status:"Pending",   eventDate:"Feb 20, 2025",     location:"Lecture Hall B",               expectedAttendees:150, description:"Guest lecture on ethical considerations in AI development.",          documents:[], comments:[] },
-    { id:4, title:"Student Innovation Workshop",     organizer:"Lisa Anderson",          submissionDate:"Dec 20, 2024", status:"Overdue",   dueDate:"Jan 10, 2025", eventDate:"March 1, 2025",    location:"Innovation Lab",               expectedAttendees:75,  description:"Workshop on innovation and entrepreneurship for students.",           documents:[], comments:[] },
-    { id:5, title:"Department Fundraiser Gala",      organizer:"Prof. Robert Martinez",  submissionDate:"Jan 04, 2025", status:"Pending",   eventDate:"May 10, 2025",     location:"Grand Ballroom",               expectedAttendees:300, description:"Annual fundraising gala for department scholarships.",               documents:[], comments:[] },
-    { id:6, title:"Graduate Student Orientation",    organizer:"Dr. Amanda Lee",         submissionDate:"Jan 05, 2025", status:"In Review", eventDate:"Aug 25, 2025",     location:"Student Center",               expectedAttendees:200, description:"Orientation program for new graduate students.",                     documents:[], comments:[] },
-  ];
-
-  const statusCounts = { pending:8, inReview:3, completed:0, overdue:2 };
-
   const { backendUrl, setIsLoggedIn } = useContext(AppContext);
+
+  const statusCounts = useMemo(() => ({
+    pending: events.filter((event) => event.status === "Pending").length,
+    inReview: events.filter((event) => event.status === "In Review").length,
+    completed: events.filter((event) => event.status === "Approved").length,
+    overdue: events.filter((event) => event.status === "Overdue").length,
+  }), [events]);
 
   const handleLogout = async (e: React.FormEvent) => {
     try {
@@ -119,10 +177,114 @@ const ApprovalDashboard = () => {
     }
   };
 
-  const filteredEvents = events.filter(e => {
-    const matchSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        e.organizer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = statusFilter === "all" || e.status.toLowerCase().replace(" ", "-") === statusFilter;
+  const fetchWorkflowQueue = async () => {
+    try {
+      setIsLoadingData(true);
+      axios.defaults.withCredentials = true;
+
+      const { data } = await axios.get(`${backendUrl}/api/workflow/get`);
+      if (!data?.success) {
+        toast.error(data?.message || "Failed to fetch approval queue.");
+        setEvents([]);
+        setSelectedEvent(null);
+        return;
+      }
+
+      const workflowMessage = data.message;
+      const workflowContent: WorkflowApiItem[] = Array.isArray(workflowMessage?.workflowContent)
+        ? workflowMessage.workflowContent
+        : [];
+      const eventPayload: WorkflowApiEvent | null = workflowMessage?.event || null;
+
+      if (!eventPayload) {
+        setEvents([]);
+        setSelectedEvent(null);
+        return;
+      }
+
+      const latestItem = workflowContent.length > 0 ? workflowContent[workflowContent.length - 1] : null;
+      const eventStatus =
+        eventPayload.isApproved
+          ? "Approved"
+          : latestItem?.status === "rejected"
+            ? "Overdue"
+            : latestItem?.status === "approved"
+              ? "In Review"
+              : "Pending";
+
+      const mappedComments: DashboardComment[] = workflowContent.map((item) => ({
+        author: formatRole(item.role),
+        role: "Workflow Step",
+        time: formatDateTime(item.updatedAt),
+        text: item.message?.trim() ? item.message : `Status changed to ${item.status}.`,
+      }));
+
+      const mappedEvent: DashboardEvent = {
+        id: String(eventPayload._id),
+        workflowId: String(workflowMessage?.workflowId || ""),
+        title: eventPayload.eventTitle,
+        organizer: eventPayload.organizerProfile?.advisorName || eventPayload.organizerProfile?.clubSociety || "Organizer",
+        submissionDate: latestItem?.updatedAt ? formatDateTime(latestItem.updatedAt) : "-",
+        status: eventStatus,
+        eventDate: eventPayload.eventDate,
+        location: eventPayload.classRoomName
+          ? `${eventPayload.venue} (${eventPayload.classRoomName})`
+          : eventPayload.venue,
+        expectedAttendees: eventPayload.expectedAttendees,
+        description: eventPayload.description,
+        documents: [],
+        comments: mappedComments,
+        workflowContent,
+      };
+
+      setEvents([mappedEvent]);
+      setSelectedEvent(mappedEvent);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to fetch approval queue.");
+      setEvents([]);
+      setSelectedEvent(null);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkflowQueue();
+  }, [backendUrl]);
+
+  const handleWorkflowAction = async (status: "approved" | "rejected") => {
+    if (!selectedEvent) return;
+    if (status === "rejected" && !comment.trim()) {
+      toast.error("Please add a rejection comment.");
+      return;
+    }
+
+    try {
+      axios.defaults.withCredentials = true;
+      const { data } = await axios.post(`${backendUrl}/api/workflow/update`, {
+        status,
+        message: comment.trim(),
+      });
+
+      if (!data?.success) {
+        toast.error(data?.message || "Failed to update workflow.");
+        return;
+      }
+
+      toast.success(status === "approved" ? "Workflow approved." : "Workflow rejected.");
+      setComment("");
+      await fetchWorkflowQueue();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update workflow.");
+    }
+  };
+
+  const filteredEvents = events.filter((event) => {
+    const matchSearch =
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.organizer.toLowerCase().includes(searchQuery.toLowerCase());
+    const normalized = event.status.toLowerCase().replace(/\s+/g, "-");
+    const matchStatus = statusFilter === "all" || normalized === statusFilter;
     return matchSearch && matchStatus;
   });
 
@@ -254,14 +416,14 @@ const ApprovalDashboard = () => {
           {/* Nav items */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 px-3 pt-1 pb-2">Queue</p>
-            <SideNavItem icon={<Clock size={16} />}       label="Pending"    count={statusCounts.pending}  active={activeNav==="pending"}    onClick={() => setActiveNav("pending")} />
-            <SideNavItem icon={<Eye size={16} />}         label="In Review"  count={statusCounts.inReview} active={activeNav==="in-review"}  onClick={() => setActiveNav("in-review")} />
-            <SideNavItem icon={<Check size={16} />}       label="Completed"  active={activeNav==="completed"} onClick={() => setActiveNav("completed")} />
-            <SideNavItem icon={<AlertTriangle size={16} />} label="Overdue"  count={statusCounts.overdue}  danger active={activeNav==="overdue"}   onClick={() => setActiveNav("overdue")} />
+            <SideNavItem icon={<Clock size={16} />}       label="Pending"    count={statusCounts.pending}  active={activeNav==="pending"}    onClick={() => { setActiveNav("pending"); setStatusFilter("pending"); }} />
+            <SideNavItem icon={<Eye size={16} />}         label="In Review"  count={statusCounts.inReview} active={activeNav==="in-review"}  onClick={() => { setActiveNav("in-review"); setStatusFilter("in-review"); }} />
+            <SideNavItem icon={<Check size={16} />}       label="Completed"  count={statusCounts.completed} active={activeNav==="completed"} onClick={() => { setActiveNav("completed"); setStatusFilter("approved"); }} />
+            <SideNavItem icon={<AlertTriangle size={16} />} label="Overdue"  count={statusCounts.overdue}  danger active={activeNav==="overdue"}   onClick={() => { setActiveNav("overdue"); setStatusFilter("overdue"); }} />
 
             <div className="pt-3 mt-3 border-t border-slate-100">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 px-3 pb-2">Account</p>
-              <SideNavItem icon={<Clock size={16} />}    label="My History" active={activeNav==="history"} onClick={() => setActiveNav("history")} />
+              <SideNavItem icon={<Clock size={16} />}    label="My History" active={activeNav==="history"} onClick={() => { setActiveNav("history"); setStatusFilter("all"); }} />
             </div>
           </nav>
 
@@ -338,6 +500,7 @@ const ApprovalDashboard = () => {
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="in-review">In Review</option>
+                <option value="approved">Completed</option>
                 <option value="overdue">Overdue</option>
               </select>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none">
@@ -388,7 +551,17 @@ const ApprovalDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEvents.map((event, idx) => (
+                    {isLoadingData && (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-sm text-slate-500">Loading approval queue...</td>
+                      </tr>
+                    )}
+                    {!isLoadingData && filteredEvents.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-sm text-slate-500">No workflow items found for your role.</td>
+                      </tr>
+                    )}
+                    {!isLoadingData && filteredEvents.map((event, idx) => (
                       <tr
                         key={event.id}
                         className={`table-row row-fade cursor-pointer ${selectedEvent?.id === event.id ? "selected" : ""} ${event.status === "Overdue" ? "overdue-row" : ""}`}
@@ -405,12 +578,12 @@ const ApprovalDashboard = () => {
                           <p className={`text-sm font-semibold truncate ${selectedEvent?.id === event.id ? "text-blue-700" : "text-slate-700"}`}>
                             {event.title}
                           </p>
-                          {event.dueDate && (
+                          {/* {event.dueDate && (
                             <p className="text-[11px] text-red-500 flex items-center gap-1 mt-0.5">
                               <AlertTriangle size={10} />
                               Due: {event.dueDate}
                             </p>
-                          )}
+                          )} */}
                         </td>
 
                         {/* Organizer */}
@@ -432,8 +605,8 @@ const ApprovalDashboard = () => {
                           <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                             <button className="action-icon action-icon-view"    title="View"><Eye size={13} /></button>
                             <button className="action-icon action-icon-comment" title="Comment"><MessageCircle size={13} /></button>
-                            <button className="action-icon action-icon-check"   title="Approve"><Check size={13} /></button>
-                            <button className="action-icon action-icon-x"       title="Reject"><X size={13} /></button>
+                            <button className="action-icon action-icon-check"   title="Approve" onClick={() => { setSelectedEvent(event); handleWorkflowAction("approved"); }}><Check size={13} /></button>
+                            <button className="action-icon action-icon-x"       title="Reject" onClick={() => { setSelectedEvent(event); handleWorkflowAction("rejected"); }}><X size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -444,7 +617,7 @@ const ApprovalDashboard = () => {
 
               {/* Pagination */}
               <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between bg-white">
-                <p className="text-xs text-slate-400">Showing <span className="font-semibold text-slate-600">{filteredEvents.length}</span> of 13 events</p>
+                <p className="text-xs text-slate-400">Showing <span className="font-semibold text-slate-600">{filteredEvents.length}</span> of {events.length} events</p>
                 <div className="flex items-center gap-1.5">
                   <button className="page-btn"><ChevronLeft size={14} /></button>
                   {[1,2,3].map(n => (
@@ -570,12 +743,12 @@ const ApprovalDashboard = () => {
 
                 {/* Action buttons — fixed at bottom */}
                 <div className="flex-shrink-0 p-4 border-t border-slate-100 space-y-2 bg-white">
-                  <button className="btn-approve w-full py-2.5 rounded-xl text-sm font-semibold text-white relative overflow-hidden flex items-center justify-center gap-2">
+                  <button onClick={() => handleWorkflowAction("approved")} className="btn-approve w-full py-2.5 rounded-xl text-sm font-semibold text-white relative overflow-hidden flex items-center justify-center gap-2">
                     <div className="btn-shine" />
                     <span className="relative z-10 flex items-center gap-2"><Check size={14} /> Approve</span>
                   </button>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="btn-reject py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+                    <button onClick={() => handleWorkflowAction("rejected")} className="btn-reject py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
                       <X size={13} /> Reject
                     </button>
                     <button className="btn-revision py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
