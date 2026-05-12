@@ -38,7 +38,7 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { backendUrl, setIsLoggedIn, userData } = useContext(AppContext);
+  const { backendUrl, setIsLoggedIn, userData, isLoggedIn } = useContext(AppContext);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -86,10 +86,9 @@ const Header = () => {
 
   /* nav link base */
   const navLink = (path: string) =>
-    `relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.82rem] font-medium transition-all duration-200 whitespace-nowrap ${
-      isActive(path)
-        ? "text-blue-600 bg-blue-50"
-        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+    `relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.82rem] font-medium transition-all duration-200 whitespace-nowrap ${isActive(path)
+      ? "text-blue-600 bg-blue-50"
+      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
     }`;
 
   /* avatar initials */
@@ -104,9 +103,8 @@ const Header = () => {
       `}</style>
 
       <header
-        className={`header-glass sticky top-0 z-[100] w-full border-b border-slate-200/60 font-body transition-all duration-300 ${
-          scrolled ? "scrolled" : ""
-        }`}
+        className={`header-glass sticky top-0 z-[100] w-full border-b border-slate-200/60 font-body transition-all duration-300 ${scrolled ? "scrolled" : ""
+          }`}
       >
         <div className="max-w-[1240px] mx-auto px-5 h-[64px] flex items-center justify-between gap-4">
 
@@ -139,28 +137,29 @@ const Header = () => {
                 {isActive("/my-events") && <span className="nav-link-active-bar" />}
               </Link>
             )}
-            {(userData?.role !== "organizer" && userData.role !== "student") && (
+            {userData && userData.role !== "organizer" && userData.role !== "student" && (
               <Link to="/approval-dashboard" className={navLink("/approval-dashboard")}>
                 Dashboard
-                  {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
+                {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
               </Link>
             )}
 
-            <Link to="/profile" className={navLink("/profile")}>
-              My Profile
-              {isActive("/profile") && <span className="nav-link-active-bar" />}
-            </Link>
+            {isLoggedIn && (
+              <Link to="/profile" className={navLink("/profile")}>
+                My Profile
+                {isActive("/profile") && <span className="nav-link-active-bar" />}
+              </Link>
+            )}
 
             {/* ── MORE DROPDOWN ── */}
             {isAdminOrLecturer && (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowMoreDropdown((p) => !p)}
-                  className={`more-btn flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.82rem] font-medium border transition-all ${
-                    showMoreDropdown
-                      ? "open"
-                      : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100"
-                  }`}
+                  className={`more-btn flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.82rem] font-medium border transition-all ${showMoreDropdown
+                    ? "open"
+                    : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100"
+                    }`}
                 >
                   More
                   <ChevronDown
@@ -226,38 +225,50 @@ const Header = () => {
 
           {/* ── RIGHT ACTIONS ── */}
           <div className="flex items-center gap-2.5 shrink-0">
+            {isLoggedIn ? (
+              <>
+                {/* Username */}
+                {userData?.name && (
+                  <span className="hidden lg:block text-[0.78rem] font-medium text-slate-500 max-w-[110px] truncate">
+                    {userData.name}
+                  </span>
+                )}
 
-            {/* Username */}
-            {userData?.name && (
-              <span className="hidden lg:block text-[0.78rem] font-medium text-slate-500 max-w-[110px] truncate">
-                {userData.name}
-              </span>
+                {/* Avatar */}
+                <Link to="/profile">
+                  <div className="avatar-ring">
+                    <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
+                      {userData?.name ? (
+                        <span className="text-[11px] font-bold text-blue-600 tracking-wide">{initials}</span>
+                      ) : (
+                        <User size={14} className="text-blue-400" />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Divider */}
+                <div className="header-divider" />
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="logout-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.78rem] font-medium text-slate-400"
+                >
+                  <LogOut size={13} />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/sign-in" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                  Sign in
+                </Link>
+                <Link to="/sign-up" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                  Sign up
+                </Link>
+              </>
             )}
-
-            {/* Avatar */}
-            <Link to="/profile">
-              <div className="avatar-ring">
-                <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
-                  {userData?.name ? (
-                    <span className="text-[11px] font-bold text-blue-600 tracking-wide">{initials}</span>
-                  ) : (
-                    <User size={14} className="text-blue-400" />
-                  )}
-                </div>
-              </div>
-            </Link>
-
-            {/* Divider */}
-            <div className="header-divider" />
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="logout-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.78rem] font-medium text-slate-400"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
           </div>
         </div>
 

@@ -59,9 +59,8 @@ const IconSparkle = () => (
 
 const PasswordCheck = ({ passed, label }: { passed: boolean; label: string }) => (
   <div className="flex items-center gap-2 text-[11px] font-medium transition-all duration-300">
-    <span className={`w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
-      passed ? "bg-emerald-100 text-emerald-500" : "bg-slate-100 text-slate-300"
-    }`}>
+    <span className={`w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 ${passed ? "bg-emerald-100 text-emerald-500" : "bg-slate-100 text-slate-300"
+      }`}>
       {passed ? <Check size={9} strokeWidth={3} /> : <X size={9} strokeWidth={2.5} />}
     </span>
     <span className={`transition-colors duration-300 ${passed ? "text-emerald-600" : "text-slate-400"}`}>
@@ -172,12 +171,12 @@ const SignUp = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
 
           {/* Logo */}
-          <div className="relative z-10 p-10 flex items-center gap-3">
+          <Link to="/" className="relative z-10 p-10 flex items-center gap-3 w-fit hover:opacity-90 transition-opacity">
             <div className="logo-badge w-9 h-9 rounded-xl flex items-center justify-center text-white">
               <IconSparkle />
             </div>
             <span className="font-display text-white text-xl tracking-wide font-medium">Eventraze</span>
-          </div>
+          </Link>
 
           {/* Steps visual */}
           <div className="relative z-10 px-10 mt-auto mb-8">
@@ -187,9 +186,8 @@ const SignUp = () => {
               { num: "02", title: "Build your profile", desc: "Preferences & interests", active: false },
               { num: "03", title: "Start exploring", desc: "Discover amazing events", active: false },
             ].map((step) => (
-              <div key={step.num} className={`flex items-start gap-4 py-3 border-l-2 pl-4 mb-1 transition-all ${
-                step.active ? "border-blue-400" : "border-white/10"
-              }`}>
+              <div key={step.num} className={`flex items-start gap-4 py-3 border-l-2 pl-4 mb-1 transition-all ${step.active ? "border-blue-400" : "border-white/10"
+                }`}>
                 <span className={`text-[11px] font-bold tracking-widest mt-0.5 ${step.active ? "text-blue-300" : "text-white/25"}`}>
                   {step.num}
                 </span>
@@ -220,12 +218,12 @@ const SignUp = () => {
           <div className="relative z-10 w-full max-w-[460px] glass-card rounded-3xl p-8">
 
             {/* Mobile logo */}
-            <div className="lg:hidden flex items-center gap-2 mb-7">
+            <Link to="/" className="lg:hidden flex items-center gap-2 mb-7 w-fit hover:opacity-80 transition-opacity">
               <div className="logo-badge w-8 h-8 rounded-xl flex items-center justify-center text-white">
                 <IconSparkle />
               </div>
               <span className="font-display text-slate-800 text-lg font-medium">Eventraze</span>
-            </div>
+            </Link>
 
             {/* Step indicators */}
             <div className="fade-in-up s1 flex items-center gap-2 mb-6">
@@ -336,9 +334,8 @@ const SignUp = () => {
                   <IconLock />
                   <input
                     type={showConfirm ? "text" : "password"}
-                    className={`input-field w-full rounded-xl pl-11 pr-12 py-3 text-slate-700 text-sm ${
-                      confirmError ? "error-ring" : ""
-                    }`}
+                    className={`input-field w-full rounded-xl pl-11 pr-12 py-3 text-slate-700 text-sm ${confirmError ? "error-ring" : ""
+                      }`}
                     placeholder="Repeat your password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}

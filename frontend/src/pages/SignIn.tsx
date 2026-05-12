@@ -212,14 +212,14 @@ const SignIn = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
 
           {/* Logo */}
-          <div className="relative z-10 p-10 flex items-center gap-3">
+          <Link to="/" className="relative z-10 p-10 flex items-center gap-3 w-fit hover:opacity-90 transition-opacity">
             <div className="logo-badge w-9 h-9 rounded-xl flex items-center justify-center text-white">
               <IconSparkle />
             </div>
             <span className="font-display text-white text-xl tracking-wide font-medium">
               Eventraze
             </span>
-          </div>
+          </Link>
 
           {/* Tags */}
           <div className="relative z-10 px-10 flex gap-2 mt-auto mb-6">
@@ -273,12 +273,12 @@ const SignIn = () => {
           <div className="relative z-10 w-full max-w-[420px] glass-card rounded-3xl p-10">
 
             {/* Mobile logo */}
-            <div className="lg:hidden flex items-center gap-2 mb-8">
+            <Link to="/" className="lg:hidden flex items-center gap-2 mb-8 w-fit hover:opacity-80 transition-opacity">
               <div className="logo-badge w-8 h-8 rounded-xl flex items-center justify-center text-white">
                 <IconSparkle />
               </div>
               <span className="font-display text-slate-800 text-lg font-medium">Eventraze</span>
-            </div>
+            </Link>
 
             {/* Header */}
             <div className="fade-in-up stagger-1 mb-8">
