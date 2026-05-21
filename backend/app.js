@@ -13,7 +13,7 @@ require('dotenv').config();
 
 const app = express();
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:8080'];
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:8080','https://university-event-registration-rfqy.vercel.app/'];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 // app.use(cors());
