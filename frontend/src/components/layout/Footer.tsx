@@ -182,6 +182,7 @@ const Footer = () => {
                 <FooterLink to="#">Support</FooterLink>
                 <FooterLink to="#">FAQ</FooterLink>
                 <FooterLink to="#">Contact</FooterLink>
+                <FooterLink to="/sign-in">Admin</FooterLink>
               </ul>
             </div>
 

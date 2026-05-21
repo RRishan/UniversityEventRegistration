@@ -10,7 +10,7 @@ const CategoriesSection = () => {
       icon: <><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></> },
     { label: "Sports",            count: "31 events",
       icon: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16M8 22v-5M16 22v-5M12 17c-4 0-7-3-7-7V4h14v6c0 4-3 7-7 7z"/></> },
-    { label: "Networking",        count: "15 events",
+    { label: "Conferences",        count: "15 events",
       icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></> },
     { label: "Cultural",          count: "22 events",
       icon: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></> },

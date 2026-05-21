@@ -175,7 +175,7 @@ const SignIn = () => {
 
       if (data.success) {
         await checkAuth();
-        if (data.role !== "student" && data.role !== "organizer") {
+        if (data.role !== "president") {
           navigate("/approval-dashboard");
         } else {
           navigate("/");
@@ -212,14 +212,17 @@ const SignIn = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
 
           {/* Logo */}
-          <div className="relative z-10 p-10 flex items-center gap-3">
-            <div className="logo-badge w-9 h-9 rounded-xl flex items-center justify-center text-white">
-              <IconSparkle />
+          <Link to="/" className="absolute top-6 left-6 z-20 flex items-center gap-2">
+            <div className="relative z-10 p-10 flex items-center gap-3">
+              <div className="logo-badge w-9 h-9 rounded-xl flex items-center justify-center text-white">
+                <IconSparkle />
+              </div>
+              <span className="font-display text-white text-xl tracking-wide font-medium">
+                Eventraze
+              </span>
             </div>
-            <span className="font-display text-white text-xl tracking-wide font-medium">
-              Eventraze
-            </span>
-          </div>
+          </Link>
+          
 
           {/* Tags */}
           <div className="relative z-10 px-10 flex gap-2 mt-auto mb-6">

@@ -111,7 +111,6 @@ const HomePresenter = ({
               <p className="mt-4 max-w-xl text-sm text-white/80">Streamline event registration and approval for students, organizers, and faculty.</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link to="/events" className="rounded-lg bg-blue-500 px-5 py-2.5 text-sm font-semibold" aria-label="Browse all events">Browse events</Link>
-                {!isLoggedIn && <Link to="/event-registration" className="rounded-lg border border-white/40 px-5 py-2.5 text-sm" aria-label="Register now">Register now</Link>}
               </div>
               <div className="mt-8 grid grid-cols-3 gap-4" aria-label="Platform statistics">
                 {heroStats.map((stat) => (
@@ -192,51 +191,10 @@ const HomePresenter = ({
           )}
         </section>
 
-        <FeaturesSection />
+        {/* <FeaturesSection /> */}
         <CategoriesSection />
         <HowItWorksSection />
         <TestimonialsSection />
-
-        {/* <section className="mx-auto max-w-6xl px-6 pb-14" aria-labelledby="why-use-title">
-          <div className="mb-7 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.12em] text-blue-600">Platform benefits</p>
-              <h2 id="why-use-title" className="text-3xl font-semibold text-slate-900">Built for campus life</h2>
-            </div>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            {featureItems.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
-                  <span aria-hidden="true">*</span>
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="relative overflow-hidden bg-slate-900 px-6 py-14 text-white" aria-labelledby="how-it-works-title">
-          <div className="mx-auto max-w-6xl">
-            <p className="text-xs uppercase tracking-[0.12em] text-blue-300">Simple flow</p>
-            <h2 id="how-it-works-title" className="mt-2 text-3xl font-semibold">How it works</h2>
-
-            <div className="mt-8 grid gap-5 md:grid-cols-3">
-              {processSteps.map((item) => (
-                <article key={item.step} className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
-                  <p className="text-xs font-semibold tracking-[0.12em] text-blue-300">{item.step}</p>
-                  <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-white/80">{item.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section> */}
 
         <section className="relative overflow-hidden bg-slate-900 px-6 py-16 text-center text-white" aria-labelledby="home-cta-title">
           <img src={crowdBg} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" />
@@ -244,12 +202,6 @@ const HomePresenter = ({
             <h2 id="home-cta-title" className="text-4xl font-semibold">Start managing your events today</h2>
             <p className="mt-3 text-sm text-white/80">Create, track, and engage with campus events through our streamlined platform.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              {
-                !isLoggedIn && (
-                  <Link to="/event-registration" className="rounded-lg bg-blue-500 px-5 py-2.5 text-sm font-semibold">Register now</Link>
-                )
-              }
-              
               <Link to="/events" className="rounded-lg border border-white/40 px-5 py-2.5 text-sm">Browse events</Link>
             </div>
           </div>

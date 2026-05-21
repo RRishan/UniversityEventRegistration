@@ -45,7 +45,7 @@ const App = () => (
             <Route path="/events" element={<Events />} />
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/event-registration" element={<EventRegistration />} />
-            <Route path="/event/:id" element={<ProtectedRoute><EventProfile /></ProtectedRoute>} />
+            <Route path="/event/:id" element={<EventProfile />} />
             <Route path="/event-detail/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
             <Route path="/event-edit/:id" element={<ProtectedRoute><EventEditMode /></ProtectedRoute>} />
             <Route path="/approval-dashboard" element={<ApprovalDashboard />} />
