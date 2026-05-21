@@ -7,7 +7,6 @@ const router = express.Router();
 router.post('/register', userAuth ,eventController.addEvent)
 router.get('/event', eventController.getEvent)
 router.get('/events', eventController.getAllEvent)
-router.get('/events', eventController.getAllEvent)
 router.put('/update', userAuth, eventController.updateEvent)
 router.post('/update', userAuth, eventController.updateEvent)
 router.delete('/delete', eventController.deleteEvent)

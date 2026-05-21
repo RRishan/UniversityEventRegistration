@@ -117,6 +117,8 @@ const getAllEvent = async (req, res) => {
         // Get event array from database 
         const events = await Event.find({ isApproved: true });
 
+        
+
         // Check events invalid or not
         if(!events) {
             return res.send({success: false, message: "Invalid Events"})
