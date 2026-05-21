@@ -145,11 +145,12 @@ const Header = () => {
                   {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
               </Link>
             )}
-
-            <Link to="/profile" className={navLink("/profile")}>
-              My Profile
-              {isActive("/profile") && <span className="nav-link-active-bar" />}
-            </Link>
+            {userData?.role !== "student" && (
+              <Link to="/profile" className={navLink("/profile")}>
+                My Profile
+                {isActive("/profile") && <span className="nav-link-active-bar" />}
+              </Link>
+            )}
 
             {/* ── MORE DROPDOWN ── */}
             {isAdminOrLecturer && (
@@ -235,29 +236,37 @@ const Header = () => {
             )}
 
             {/* Avatar */}
-            <Link to="/profile">
-              <div className="avatar-ring">
-                <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
-                  {userData?.name ? (
-                    <span className="text-[11px] font-bold text-blue-600 tracking-wide">{initials}</span>
-                  ) : (
-                    <User size={14} className="text-blue-400" />
-                  )}
-                </div>
-              </div>
-            </Link>
+            {
+              userData.role !== "student" && (
+                <Link to="/profile">
+                  <div className="avatar-ring">
+                    <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
+                      {userData?.name ? (
+                        <span className="text-[11px] font-bold text-blue-600 tracking-wide">{initials}</span>
+                      ) : (
+                        <User size={14} className="text-blue-400" />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              )
+            }
 
             {/* Divider */}
             <div className="header-divider" />
 
             {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="logout-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.78rem] font-medium text-slate-400"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
+            {
+              userData.role !== "student" && (
+                <button
+                  onClick={handleLogout}
+                  className="logout-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.78rem] font-medium text-slate-400"
+                >
+                  <LogOut size={13} />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              )
+            }
           </div>
         </div>
 

@@ -27,7 +27,9 @@ interface AppContextProviderProps {
 export const AppContextProvider =({ children }: AppContextProviderProps) => {
     const backendUrl: string = import.meta.env.VITE_BACKEND_URL as string;
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState<UserData | null>(null);
+    const [userData, setUserData] = useState<UserData | null>({
+      name: "Student", email : "student@example.com", role: "student"
+    });
     const [authLoading, setAuthLoading] = useState(true);
 
     const checkAuth =  async () => {
