@@ -14,6 +14,7 @@ import Events from "./pages/Events";
 import MyEvents from "./pages/MyEvents";
 import EventRegistration from "./pages/EventRegistration";
 import EventDetail from "./pages/EventDetail";
+import EventEditMode from "./pages/EventEditMode";
 import ApprovalDashboard from "./pages/ApprovalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Reports from "./pages/Reports";
@@ -21,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import { AppContextProvider } from "./context/AppContext";
 import ProtectedRoute from "./pages/protectedRoute";
 import Profile from "./pages/Profile";
+import EventProfile from "./pages/EventProfile";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +45,9 @@ const App = () => (
             <Route path="/events" element={<Events />} />
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/event-registration" element={<EventRegistration />} />
-            <Route path="/event/:id" element={<EventDetail />} />
+            <Route path="/event/:id" element={<ProtectedRoute><EventProfile /></ProtectedRoute>} />
+            <Route path="/event-detail/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
+            <Route path="/event-edit/:id" element={<ProtectedRoute><EventEditMode /></ProtectedRoute>} />
             <Route path="/approval-dashboard" element={<ApprovalDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/reports" element={<Reports />} />

@@ -1,340 +1,375 @@
-import { Link } from "react-router-dom";
-import { Check, Clock, AlertCircle, X, Download, Edit, XCircle, Calendar, MapPin, Users, ChevronDown, Search, Bell, Menu } from "lucide-react";
+﻿import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+import { toast } from "sonner";
+import { CheckCircle2, Clock3, XCircle, Calendar, MapPin, Users } from "lucide-react";
+
+import MainLayout from "@/components/layout/MainLayout";
+import { AppContext } from "@/context/AppContext";
+
+type EventData = {
+  _id: string;
+  eventTitle: string;
+  description: string;
+  category: string;
+  eventDate: string;
+  expectedAttendees: number;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  imageLink: string;
+  isApproved: boolean;
+  organizationId: string;
+  classRoomName?: string;
+};
+
+type WorkflowItem = {
+  _id: string;
+  role: string;
+  status: "approved" | "pending" | "rejected" | string;
+  message?: string;
+  updatedAt?: string;
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  headOfSection: "Head of Section",
+  welfareOfficer: "Welfare Officer",
+  sportDerector: "Sport Director",
+  facultyDean: "Faculty Dean",
+  chairmanOfArt: "Chairman of Art",
+  proctor: "Proctor",
+  viceChancellor: "Vice Chancellor",
+  organizer: "Organizer",
+  completed: "Completed",
+};
+
+const toTitleCase = (value: string) => {
+  if (!value) return "Unknown";
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const formatRole = (role: string) => ROLE_LABELS[role] || toTitleCase(role);
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return new Intl.DateTimeFormat("en-US", { weekday: "short", year: "numeric", month: "long", day: "numeric" }).format(date);
+};
+
+const formatDateTime = (dateString?: string) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+};
+
+const formatTime = (time24: string) => {
+  const [hourRaw, minuteRaw] = time24.split(":");
+  const hour = Number(hourRaw);
+  const minute = Number(minuteRaw);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return time24;
+
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).format(date);
+};
 
 const EventDetail = () => {
-  const event = {
-    id: "AC",
-    title: "Annual Company Retreat 2025",
-    status: "In Review",
-    organizer: "Sarah Johnson",
-    submittedDate: "Jan 15, 2025",
-    eventDate: "Mar 15-17, 2025",
-    location: "Mountain Resort",
-    expectedAttendees: 120,
-    currentStep: 2,
-    steps: [
-      {
-        id: 1,
-        title: "Head of Section",
-        status: "Completed",
-        approver: "Michael Chen",
-        approvedAt: "Jan 16, 2025 at 10:30 AM",
-      },
-      {
-        id: 2,
-        title: "Deputy Director",
-        status: "In Progress",
-        assignee: "Jennifer Williams",
-        pendingSince: "Jan 16, 2025 at 2:15 PM",
-        note: "This approval step typically takes 2-3 business days",
-      },
-      {
-        id: 3,
-        title: "Welfare Unit",
-        status: "Pending",
-        note: "Will be assigned after Step 2 completion",
-      },
-      {
-        id: 4,
-        title: "Admin",
-        status: "Skipped",
-        reason: "Not applicable for internal events",
-      },
-    ],
-    comments: [
-      {
-        author: "Michael Chen",
-        role: "Head of Section",
-        date: "Jan 16, 2025 at 10:30 AM",
-        status: "Approved",
-        text: "Excellent proposal! The retreat plan is well-structured and the budget allocation looks reasonable. Approved for next level review.",
-      },
-      {
-        author: "Sarah Johnson",
-        role: "Event Organizer",
-        date: "Jan 15, 2025 at 3:45 PM",
-        text: "Event submitted for approval. All documentation and budget breakdown attached.",
-      },
-    ],
-  };
+  const { id } = useParams<{ id: string }>();
+  const appContext = useContext(AppContext);
 
-  const getStepIcon = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return (
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <Check className="w-5 h-5 text-primary-foreground" />
-          </div>
-        );
-      case "In Progress":
-        return (
-          <div className="w-10 h-10 rounded-full bg-warning flex items-center justify-center">
-            <Clock className="w-5 h-5 text-warning-foreground" />
-          </div>
-        );
-      case "Pending":
-        return (
-          <div className="w-10 h-10 rounded-full border-2 border-muted flex items-center justify-center">
-            <Clock className="w-5 h-5 text-muted-foreground" />
-          </div>
-        );
-      case "Skipped":
-        return (
-          <div className="w-10 h-10 rounded-full bg-destructive flex items-center justify-center">
-            <X className="w-5 h-5 text-destructive-foreground" />
-          </div>
-        );
-      default:
-        return null;
+  if (!appContext) return null;
+
+  const { backendUrl } = appContext;
+
+  const [eventData, setEventData] = useState<EventData | null>(null);
+  const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
+  const [organizerResponseMessage, setOrganizerResponseMessage] = useState("");
+
+  const fetchEventAndWorkflow = useCallback(async () => {
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      axios.defaults.withCredentials = true;
+
+      const eventResponse = await axios.get(`${backendUrl}/api/event/organization-events`);
+      if (eventResponse.data?.success && Array.isArray(eventResponse.data?.message)) {
+        const matchedEvent = (eventResponse.data.message as EventData[]).find((event) => event._id === id) || null;
+        setEventData(matchedEvent);
+      } else {
+        setEventData(null);
+      }
+
+      const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, { eventId: id });
+      if (workflowResponse.data?.success) {
+        const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent;
+        setWorkflowItems(Array.isArray(workflowContent) ? workflowContent : []);
+      } else {
+        setWorkflowItems([]);
+        toast.error(workflowResponse.data?.message || "Failed to load workflow.");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to load event details.");
+      setEventData(null);
+      setWorkflowItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [backendUrl, id]);
+
+  useEffect(() => {
+    fetchEventAndWorkflow();
+  }, [fetchEventAndWorkflow]);
+
+  const approvedCount = useMemo(() => workflowItems.filter((item) => item.status === "approved").length, [workflowItems]);
+  const progress = workflowItems.length > 0 ? Math.round((approvedCount / workflowItems.length) * 100) : 0;
+
+  const workflowStatus = useMemo(() => {
+    if (eventData?.isApproved === true) return "Fully Completed";
+    if (workflowItems.some((item) => item.status === "rejected")) return "Rejected";
+    if (workflowItems.length > 0 && workflowItems.every((item) => item.status === "approved")) return "Completed";
+    if (workflowItems.length > 0 && workflowItems.some((item) => item.status === "approved")) return "In Progress";
+    if (workflowItems.length > 0) return "Pending";
+    return "Not Started";
+  }, [eventData?.isApproved, workflowItems]);
+
+  const latestWorkflowItem = useMemo(() => {
+    if (workflowItems.length === 0) return null;
+    return workflowItems[workflowItems.length - 1];
+  }, [workflowItems]);
+
+  const latestRejectedItem = useMemo(() => {
+    for (let index = workflowItems.length - 1; index >= 0; index -= 1) {
+      if (workflowItems[index].status === "rejected") {
+        return workflowItems[index];
+      }
+    }
+    return null;
+  }, [workflowItems]);
+
+  const showOrganizerAction =
+    eventData?.isApproved !== true &&
+    latestWorkflowItem?.role === "organizer" &&
+    latestWorkflowItem?.status === "pending";
+
+  const handleSubmitOrganizerResponse = async () => {
+    const trimmedMessage = organizerResponseMessage.trim();
+    if (!trimmedMessage) {
+      toast.error("Please add your update message before continuing.");
+      return;
+    }
+
+    try {
+      setIsSubmittingResponse(true);
+      axios.defaults.withCredentials = true;
+
+      const response = await axios.post(`${backendUrl}/api/workflow/update`, {
+        status: "approved",
+        message: trimmedMessage,
+      });
+
+      if (!response.data?.success) {
+        toast.error(response.data?.message || "Failed to submit workflow update.");
+        return;
+      }
+
+      toast.success("Update sent successfully. Workflow moved to the next step.");
+      setOrganizerResponseMessage("");
+      await fetchEventAndWorkflow();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to submit workflow update.");
+    } finally {
+      setIsSubmittingResponse(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="bg-white border-b border-border">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Menu className="w-6 h-6 text-muted-foreground" />
-            <nav className="flex items-center gap-6">
-              <Link to="/my-events" className="text-foreground font-medium">Dashboard</Link>
-              <Link to="/my-events" className="text-muted-foreground">My Events</Link>
-              <Link to="/calendar" className="text-muted-foreground">Calendar</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">3:51 PM GMT+7</span>
-            <Link to="/event-registration" className="px-4 py-2 border border-border rounded-lg font-medium">
-              Create Event
-            </Link>
-            <Search className="w-5 h-5 text-muted-foreground" />
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-lg">👤</span>
-            </div>
-          </div>
+    <MainLayout title="Event Detail" subtitle="Real-time event and approval workflow details">
+      <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-2">
+        <div className="mb-4 text-xs text-slate-400">
+          <Link to="/my-events" className="font-medium hover:text-blue-600">My Events</Link>
+          <span className="mx-2">/</span>
+          <span className="text-slate-600">Event Detail</span>
         </div>
-      </header>
 
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Link to="/my-events" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
-          <span className="text-muted-foreground">›</span>
-          <Link to="/my-events" className="text-muted-foreground hover:text-foreground">My Events</Link>
-          <span className="text-muted-foreground">›</span>
-          <span className="font-medium">{event.title}</span>
-        </div>
-      </div>
+        {isLoading && <p className="rounded-xl border bg-white p-6 text-sm text-slate-500">Loading event and workflow...</p>}
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 pb-12">
-        {/* Event Header Card */}
-        <div className="bg-white rounded-2xl p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center text-xl font-bold">
-                {event.id}
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold">{event.title}</h1>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    Organized by {event.organizer}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    Submitted on {event.submittedDate}
-                  </span>
+        {!isLoading && !eventData && <p className="rounded-xl border bg-white p-6 text-sm text-red-500">Event not found.</p>}
+
+        {!isLoading && eventData && (
+          <>
+            <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative h-60 w-full overflow-hidden">
+                <img src={eventData.imageLink} alt={eventData.eventTitle} className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                  <p className="inline-flex rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]">
+                    {eventData.isApproved ? "Fully Completed Event" : "Pending Approval"}
+                  </p>
+                  <h1 className="mt-2 text-3xl font-semibold">{eventData.eventTitle}</h1>
+                  <p className="mt-2 max-w-3xl text-sm text-white/90">{eventData.description}</p>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-info/10 text-info rounded-full text-sm">
-              <Clock className="w-4 h-4" />
-              {event.status}
-            </div>
-          </div>
-        </div>
+            </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Approval Workflow */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6">Approval Workflow</h2>
-            
-            <div className="space-y-0">
-              {event.steps.map((step, index) => (
-                <div key={step.id} className="approval-workflow-step">
-                  <div className="absolute left-0 top-0">
-                    {getStepIcon(step.status)}
+            <div className="grid gap-5 lg:grid-cols-3">
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+                <h2 className="text-xl font-semibold text-slate-900">Workflow timeline</h2>
+                <p className="mt-1 text-sm text-slate-500">Status: <span className="font-semibold text-slate-700">{workflowStatus}</span></p>
+
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+                    <span>Progress</span>
+                    <span className="font-semibold text-slate-700">{progress}%</span>
                   </div>
-                  
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2">
-                        Step {step.id}: {step.title}
-                        <span className={`px-2 py-0.5 rounded text-xs ${
-                          step.status === "Completed" ? "bg-muted text-muted-foreground" :
-                          step.status === "In Progress" ? "border border-foreground" :
-                          step.status === "Pending" ? "border border-muted-foreground text-muted-foreground" :
-                          "bg-muted text-muted-foreground"
-                        }`}>
-                          {step.status}
-                        </span>
-                      </h3>
-                      
-                      {step.approver && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <Users className="w-4 h-4" />
-                          Approved by {step.approver}
-                        </p>
-                      )}
-                      {step.assignee && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <Users className="w-4 h-4" />
-                          Assigned to {step.assignee}
-                        </p>
-                      )}
-                      {step.approvedAt && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Approved on {step.approvedAt}
-                        </p>
-                      )}
-                      {step.pendingSince && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          Pending since {step.pendingSince}
-                        </p>
-                      )}
-                      {step.note && step.status !== "Skipped" && (
-                        <div className="mt-2 p-3 bg-muted rounded-lg">
-                          <p className="text-sm flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {step.status === "In Progress" ? "Awaiting Review" : step.note}
-                          </p>
-                          {step.status === "In Progress" && (
-                            <p className="text-sm text-muted-foreground mt-1">{step.note}</p>
-                          )}
+                  <div className="h-2 rounded-full bg-slate-200">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  {workflowItems.length === 0 && (
+                    <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No workflow records found for this event.</p>
+                  )}
+
+                  {workflowItems.map((item, index) => {
+                    const approved = item.status === "approved";
+                    const rejected = item.status === "rejected";
+                    const pending = item.status === "pending";
+
+                    return (
+                      <article key={item._id || `${item.role}-${index}`} className="rounded-xl border border-slate-200 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            {approved && <CheckCircle2 size={16} className="text-emerald-500" />}
+                            {rejected && <XCircle size={16} className="text-red-500" />}
+                            {pending && <Clock3 size={16} className="text-amber-500" />}
+                            {!approved && !rejected && !pending && <Clock3 size={16} className="text-slate-400" />}
+                            <h3 className="text-sm font-semibold text-slate-800">{formatRole(item.role)}</h3>
+                          </div>
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
+                              approved
+                                ? "bg-emerald-50 text-emerald-700"
+                                : rejected
+                                  ? "bg-red-50 text-red-700"
+                                  : pending
+                                    ? "bg-amber-50 text-amber-700"
+                                    : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
                         </div>
-                      )}
-                      {step.reason && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <AlertCircle className="w-4 h-4" />
-                          Reason: {step.reason}
+
+                        <p className="mt-2 text-xs text-slate-500">Updated: <span className="font-medium text-slate-700">{formatDateTime(item.updatedAt)}</span></p>
+                        <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{item.message?.trim() ? item.message : "No message provided."}</p>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <aside className="space-y-5">
+                {showOrganizerAction && (
+                  <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
+                    <h2 className="text-lg font-semibold text-slate-900">Action required from organizer</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      This event was sent back for changes. Update your event details, then confirm below to continue the workflow.
+                    </p>
+
+                    {latestRejectedItem?.message?.trim() && (
+                      <div className="mt-4 rounded-xl border border-amber-200 bg-white p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700">
+                          Rejection note from {formatRole(latestRejectedItem.role)}
                         </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <button className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground">
-                    <ChevronDown className="w-4 h-4" />
-                    View Comments & Feedback
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-primary text-primary-foreground rounded-2xl p-6">
-              <h3 className="font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full py-2 bg-primary-foreground text-primary rounded-lg font-medium flex items-center justify-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Download Approval Document
-                </button>
-                <button className="w-full py-2 bg-white/20 rounded-lg font-medium flex items-center justify-center gap-2">
-                  <Edit className="w-4 h-4" />
-                  Edit Event
-                </button>
-                <button className="w-full py-2 bg-white/20 rounded-lg font-medium flex items-center justify-center gap-2">
-                  <XCircle className="w-4 h-4" />
-                  Cancel Event
-                </button>
-              </div>
-            </div>
-
-            {/* Event Summary */}
-            <div className="bg-white rounded-2xl p-6">
-              <h3 className="font-semibold mb-4">Event Summary</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Event Date:</span>
-                  <span className="font-medium">{event.eventDate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Location:</span>
-                  <span className="font-medium">{event.location}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Expected Attendees:</span>
-                  <span className="font-medium">{event.expectedAttendees} people</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <span className="font-medium">Step {event.currentStep} of {event.steps.length}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Comments & Feedback History */}
-        <div className="bg-white rounded-2xl p-6 mt-6">
-          <h2 className="text-xl font-semibold mb-6">Comments & Feedback History</h2>
-          
-          <div className="space-y-4">
-            {event.comments.map((comment, idx) => (
-              <div key={idx} className="bg-muted/30 rounded-xl p-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-xl">👤</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold">{comment.author}</span>
-                        <span className="text-sm text-muted-foreground ml-2">{comment.role}</span>
+                        <p className="mt-1 text-sm text-slate-700">{latestRejectedItem.message}</p>
                       </div>
-                      <span className="text-sm text-muted-foreground">{comment.date}</span>
-                    </div>
-                    {comment.status && (
-                      <span className="inline-block px-2 py-0.5 bg-muted rounded text-xs mt-1">
-                        {comment.status}
-                      </span>
                     )}
-                    <p className="mt-2 text-muted-foreground">{comment.text}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-border py-6">
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            © 2025 Event Management System. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6">
-            <Link to="/help" className="text-sm text-muted-foreground hover:text-foreground">
-              Help Center
-            </Link>
-            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground">
-              Terms of Service
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+                    <div className="mt-4">
+                      <label htmlFor="organizer-response" className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        Your message
+                      </label>
+                      <textarea
+                        id="organizer-response"
+                        value={organizerResponseMessage}
+                        onChange={(event) => setOrganizerResponseMessage(event.target.value)}
+                        rows={4}
+                        placeholder="I changed the date. Please continue the workflow."
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSubmitOrganizerResponse}
+                      disabled={isSubmittingResponse}
+                      className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmittingResponse ? "Submitting..." : "Submit update and continue workflow"}
+                    </button>
+                  </section>
+                )}
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900">Event summary</h2>
+                  <div className="mt-4 space-y-3 text-sm">
+                    <p className="flex items-start gap-2 text-slate-600"><Calendar size={15} className="mt-0.5 text-blue-500" /> {formatDate(eventData.eventDate)}</p>
+                    <p className="flex items-start gap-2 text-slate-600"><Clock3 size={15} className="mt-0.5 text-blue-500" /> {formatTime(eventData.startTime)} - {formatTime(eventData.endTime)}</p>
+                    <p className="flex items-start gap-2 text-slate-600"><MapPin size={15} className="mt-0.5 text-blue-500" /> {eventData.venue}</p>
+                    <p className="flex items-start gap-2 text-slate-600"><Users size={15} className="mt-0.5 text-blue-500" /> {eventData.expectedAttendees} attendees</p>
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900">Quick links</h2>
+                  <div className="mt-4 space-y-2">
+                    {showOrganizerAction ? (
+                      <Link to={`/event-edit/${eventData._id}`} className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+                        Open event edit mode
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex w-full cursor-not-allowed justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
+                        title="Editing is available only when workflow is returned to organizer after rejection"
+                      >
+                        Edit available after rejection
+                      </button>
+                    )}
+                    <Link to="/my-events" className="inline-flex w-full justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                      Back to my events
+                    </Link>
+                  </div>
+                </section>
+              </aside>
+            </div>
+          </>
+        )}
+      </div>
+    </MainLayout>
   );
 };
 
