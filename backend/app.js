@@ -21,6 +21,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+app.use('/', (req, res) => {
+    res.send("connected");
+});
+
 app.use('/api/auth', authRouter)
 app.use('/api/event', eventRouter)
 app.use('/api/student', studentRouter)
