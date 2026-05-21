@@ -168,7 +168,7 @@ const EventDetail = () => {
 
   const showOrganizerAction =
     eventData?.isApproved !== true &&
-    latestWorkflowItem?.role === "organizer" &&
+    latestWorkflowItem?.role === "president" &&
     latestWorkflowItem?.status === "pending";
 
   const handleSubmitOrganizerResponse = async () => {

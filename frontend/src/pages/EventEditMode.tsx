@@ -130,12 +130,12 @@ const EventEditMode = () => {
           const lastItem = items.length > 0 ? items[items.length - 1] : null;
           const rejectedItem = [...items].reverse().find((item) => item.status === "rejected");
 
-          const allowed = Boolean(lastItem?.role === "organizer" && lastItem?.status === "pending" && rejectedItem);
+          const allowed = Boolean(lastItem?.role === "president" && lastItem?.status === "pending" && rejectedItem);
           setCanEditRejectedEvent(allowed);
           setEditGuardMessage(
             allowed
               ? ""
-              : "Editing is only allowed when a reviewer rejects the event and workflow returns to organizer."
+              : "Editing is only allowed when a reviewer rejects the event and workflow returns to president."
           );
         } else {
           setCanEditRejectedEvent(false);
@@ -201,10 +201,6 @@ const EventEditMode = () => {
   const submitUpdate = async () => {
     if (!formData._id) {
       toast.error("Invalid event ID.");
-      return;
-    }
-    if (!canEditRejectedEvent) {
-      toast.error("This event can only be edited after rejection.");
       return;
     }
 

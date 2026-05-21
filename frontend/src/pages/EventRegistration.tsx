@@ -106,6 +106,10 @@ const EventRegistration = () => {
   /* Logic unchanged */
   const handleNext = async () => {
     if (currentStep < 5) {
+      console.log(!formData.eventTitle && !formData.description && !formData.category && !formData.eventDate && !formData.expectedAttendees && !formData.startTime && !formData.endTime && !formData.applicantName && !formData.registrationNumber && !formData.imageLink && !formData.venue && !formData.classRoomName);
+      if (!formData.eventTitle && !formData.description && !formData.category && !formData.eventDate && !formData.expectedAttendees && !formData.startTime && !formData.endTime && !formData.applicantName && !formData.registrationNumber && !formData.imageLink && !formData.venue && !formData.classRoomName) {
+        return toast.error("Please fill in all required fields.");
+      }
       setCurrentStep(currentStep + 1);
     } else {
       try {
@@ -188,8 +192,10 @@ const EventRegistration = () => {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="form-input appearance-none pr-10 cursor-pointer">
                   <option value="">Select a category</option>
+                  <option value="music-arts">Music & Arts</option>
                   <option value="workshop">Workshop</option>
-                  <option value="seminar">Seminar</option>
+                  <option value="tech-innovation">Tech & Innovation</option>
+                  <option value="sports">Sports</option>
                   <option value="conference">Conference</option>
                   <option value="cultural">Cultural Event</option>
                 </select>

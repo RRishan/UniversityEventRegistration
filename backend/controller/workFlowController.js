@@ -5,17 +5,17 @@ const Event = require('../models/Event');
 
 const workflowController = [
     {
-        role: "headOfSection",
+        role: "advisor",
         approvedCondition: (workflow, message , eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "headOfSection").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "headOfSection").message = message;
+            workflow.workFlowContent.findLast(item => item.role === "advisor").status = "approved";
+            workflow.workFlowContent.findLast(item => item.role === "advisor").message = message;
             workflow.workFlowContent.push({role: "welfareOfficer", status: "pending", message: ""});
             return workflow.workFlowContent;
         },
         rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "headOfSection").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "headOfSection").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.findLast(item => item.role === "advisor").status = "rejected";
+            workflow.workFlowContent.findLast(item => item.role === "advisor").message = message;
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
     },
@@ -42,7 +42,7 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         },
     },
@@ -58,7 +58,7 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "facultyDean").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "facultyDean").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
 
@@ -80,7 +80,7 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "sportDerector").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "sportDerector").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
     },
@@ -95,7 +95,7 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
     },
@@ -110,7 +110,7 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "proctor").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "proctor").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
     },
@@ -133,15 +133,15 @@ const workflowController = [
         rejectCondition: (workflow, message, eventObj) => {
             workflow.workFlowContent.findLast(item => item.role === "viceChancellor").status = "rejected";
             workflow.workFlowContent.findLast(item => item.role === "viceChancellor").message = message;
-            workflow.workFlowContent.push({role: "organizer", status: "pending", message: ""});
+            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
             return workflow.workFlowContent;
         }
     },
     {
-        role: "organizer",
+        role: "president",
         approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "organizer").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "organizer").message = message;
+            workflow.workFlowContent.findLast(item => item.role === "president").status = "approved";
+            workflow.workFlowContent.findLast(item => item.role === "president").message = message;
             const rejectedRole = workflow.workFlowContent.findLast(item => item.status === "rejected").role;
             workflow.workFlowContent.push({role: rejectedRole, status: "pending", message: ""});
             return workflow.workFlowContent;
@@ -278,7 +278,7 @@ const getWorkFlowByOrganizer = async (req, res) => {
 
         const role = user.adminProfile.role;
 
-        if(role !== "organizer") {
+        if(role !== "president") {
             return res.send({success: false, message: "User is not an organizer"})
         }
 

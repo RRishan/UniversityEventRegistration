@@ -57,7 +57,7 @@ const addEvent = async (req, res) => {
             return res.send({success: false, message: "Invalid User"})
         }
 
-        if(user.adminProfile.role !== "organizer") {
+        if(user.adminProfile.role !== "president") {
             return res.send({success: false, message: "Unauthorized User"})
         }
 
@@ -69,7 +69,7 @@ const addEvent = async (req, res) => {
 
         // Build the workflow model
         const workFlow = new WorkFlow({eventId: savedEvent._id, workFlowContent: [
-            {role: "headOfSection"}
+            {role: "advisor"}
         ]})
         
         // Save workflow model
@@ -199,7 +199,7 @@ const updateEvent = async (req, res) => {
         const latestWorkflowItem = workflow.workFlowContent[workflow.workFlowContent.length - 1];
         const hasRejectedStep = workflow.workFlowContent.some(item => item.status === "rejected");
 
-        if(!(latestWorkflowItem.role === "organizer" && latestWorkflowItem.status === "pending" && hasRejectedStep)) {
+        if(!(latestWorkflowItem.role === "president" && latestWorkflowItem.status === "pending" && hasRejectedStep)) {
             return res.send({success: false, message: "Event can only be edited after rejection and when returned to organizer"})
         }
 
