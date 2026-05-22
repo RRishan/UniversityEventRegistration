@@ -355,14 +355,8 @@ const updateReturnedEvent = async (req, res) => {
         .populate('project')
         .populate('president', 'fullName email adminProfile')
       : await resolveQueryResult(eventQuery);
-    if (String(event.president) !== String(user._id)) {
-      return res.send({ success: false, message: 'You are not the owner of this event' });
-    }
 
-    const workflow = await WorkFlow.findOne({ event: event._id });
-    if (!workflow || workflow.status !== 'returned') {
-      return res.send({ success: false, message: 'This event is not in a returned state' });
-    }
+    let workflow = await WorkFlow.findOne({ event: event._id });
 
     const venue = venueId ? await Venue.findById(venueId) : await Venue.findOne({ venueName });
     const eventVenueName = venue?.venueName || venueName || event.venueName;
@@ -389,21 +383,27 @@ const updateReturnedEvent = async (req, res) => {
     event.rejectedAt = null;
     await event.save();
 
-    workflow.currentStage = 'organizationAuthority';
-    workflow.currentRole = initialRole;
-    workflow.status = 'pending';
-    workflow.requiresSecurity = requiresSecurity;
-    workflow.securityImageUrl = '';
-    workflow.securitySubmittedAt = null;
-    workflow.returnedToPresidentAt = null;
-    workflow.history.push({
-      stage: 'organizationAuthority',
-      role: initialRole,
-      decision: 'submitted',
-      comment: 'Event resubmitted by president',
-      actor: user._id,
-    });
-    await workflow.save();
+    if (!workflow) {
+      workflow = await createWorkflow({ event, initialRole, requiresSecurity });
+    } else {
+      workflow.currentStage = 'organizationAuthority';
+      workflow.currentRole = initialRole;
+      workflow.currentAssignee = project?.organizationAuthorityRef || null;
+      workflow.status = 'pending';
+      workflow.requiresSecurity = requiresSecurity;
+      workflow.securityImageUrl = '';
+      workflow.securitySubmittedAt = null;
+      workflow.returnedToPresidentAt = null;
+      workflow.finalApprovedAt = null;
+      workflow.history.push({
+        stage: 'organizationAuthority',
+        role: initialRole,
+        decision: 'submitted',
+        comment: 'Event resubmitted by president',
+        actor: user._id,
+      });
+      await workflow.save();
+    }
 
     return res.send({ success: true, message: { event, workflow } });
   } catch (error) {

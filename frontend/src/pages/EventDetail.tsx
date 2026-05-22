@@ -119,7 +119,7 @@ const EventDetail = () => {
 
   if (!appContext) return null;
 
-  const { backendUrl } = appContext;
+  const { backendUrl, userData } = appContext;
 
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
@@ -213,10 +213,11 @@ const EventDetail = () => {
     return null;
   }, [workflowItems]);
 
-  const showOrganizerAction =
-    eventData?.isApproved !== true &&
-    latestWorkflowItem?.role === "president" &&
-    latestWorkflowItem?.status === "pending";
+  const hasRejectedWorkflow = workflowItems.some((item) => item.status === "rejected");
+  const canOpenEditMode =
+    userData?.role === "president" ||
+    (eventData?.isApproved !== true &&
+      (hasRejectedWorkflow || (latestWorkflowItem?.role === "president" && latestWorkflowItem?.status === "pending")));
 
   const handleSubmitOrganizerResponse = async () => {
     const trimmedMessage = organizerResponseMessage.trim();
@@ -229,9 +230,10 @@ const EventDetail = () => {
       setIsSubmittingResponse(true);
       axios.defaults.withCredentials = true;
 
-      const response = await axios.post(`${backendUrl}/api/workflow/update`, {
+      const response = await axios.post(`${backendUrl}/api/workflow/decision`, {
+        eventId: id,
         status: "approved",
-        message: trimmedMessage,
+        comment: trimmedMessage,
       });
 
       if (!response.data?.success) {
@@ -338,11 +340,11 @@ const EventDetail = () => {
               </section>
 
               <aside className="space-y-5">
-                {showOrganizerAction && (
+                {canOpenEditMode && (
                   <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold text-slate-900">Action required from organizer</h2>
+                    <h2 className="text-lg font-semibold text-slate-900">Edit access</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      This event was sent back for changes. Update your event details, then confirm below to continue the workflow.
+                      Presidents can edit the event details here and continue the workflow after saving changes.
                     </p>
 
                     {latestRejectedItem?.message?.trim() && (
@@ -392,7 +394,7 @@ const EventDetail = () => {
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">Quick links</h2>
                   <div className="mt-4 space-y-2">
-                    {showOrganizerAction ? (
+                    {canOpenEditMode ? (
                       <Link to={`/event-edit/${eventData._id}`} className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
                         Open event edit mode
                       </Link>
@@ -401,9 +403,9 @@ const EventDetail = () => {
                         type="button"
                         disabled
                         className="inline-flex w-full cursor-not-allowed justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
-                        title="Editing is available only when workflow is returned to organizer after rejection"
+                        title="Editing is available for the president role or after the workflow returns to the president"
                       >
-                        Edit available after rejection
+                        Edit access available
                       </button>
                     )}
                     <Link to="/my-events" className="inline-flex w-full justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
