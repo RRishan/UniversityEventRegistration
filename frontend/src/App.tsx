@@ -18,6 +18,7 @@ import EventRegistration from "@/pages/EventRegistration";
 import EventDetail from "./pages/EventDetail";
 import EventProfile from "./pages/EventProfile";
 import EventEditMode from "./pages/EventEditMode";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <EventEditMode />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />

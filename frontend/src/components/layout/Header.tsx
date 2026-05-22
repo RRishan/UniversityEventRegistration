@@ -116,7 +116,7 @@ const Header = () => {
                 {userData.name}
               </span>
             )}
-            <div className="avatar-ring">
+            <div onClick={() => navigate("/profile")} className="avatar-ring">
               <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
                 {userData?.name ? (
                   <span className="text-[11px] font-bold text-blue-600 tracking-wide">{initials}</span>
