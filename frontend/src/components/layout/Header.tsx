@@ -83,9 +83,33 @@ const Header = () => {
             Events
             {isActive("/events") && <span className="nav-link-active-bar" />}
           </Link>
+          {
+            userData?.role === "president" && (
+              <Link to="/my-events" className={navLink("/my-events")}>
+                My Events
+                {isActive("/my-events") && <span className="nav-link-active-bar" />}
+              </Link>
+            )
+          }
+          {
+            userData?.role === "welfareOfficer" && (
+              <Link to="/admin" className={navLink("/admin")}>
+                Dashboard
+                {isActive("/admin") && <span className="nav-link-active-bar" />}
+              </Link>
+            )
+          }
+          {
+            userData?.role === "welfareOfficer" && (
+              <Link to="/approval-dashboard" className={navLink("/approval-dashboard")}>
+                Event Workflow
+                {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
+              </Link>
+            )
+          }
         </nav>
 
-        {userData ? (
+        {userData?.role ? (
           <div className="flex items-center gap-2.5 shrink-0">
             {userData?.name && (
               <span className="hidden lg:block text-[0.78rem] font-medium text-slate-500 max-w-[110px] truncate">

@@ -10,7 +10,13 @@ import SignIn from "@/pages/SignIn";
 import Events from "@/pages/Events";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Workspace from "@/pages/Workspace";
+import ApprovalDashboard from "@/pages/ApprovalDashboard";
+import ApprovalEventDetail from "./pages/ApprovalEventDetail";
 import NotFound from "@/pages/NotFound";
+import MyEvents from "./pages/MyEvents";
+import EventRegistration from "@/pages/EventRegistration";
+import EventDetail from "./pages/EventDetail";
+import EventProfile from "./pages/EventProfile";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +47,54 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="/approval-dashboard" element={<Navigate to="/workspace" replace />} />
+            <Route
+              path="/my-events"
+              element={
+                <ProtectedRoute>
+                  <MyEvents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/event-registration"
+              element={
+                <ProtectedRoute>
+                  <EventRegistration />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/approval-dashboard"
+              element={
+                <ProtectedRoute>
+                  <ApprovalDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/event/:id"
+              element={
+                <ProtectedRoute>
+                  <EventProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/event-detail/:id"
+              element={
+                <ProtectedRoute>
+                  <EventDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/approval-dashboard/event/:eventId"
+              element={
+                <ProtectedRoute>
+                  <ApprovalEventDetail />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

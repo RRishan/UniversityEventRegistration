@@ -121,7 +121,7 @@ const EventDetail = () => {
 
       const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, { eventId: id });
       if (workflowResponse.data?.success) {
-        const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent;
+        const workflowContent = workflowResponse.data?.message?.workflow?.history || workflowResponse.data?.message?.workflow?.workFlowContent;
         setWorkflowItems(Array.isArray(workflowContent) ? workflowContent : []);
       } else {
         setWorkflowItems([]);

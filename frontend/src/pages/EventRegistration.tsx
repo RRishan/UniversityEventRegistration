@@ -84,10 +84,13 @@ const ReviewRow = ({ label, value }: { label: string; value: string }) => (
 const EventRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const { backendUrl } = useContext(AppContext);
+  const { backendUrl, userData } = useContext(AppContext);
   const [dragOver, setDragOver] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
 
   const [formData, setFormData] = useState({
+    projectId: "",
     eventTitle: "",
     description: "",
     category: "",
@@ -103,37 +106,91 @@ const EventRegistration = () => {
     documents: [] as File[],
   });
 
-  /* Logic unchanged */
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        setLoadingProjects(true);
+        axios.defaults.withCredentials = true;
+        const { data } = await axios.get(`${backendUrl}/api/project/list`);
+        if (data?.success) {
+          setProjects(Array.isArray(data.message) ? data.message : []);
+        } else {
+          toast.error(data?.message || "Unable to load president projects.");
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || error?.message || "Unable to load president projects.");
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    if (userData?.role === "president") {
+      loadProjects();
+    }
+  }, [backendUrl, userData?.role]);
+
+  const validateCurrentStep = () => {
+    if (currentStep === 1) {
+      if (!formData.projectId) return "Please select your project.";
+      if (!formData.eventTitle.trim()) return "Please enter the event title.";
+      if (!formData.description.trim()) return "Please enter the event description.";
+      if (!formData.category.trim()) return "Please select an event category.";
+      if (!formData.eventDate.trim()) return "Please choose the event date.";
+      if (!formData.expectedAttendees || formData.expectedAttendees <= 0) return "Expected attendees must be greater than 0.";
+      if (!formData.startTime.trim()) return "Please choose the start time.";
+      if (!formData.endTime.trim()) return "Please choose the end time.";
+    }
+
+    if (currentStep === 2) {
+      if (!formData.venue.trim()) return "Please select a venue.";
+      if (formData.venue === VenuePlace.Faculty && !formData.classRoomName.trim()) {
+        return "Please enter the classroom name.";
+      }
+    }
+
+    return "";
+  };
+
   const handleNext = async () => {
-    if (currentStep < 5) {
-      console.log(!formData.eventTitle && !formData.description && !formData.category && !formData.eventDate && !formData.expectedAttendees && !formData.startTime && !formData.endTime && !formData.applicantName && !formData.registrationNumber && !formData.imageLink && !formData.venue && !formData.classRoomName);
-      if (!formData.eventTitle && !formData.description && !formData.category && !formData.eventDate && !formData.expectedAttendees && !formData.startTime && !formData.endTime && !formData.applicantName && !formData.registrationNumber && !formData.imageLink && !formData.venue && !formData.classRoomName) {
-        return toast.error("Please fill in all required fields.");
+    if (currentStep < 4) {
+      const validationMessage = validateCurrentStep();
+      if (validationMessage) {
+        return toast.error(validationMessage);
       }
       setCurrentStep(currentStep + 1);
-    } else {
+      return;
+    }
+
+    if (currentStep === 5) {
+      navigate("/workspace");
+      return;
+    }
+
+    if (currentStep === 4) {
       try {
         axios.defaults.withCredentials = true;
-        console.log(formData);
-        const { data } = await axios.post(backendUrl + "/api/event/register", {
-          eventTitle: formData.eventTitle, description: formData.description,
-          category: formData.category, eventDate: formData.eventDate,
+        const { data } = await axios.post(backendUrl + "/api/event/create", {
+          projectId: formData.projectId,
+          title: formData.eventTitle,
+          description: formData.description,
+          category: formData.category,
+          eventDate: formData.eventDate,
           expectedAttendees: formData.expectedAttendees,
-          startTime: formData.startTime, endTime: formData.endTime,
-          applicantName: formData.applicantName, registrationNumber: formData.registrationNumber,
-          venue: formData.venue, imageLink: formData.imageLink, classRoomName: formData.classRoomName,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          venueName: formData.venue,
+          coverImageUrl: formData.imageLink,
+          classroomName: formData.classRoomName,
         });
-        console.log(data);
         if (data.success) {
           toast.success("Event submitted successfully!");
           setCurrentStep(5);
-          navigate("/my-events");
+          navigate("/workspace");
         } else {
           toast.error(data.message);
         }
-      } catch (error) {
-        console.error(error.response?.data);
-        toast.error(error.message);
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || error?.message || "Event submission failed.");
       }
     }
   };
@@ -169,6 +226,30 @@ const EventRegistration = () => {
       case 1:
         return (
           <div className="space-y-5">
+            <div>
+              <label className="field-label">Project <span className="text-red-400">*</span></label>
+              <div className="relative">
+                <select value={formData.projectId}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  className="form-input appearance-none pr-10 cursor-pointer">
+                  <option value="">{loadingProjects ? "Loading projects..." : "Select your project"}</option>
+                  {projects.map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.projectName} {project.organization?.organizationName ? `- ${project.organization.organizationName}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </div>
+              {!loadingProjects && projects.length === 0 && (
+                <p className="mt-2 text-xs text-amber-600">
+                  No assigned project found. Your advisor or dean must create your project and president account first.
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="field-label">Event Title <span className="text-red-400">*</span></label>
               <input type="text" placeholder="Enter event title"

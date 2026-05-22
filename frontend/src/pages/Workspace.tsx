@@ -1,128 +1,47 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, CheckCircle2, FileUp, Plus, RefreshCcw, Send, ShieldCheck, XCircle } from "lucide-react";
+import { Check, FileUp, Home, LogOut, RefreshCcw, Send, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
 import { AppContext } from "@/context/AppContext";
 import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useContext } from "react";
 
-type Project = {
-  _id: string;
-  projectName: string;
-  description: string;
-  organization: {
-    _id: string;
-    organizationName: string;
-    organizationType: string;
-  };
-  organizationAuthorityType: string;
-  president: {
-    _id: string;
-    fullName: string;
-    email: string;
-  };
-};
-
-type EventItem = {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  eventDate: string;
-  startTime: string;
-  endTime: string;
-  venueName: string;
-  approvalStage: string;
-  status: string;
-  requiresSecurity: boolean;
-  coverImageUrl?: string;
-};
-
-type WorkflowItem = {
-  _id: string;
-  currentStage: string;
-  currentRole: string;
-  currentAssignee?: string;
-  status: string;
-  event: EventItem & {
-    project?: { projectName?: string };
-    organization?: { organizationName?: string };
-    president?: { fullName?: string; email?: string };
-    venue?: { venueName?: string; ownerType?: string };
-  };
-};
-
-type ProfileResponse = {
-  adminProfile?: {
-    organization?: string;
-    faculty?: string;
-    role?: string;
-  };
-  fullName?: string;
-  email?: string;
-};
-
-type FileLike = File | null;
-
-const roleLabel: Record<string, string> = {
-  welfareOfficer: "Welfare Officer",
-  advisor: "Advisor",
-  dean: "Dean",
-  president: "President",
-  proctor: "Proctor",
-  viceChancellor: "Vice Chancellor",
-  chairmanOfArt: "Chairman of Art",
-  sportsDirector: "Sports Director",
-};
+type WorkflowItem = any;
+type ProjectItem = any;
+type EventItem = any;
 
 const stageLabel: Record<string, string> = {
-  organizationAuthority: "Organization authority",
-  welfareOfficer: "Welfare officer",
-  venueOwner: "Venue owner",
-  categoryCheck: "Category review",
-  securityUpload: "Security upload",
+  organizationAuthority: "Organization Authority",
+  welfareOfficer: "Welfare Officer",
+  venueOwner: "Venue Owner",
+  categoryCheck: "Category Check",
+  securityUpload: "Security Upload",
   proctor: "Proctor",
   viceChancellor: "Vice Chancellor",
-  welfareFinal: "Welfare final sign-off",
+  welfareFinal: "Welfare Final",
   approved: "Approved",
-  returnedToPresident: "Returned to president",
+  returnedToPresident: "Returned to President",
 };
-
-const toDataUrl = (file: FileLike) =>
-  new Promise<string>((resolve, reject) => {
-    if (!file) {
-      reject(new Error("No file selected"));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Unable to read file"));
-    reader.readAsDataURL(file);
-  });
 
 const Workspace = () => {
   const navigate = useNavigate();
-  const { userData } = useContext(AppContext);
+  const context = useContext(AppContext);
+  if (!context) return null;
+  const { userData, setIsLoggedIn, setUserData, backendUrl } = context;
+
   const role = userData?.role || "student";
+  const canApprove = ["advisor", "dean", "welfareOfficer", "sportsDirector", "chairmanOfArt", "proctor", "viceChancellor"].includes(role);
+  const canCreateProject = role === "advisor" || role === "dean";
+  const canCreateEvent = role === "president";
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [myEvents, setMyEvents] = useState<EventItem[]>([]);
+  const [activeTab, setActiveTab] = useState<"queue" | "project" | "events" | "security" | "timeline">("queue");
+  const [loading, setLoading] = useState(false);
   const [queue, setQueue] = useState<WorkflowItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [myEvents, setMyEvents] = useState<EventItem[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowItem | null>(null);
-  const [actionComment, setActionComment] = useState("");
-  const [profile, setProfile] = useState<ProfileResponse | null>(null);
-
+  const [comment, setComment] = useState("");
+  const [securityFile, setSecurityFile] = useState<File | null>(null);
   const [projectForm, setProjectForm] = useState({
     organizationId: "",
     projectName: "",
@@ -131,7 +50,6 @@ const Workspace = () => {
     presidentEmail: "",
     presidentPassword: "",
   });
-
   const [eventForm, setEventForm] = useState({
     projectId: "",
     title: "",
@@ -146,107 +64,122 @@ const Workspace = () => {
     coverImageUrl: "",
   });
 
-  const [securityFile, setSecurityFile] = useState<FileLike>(null);
+  useEffect(() => {
+    if (role === "student") {
+      navigate("/");
+    }
+  }, [role, navigate]);
 
-  const canCreateProject = role === "advisor" || role === "dean";
-  const canApprove = ["advisor", "dean", "welfareOfficer", "sportsDirector", "chairmanOfArt", "proctor", "viceChancellor"].includes(role);
-  const canCreateEvent = role === "president";
+  const tabs = useMemo(
+    () =>
+      [
+        { key: "queue", label: "My Workflow Queue", show: canApprove },
+        { key: "project", label: "Project Setup", show: canCreateProject },
+        { key: "events", label: "My Events", show: canCreateEvent },
+        { key: "security", label: "Security Upload", show: canCreateEvent },
+        { key: "timeline", label: "Timeline View", show: true },
+      ].filter((tab) => tab.show),
+    [canApprove, canCreateEvent, canCreateProject],
+  );
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projectRes, eventRes, queueRes] = await Promise.allSettled([
+      const [queueRes, projectRes, eventRes] = await Promise.allSettled([
+        api.get("/api/workflow/queue"),
         api.get("/api/project/list"),
         api.get("/api/event/mine"),
-        api.get("/api/workflow/queue"),
       ]);
 
+      if (queueRes.status === "fulfilled" && queueRes.value.data?.success) {
+        const nextQueue = Array.isArray(queueRes.value.data.message) ? queueRes.value.data.message : [];
+        setQueue(nextQueue);
+        setSelectedWorkflow(nextQueue[0] || null);
+      } else {
+        setQueue([]);
+        setSelectedWorkflow(null);
+      }
+
       if (projectRes.status === "fulfilled" && projectRes.value.data?.success) {
-        setProjects(projectRes.value.data.message || []);
+        setProjects(Array.isArray(projectRes.value.data.message) ? projectRes.value.data.message : []);
+      } else {
+        setProjects([]);
       }
 
       if (eventRes.status === "fulfilled" && eventRes.value.data?.success) {
-        setMyEvents(eventRes.value.data.message || []);
-      }
-
-      if (queueRes.status === "fulfilled" && queueRes.value.data?.success) {
-        const nextQueue = queueRes.value.data.message || [];
-        setQueue(nextQueue);
-        if (Array.isArray(nextQueue) && nextQueue.length > 0) {
-          setSelectedWorkflow((current) => current && nextQueue.some((item: WorkflowItem) => item._id === current._id) ? current : nextQueue[0]);
-        } else {
-          setSelectedWorkflow(null);
-        }
-      }
-
-      const profileRes = await api.get("/api/user/profile");
-      if (profileRes.data?.success) {
-        setProfile(profileRes.data.message || profileRes.data.user || null);
-        const organizationId = profileRes.data.message?.adminProfile?.organization || profileRes.data.user?.adminProfile?.organization;
-        if (organizationId) {
-          setProjectForm((current) => ({ ...current, organizationId }));
-        }
+        setMyEvents(Array.isArray(eventRes.value.data.message) ? eventRes.value.data.message : []);
+      } else {
+        setMyEvents([]);
       }
     } catch (error) {
-      console.error(error);
+      toast.error("Unable to load workspace");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!userData) return;
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.role]);
+  }, [role]);
 
-  const projectLookup = useMemo(
-    () => projects.map((project) => ({
-      value: project._id,
-      label: `${project.projectName} - ${project.organization?.organizationName || "Organization"}`,
-    })),
-    [projects],
-  );
-
-  const createProject = async () => {
+  const logout = async () => {
     try {
-      const payload = {
-        ...projectForm,
-      };
-      const { data } = await api.post("/api/project/create", payload);
-      if (!data?.success) {
-        toast.error(data?.message || "Unable to create project");
-        return;
+      const { data } = await axios.post(`${backendUrl}/api/auth/logout`);
+      if (data.success) {
+        setIsLoggedIn(false);
+        setUserData(null);
+        navigate("/sign-in");
       }
-
-      toast.success("Project and president created");
-      setProjectForm({
-        organizationId: "",
-        projectName: "",
-        description: "",
-        presidentName: "",
-        presidentEmail: "",
-        presidentPassword: "",
-      });
-      await loadData();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unable to create project");
+    } catch {
+      toast.error("Logout failed");
     }
   };
 
+  const createProject = async () => {
+    const { data } = await api.post("/api/project/create", projectForm);
+    if (!data?.success) return toast.error(data?.message || "Unable to create project");
+    toast.success("Project created");
+    setProjectForm({
+      organizationId: "",
+      projectName: "",
+      description: "",
+      presidentName: "",
+      presidentEmail: "",
+      presidentPassword: "",
+    });
+    loadData();
+  };
+
   const createEvent = async () => {
+    if (!eventForm.projectId) return toast.error("Please select a project");
+    if (!eventForm.title.trim()) return toast.error("Event title is required");
+    if (!eventForm.description.trim()) return toast.error("Event description is required");
+    if (!eventForm.category.trim()) return toast.error("Event category is required");
+    if (!eventForm.eventDate) return toast.error("Event date is required");
+    if (!eventForm.startTime) return toast.error("Start time is required");
+    if (!eventForm.endTime) return toast.error("End time is required");
+    if (!eventForm.expectedAttendees || Number(eventForm.expectedAttendees) <= 0) {
+      return toast.error("Expected attendees must be greater than 0");
+    }
+    if (!eventForm.venueName.trim()) return toast.error("Venue name is required");
+
     try {
       const { data } = await api.post("/api/event/create", {
-        ...eventForm,
+        projectId: eventForm.projectId,
+        title: eventForm.title.trim(),
+        description: eventForm.description.trim(),
+        category: eventForm.category.trim(),
+        eventDate: eventForm.eventDate,
+        startTime: eventForm.startTime,
+        endTime: eventForm.endTime,
         expectedAttendees: Number(eventForm.expectedAttendees),
+        venueName: eventForm.venueName.trim(),
+        classroomName: eventForm.classroomName.trim(),
+        coverImageUrl: eventForm.coverImageUrl.trim(),
       });
 
-      if (!data?.success) {
-        toast.error(data?.message || "Unable to create event");
-        return;
-      }
-
-      toast.success("Event submitted to workflow");
+      if (!data?.success) return toast.error(data?.message || "Unable to create event");
+      toast.success("Event submitted");
       setEventForm({
         projectId: "",
         title: "",
@@ -260,511 +193,231 @@ const Workspace = () => {
         classroomName: "",
         coverImageUrl: "",
       });
-      await loadData();
+      loadData();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unable to create event");
+      toast.error(error?.response?.data?.message || error?.message || "Unable to create event");
     }
   };
 
-  const resubmitEvent = async (eventId: string) => {
-    try {
-      const event = myEvents.find((item) => item._id === eventId);
-      if (!event) return;
-      const { data } = await api.post("/api/event/resubmit", {
-        eventId,
-        ...event,
-      });
-
-      if (!data?.success) {
-        toast.error(data?.message || "Unable to resubmit event");
-        return;
-      }
-
-      toast.success("Event resubmitted");
-      await loadData();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unable to resubmit event");
-    }
+  const decide = async (status: "approved" | "rejected") => {
+    if (!selectedWorkflow?.event?._id) return;
+    if (status === "rejected" && !comment.trim()) return toast.error("Comment required for rejection");
+    const { data } = await api.post("/api/workflow/decision", {
+      eventId: selectedWorkflow.event._id,
+      status,
+      comment: comment.trim(),
+    });
+    if (!data?.success) return toast.error(data?.message || "Unable to update");
+    toast.success(status === "approved" ? "Approved" : "Rejected");
+    setComment("");
+    loadData();
   };
 
-  const sendDecision = async (decision: "approved" | "rejected") => {
-    if (!selectedWorkflow) return;
-
-    if (decision === "rejected" && !actionComment.trim()) {
-      toast.error("Add a short reason for rejection");
-      return;
-    }
-
-    try {
-      const { data } = await api.post("/api/workflow/decision", {
-        eventId: selectedWorkflow.event._id,
-        status: decision,
-        comment: actionComment,
-      });
-
-      if (!data?.success) {
-        toast.error(data?.message || "Unable to update workflow");
-        return;
-      }
-
-      toast.success(decision === "approved" ? "Approved" : "Returned to president");
-      setActionComment("");
-      await loadData();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unable to update workflow");
-    }
+  const resubmit = async (eventId: string) => {
+    const event = myEvents.find((e) => e._id === eventId);
+    if (!event) return;
+    const { data } = await api.post("/api/event/resubmit", { eventId, ...event });
+    if (!data?.success) return toast.error(data?.message || "Unable to resubmit");
+    toast.success("Event resubmitted");
+    loadData();
   };
+
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const uploadSecurity = async () => {
-    if (!selectedWorkflow) return;
-
-    try {
-      const imageUrl = await toDataUrl(securityFile);
-      const { data } = await api.post("/api/workflow/security-upload", {
-        eventId: selectedWorkflow.event._id,
-        imageUrl,
-      });
-
-      if (!data?.success) {
-        toast.error(data?.message || "Unable to submit security proof");
-        return;
-      }
-
-      toast.success("Security proof uploaded");
-      setSecurityFile(null);
-      await loadData();
-    } catch (error: any) {
-      toast.error(error?.message || "Unable to submit security proof");
-    }
+    if (!securityFile || !selectedWorkflow?.event?._id) return toast.error("Select an image");
+    const imageUrl = await toDataUrl(securityFile);
+    const { data } = await api.post("/api/workflow/security-upload", {
+      eventId: selectedWorkflow.event._id,
+      imageUrl,
+    });
+    if (!data?.success) return toast.error(data?.message || "Unable to upload security proof");
+    toast.success("Security proof uploaded");
+    setSecurityFile(null);
+    loadData();
   };
 
-  const selectedEvent = selectedWorkflow?.event;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">
-              {roleLabel[role] || "User"} workspace
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold">
-              {role === "welfareOfficer"
-                ? "System administration and master data"
-                : role === "president"
-                  ? "Project events and your submissions"
-                  : canApprove
-                    ? "Approval queue"
-                    : "University workspace"}
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-              {role === "welfareOfficer"
-                ? "Create faculties, deans, venues, organizations, and university-level roles."
-                : role === "president"
-                  ? "Create events from your assigned project and watch the workflow move step by step."
-                  : "Review events, approve or reject, and keep the workflow moving to the next stage."}
-            </p>
+    <div className="min-h-screen bg-slate-50 font-body">
+      <div className="flex">
+        <aside className="w-72 min-h-screen bg-white border-r border-slate-200 p-5">
+          <h2 className="font-display text-xl text-slate-800">Workflow Workspace</h2>
+          <p className="text-xs text-slate-500 mt-1">{role}</p>
+          <div className="mt-5 space-y-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium ${
+                  activeTab === tab.key
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <div className="flex gap-3">
-            <Button variant="secondary" className="rounded-full bg-white/10 text-white hover:bg-white/20" onClick={() => navigate("/")}>
-              Public site
-            </Button>
-            <Button className="rounded-full bg-sky-500 text-white hover:bg-sky-400" onClick={loadData}>
-              <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
-            </Button>
-          </div>
-        </div>
+        </aside>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6">
-            {canCreateProject && (
-              <Card className="border-white/10 bg-white/5 text-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-sky-300" />
-                    Create project and president
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Advisors and deans create a project, then provision the president account.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Organization</Label>
-                    <Input
-                      value={projectForm.organizationId}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, organizationId: event.target.value }))}
-                      placeholder="Paste organization id"
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                    <p className="text-xs text-slate-400">
-                      {profile?.adminProfile?.organization
-                        ? "Auto-filled from your profile. You can keep it as-is."
-                        : "If it is not auto-filled, paste the organization id from the admin panel."}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Project name</Label>
-                    <Input
-                      value={projectForm.projectName}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, projectName: event.target.value }))}
-                      placeholder="Skill Up Project"
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={projectForm.description}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, description: event.target.value }))}
-                      placeholder="What is the project about?"
-                      className="min-h-28 bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>President name</Label>
-                    <Input
-                      value={projectForm.presidentName}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, presidentName: event.target.value }))}
-                      placeholder="Nimal Perera"
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>President email</Label>
-                    <Input
-                      type="email"
-                      value={projectForm.presidentEmail}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, presidentEmail: event.target.value }))}
-                      placeholder="president@uni.lk"
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Temporary password</Label>
-                    <Input
-                      type="text"
-                      value={projectForm.presidentPassword}
-                      onChange={(event) => setProjectForm((current) => ({ ...current, presidentPassword: event.target.value }))}
-                      placeholder="Admin@12345"
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="md:col-span-2 flex justify-end">
-                    <Button className="rounded-2xl bg-sky-500 text-white hover:bg-sky-400" onClick={createProject}>
-                      Create project
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        <div className="flex-1 min-h-screen">
+          <header className="sticky top-0 z-20 bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between">
+            <h1 className="font-display text-xl text-slate-800">Workspace</h1>
+            <div className="flex gap-2">
+              <button onClick={() => navigate("/approval-dashboard")} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50">Approval Dashboard</button>
+              <button onClick={loadData} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50"><RefreshCcw className="w-4 h-4 inline mr-1" />Refresh</button>
+              <button onClick={() => navigate("/")} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50"><Home className="w-4 h-4 inline mr-1" />Home</button>
+              <button onClick={logout} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-red-50 text-slate-600 hover:text-red-600"><LogOut className="w-4 h-4 inline mr-1" />Logout</button>
+            </div>
+          </header>
 
-            {canCreateEvent && (
-              <Card className="border-white/10 bg-white/5 text-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Send className="h-5 w-5 text-sky-300" />
-                    Create event
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Presidents submit an event under an assigned project.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Project</Label>
-                    <Select value={eventForm.projectId} onValueChange={(value) => setEventForm((current) => ({ ...current, projectId: value }))}>
-                      <SelectTrigger className="bg-white/10 text-white">
-                        <SelectValue placeholder="Select project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {projectLookup.map((project) => (
-                          <SelectItem key={project.value} value={project.value}>
-                            {project.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input
-                      value={eventForm.title}
-                      onChange={(event) => setEventForm((current) => ({ ...current, title: event.target.value }))}
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={eventForm.category} onValueChange={(value) => setEventForm((current) => ({ ...current, category: value }))}>
-                      <SelectTrigger className="bg-white/10 text-white">
-                        <SelectValue placeholder="Choose category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Music">Music / Arts / Cultural</SelectItem>
-                        <SelectItem value="Arts">Arts</SelectItem>
-                        <SelectItem value="Cultural">Cultural</SelectItem>
-                        <SelectItem value="Sports">Sports</SelectItem>
-                        <SelectItem value="Other">Other / Normal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={eventForm.description}
-                      onChange={(event) => setEventForm((current) => ({ ...current, description: event.target.value }))}
-                      className="min-h-28 bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Input
-                      type="date"
-                      value={eventForm.eventDate}
-                      onChange={(event) => setEventForm((current) => ({ ...current, eventDate: event.target.value }))}
-                      className="bg-white/10 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Expected attendees</Label>
-                    <Input
-                      type="number"
-                      value={eventForm.expectedAttendees}
-                      onChange={(event) => setEventForm((current) => ({ ...current, expectedAttendees: event.target.value }))}
-                      className="bg-white/10 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Start time</Label>
-                    <Input
-                      type="time"
-                      value={eventForm.startTime}
-                      onChange={(event) => setEventForm((current) => ({ ...current, startTime: event.target.value }))}
-                      className="bg-white/10 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>End time</Label>
-                    <Input
-                      type="time"
-                      value={eventForm.endTime}
-                      onChange={(event) => setEventForm((current) => ({ ...current, endTime: event.target.value }))}
-                      className="bg-white/10 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Venue name</Label>
-                    <Input
-                      value={eventForm.venueName}
-                      onChange={(event) => setEventForm((current) => ({ ...current, venueName: event.target.value }))}
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Classroom</Label>
-                    <Input
-                      value={eventForm.classroomName}
-                      onChange={(event) => setEventForm((current) => ({ ...current, classroomName: event.target.value }))}
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Cover image URL</Label>
-                    <Input
-                      value={eventForm.coverImageUrl}
-                      onChange={(event) => setEventForm((current) => ({ ...current, coverImageUrl: event.target.value }))}
-                      placeholder="https://..."
-                      className="bg-white/10 text-white placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="md:col-span-2 flex justify-end">
-                    <Button className="rounded-2xl bg-sky-500 text-white hover:bg-sky-400" onClick={createEvent}>
-                      Submit event
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          <main className="p-6">
+            {loading && <div className="text-sm text-slate-500 mb-4">Loading workspace...</div>}
 
-            {canApprove && (
-              <Card className="border-white/10 bg-white/5 text-white">
-                <CardHeader>
-                  <CardTitle>Pending approvals</CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Events waiting for your current role.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {queue.length === 0 ? (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300">
-                      No pending items for your role.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {queue.map((workflow) => (
-                        <button
-                          key={workflow._id}
-                          onClick={() => setSelectedWorkflow(workflow)}
-                          className={`w-full rounded-2xl border p-4 text-left transition ${
-                            selectedWorkflow?._id === workflow._id
-                              ? "border-sky-400/50 bg-sky-400/10"
-                              : "border-white/10 bg-white/5 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold">{workflow.event.title}</p>
-                              <p className="mt-1 text-xs text-slate-300">
-                                {workflow.event.project?.projectName || "Project"} - {workflow.event.organization?.organizationName || "Organization"}
-                              </p>
-                            </div>
-                            <Badge className="rounded-full bg-white/10 text-slate-100">{stageLabel[workflow.currentStage] || workflow.currentStage}</Badge>
-                          </div>
-                        </button>
+            {activeTab === "queue" && canApprove && (
+              <section className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5">
+                <div className="bg-white border rounded-2xl overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="p-3 text-left text-xs text-slate-500">Event</th>
+                        <th className="p-3 text-left text-xs text-slate-500">Stage</th>
+                        <th className="p-3 text-left text-xs text-slate-500">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {queue.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="p-4 text-sm text-slate-500">No queue items for your role.</td>
+                        </tr>
+                      )}
+                      {queue.map((item) => (
+                        <tr key={item._id} onClick={() => setSelectedWorkflow(item)} className="border-t cursor-pointer hover:bg-slate-50">
+                          <td className="p-3 text-sm text-slate-700">{item.event?.title || item.event?.eventTitle || "-"}</td>
+                          <td className="p-3 text-sm text-slate-600">{stageLabel[item.currentStage] || item.currentStage}</td>
+                          <td className="p-3 text-sm text-slate-600">{item.status}</td>
+                        </tr>
                       ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {canCreateEvent && (
-              <Card className="border-white/10 bg-white/5 text-white">
-                <CardHeader>
-                  <CardTitle>Your events</CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Resubmit returned events or upload security proof when required.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {myEvents.length === 0 ? (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300">
-                      No events created yet.
+                    </tbody>
+                  </table>
+                </div>
+                <div className="bg-white border rounded-2xl p-4">
+                  <h3 className="font-semibold text-slate-800">Selected Item</h3>
+                  {selectedWorkflow ? (
+                    <div className="space-y-3 mt-3">
+                      <div className="text-sm text-slate-600">{selectedWorkflow.event?.title || selectedWorkflow.event?.eventTitle}</div>
+                      <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Comment" className="w-full border rounded-xl p-2.5 text-sm" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => decide("approved")} className="px-3 py-2 rounded-xl bg-emerald-500 text-white text-sm"><Check className="w-4 h-4 inline mr-1" />Approve</button>
+                        <button onClick={() => decide("rejected")} className="px-3 py-2 rounded-xl bg-red-500 text-white text-sm"><X className="w-4 h-4 inline mr-1" />Reject</button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {myEvents.map((event) => (
-                        <div key={event._id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="font-semibold">{event.title}</p>
-                              <p className="mt-1 text-xs text-slate-300">
-                                {event.venueName} - {event.eventDate} - {event.startTime} to {event.endTime}
-                              </p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <Badge className="rounded-full bg-white/10 text-slate-100">{event.status}</Badge>
-                                <Badge className="rounded-full bg-white/10 text-slate-100">{stageLabel[event.approvalStage] || event.approvalStage}</Badge>
-                                {event.requiresSecurity && (
-                                  <Badge className="rounded-full bg-amber-400/15 text-amber-200">
-                                    Security needed
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            {event.status === "returned" && (
-                              <Button className="rounded-2xl bg-sky-500 text-white hover:bg-sky-400" onClick={() => resubmitEvent(event._id)}>
-                                Resubmit
-                              </Button>
-                            )}
-                          </div>
+                    <p className="text-sm text-slate-500 mt-3">Select an item from queue.</p>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {activeTab === "project" && canCreateProject && (
+              <section className="bg-white border rounded-2xl p-5 grid md:grid-cols-2 gap-3">
+                <h3 className="md:col-span-2 font-semibold text-slate-800">Step 0: Create Project + President</h3>
+                <input placeholder="Organization ID" className="border rounded-xl p-2.5 text-sm" value={projectForm.organizationId} onChange={(e) => setProjectForm((s) => ({ ...s, organizationId: e.target.value }))} />
+                <input placeholder="Project Name" className="border rounded-xl p-2.5 text-sm" value={projectForm.projectName} onChange={(e) => setProjectForm((s) => ({ ...s, projectName: e.target.value }))} />
+                <textarea placeholder="Description" className="md:col-span-2 border rounded-xl p-2.5 text-sm" value={projectForm.description} onChange={(e) => setProjectForm((s) => ({ ...s, description: e.target.value }))} />
+                <input placeholder="President Name" className="border rounded-xl p-2.5 text-sm" value={projectForm.presidentName} onChange={(e) => setProjectForm((s) => ({ ...s, presidentName: e.target.value }))} />
+                <input placeholder="President Email" className="border rounded-xl p-2.5 text-sm" value={projectForm.presidentEmail} onChange={(e) => setProjectForm((s) => ({ ...s, presidentEmail: e.target.value }))} />
+                <input placeholder="President Password" className="md:col-span-2 border rounded-xl p-2.5 text-sm" value={projectForm.presidentPassword} onChange={(e) => setProjectForm((s) => ({ ...s, presidentPassword: e.target.value }))} />
+                <div className="md:col-span-2"><button onClick={createProject} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"><Send className="w-4 h-4 inline mr-1" />Create Project</button></div>
+              </section>
+            )}
+
+            {activeTab === "events" && canCreateEvent && (
+              <section className="space-y-5">
+                <div className="bg-white border rounded-2xl p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-semibold text-slate-800">Step 1: Create Event</h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Use the event registration wizard to submit your project event into the approval workflow.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/event-registration")}
+                      disabled={projects.length === 0}
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Open Event Registration
+                    </button>
+                  </div>
+                  {projects.length === 0 && (
+                    <p className="mt-3 text-xs text-amber-600">
+                      No assigned project found for this president. Ask your advisor/dean to create your project first.
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-white border rounded-2xl p-5">
+                  <h3 className="font-semibold text-slate-800">My Event Submissions</h3>
+                  <div className="mt-3 space-y-2">
+                    {myEvents.length === 0 && <p className="text-sm text-slate-500">No events yet.</p>}
+                    {myEvents.map((event) => (
+                      <div key={event._id} className="border rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{event.title || event.eventTitle}</p>
+                          <p className="text-xs text-slate-500">{stageLabel[event.approvalStage] || event.approvalStage} • {event.status}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            {selectedWorkflow && (
-              <Card className="border-white/10 bg-white/5 text-white">
-                <CardHeader>
-                  <CardTitle>Selected event</CardTitle>
-                  <CardDescription className="text-slate-300">
-                    {selectedWorkflow.event.title}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-sky-300">Current stage</p>
-                    <p className="mt-2 text-lg font-semibold">{stageLabel[selectedWorkflow.currentStage] || selectedWorkflow.currentStage}</p>
-                    <p className="mt-1 text-sm text-slate-300">
-                      Role: {roleLabel[selectedWorkflow.currentRole] || selectedWorkflow.currentRole}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2 text-sm text-slate-300">
-                    <div>Organization: {selectedWorkflow.event.organization?.organizationName || "-"}</div>
-                    <div>Project: {selectedWorkflow.event.project?.projectName || "-"}</div>
-                    <div>Venue: {selectedWorkflow.event.venue?.venueName || selectedWorkflow.event.venueName}</div>
-                  </div>
-
-                  {selectedWorkflow.currentStage === "securityUpload" && role === "president" && (
-                    <div className="space-y-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
-                      <div className="flex items-center gap-2 text-amber-100">
-                        <ShieldCheck className="h-4 w-4" />
-                        Upload the signature image before the event can move forward.
+                        {event.status === "returned" && <button onClick={() => resubmit(event._id)} className="px-3 py-1.5 text-xs rounded-lg border hover:bg-slate-50">Resubmit</button>}
                       </div>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(event) => setSecurityFile(event.target.files?.[0] || null)}
-                        className="bg-white/10 text-white"
-                      />
-                      <Button className="w-full rounded-2xl bg-amber-500 text-slate-950 hover:bg-amber-400" onClick={uploadSecurity}>
-                        <FileUp className="mr-2 h-4 w-4" /> Submit security proof
-                      </Button>
-                    </div>
-                  )}
-
-                  {canApprove && selectedWorkflow.currentStage !== "securityUpload" && (
-                    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <Label>Comment</Label>
-                      <Textarea
-                        value={actionComment}
-                        onChange={(event) => setActionComment(event.target.value)}
-                        placeholder="Add a short note..."
-                        className="min-h-24 bg-white/10 text-white placeholder:text-slate-400"
-                      />
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button className="rounded-2xl bg-emerald-500 text-white hover:bg-emerald-400" onClick={() => sendDecision("approved")}>
-                          <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
-                        </Button>
-                        <Button variant="destructive" className="rounded-2xl" onClick={() => sendDecision("rejected")}>
-                          <XCircle className="mr-2 h-4 w-4" /> Reject
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    ))}
+                  </div>
+                </div>
+              </section>
             )}
 
-            <Card className="border-white/10 bg-white/5 text-white">
-              <CardHeader>
-                <CardTitle>Quick summary</CardTitle>
-                <CardDescription className="text-slate-300">
-                  What the system sees right now.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-slate-300">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <span>Projects</span>
-                  <span className="font-semibold text-white">{projects.length}</span>
+            {activeTab === "security" && canCreateEvent && (
+              <section className="bg-white border rounded-2xl p-5">
+                <h3 className="font-semibold text-slate-800 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-amber-500" />Step 4: Security Upload</h3>
+                <p className="text-sm text-slate-500 mt-2">After 6:00 PM events require 5-signature image upload.</p>
+                <div className="mt-4 border rounded-xl p-3">
+                  <select className="w-full border rounded-xl p-2.5 text-sm" value={selectedWorkflow?._id || ""} onChange={(e) => setSelectedWorkflow(queue.find((q) => q._id === e.target.value) || null)}>
+                    <option value="">Select Event In Security Stage</option>
+                    {queue.filter((q) => q.currentStage === "securityUpload").map((q) => (
+                      <option key={q._id} value={q._id}>{q.event?.title || q.event?.eventTitle}</option>
+                    ))}
+                  </select>
+                  <input className="mt-3 w-full border rounded-xl p-2.5 text-sm" type="file" accept="image/*" onChange={(e) => setSecurityFile(e.target.files?.[0] || null)} />
+                  <button onClick={uploadSecurity} className="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-slate-900 text-sm"><FileUp className="w-4 h-4 inline mr-1" />Submit Security Proof</button>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <span>My events</span>
-                  <span className="font-semibold text-white">{myEvents.length}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <span>Pending queue</span>
-                  <span className="font-semibold text-white">{queue.length}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </section>
+            )}
+
+            {activeTab === "timeline" && (
+              <section className="bg-white border rounded-2xl p-5">
+                <h3 className="font-semibold text-slate-800">Timeline View</h3>
+                <p className="text-sm text-slate-500 mt-1">Read-only stage history for selected workflow.</p>
+                {selectedWorkflow?.history?.length ? (
+                  <div className="mt-4 space-y-2">
+                    {selectedWorkflow.history.map((item: any, idx: number) => (
+                      <div key={`${item.at}-${idx}`} className="border rounded-xl p-3">
+                        <p className="text-sm text-slate-700">{stageLabel[item.stage] || item.stage}</p>
+                        <p className="text-xs text-slate-500">{item.role} • {item.decision} • {new Date(item.at).toLocaleString()}</p>
+                        {item.comment ? <p className="text-xs text-slate-600 mt-1">{item.comment}</p> : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500">Select a workflow item from Queue tab first.</p>
+                )}
+              </section>
+            )}
+          </main>
         </div>
       </div>
     </div>

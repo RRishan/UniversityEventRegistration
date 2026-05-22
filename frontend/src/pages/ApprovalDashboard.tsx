@@ -156,7 +156,7 @@ const ApprovalDashboard = () => {
 
   const navigate = useNavigate();
 
-  const { backendUrl, setIsLoggedIn } = useContext(AppContext);
+  const { backendUrl, setIsLoggedIn, userData } = useContext(AppContext);
 
   const statusCounts = useMemo(() => ({
     pending: events.filter((event) => event.status === "Pending").length,
@@ -186,7 +186,7 @@ const ApprovalDashboard = () => {
       setIsLoadingData(true);
       axios.defaults.withCredentials = true;
 
-      const { data } = await axios.get(`${backendUrl}/api/workflow/get`);
+      const { data } = await axios.get(`${backendUrl}/api/workflow/queue`);
       if (!data?.success) {
         toast.error(data?.message || "Failed to fetch approval queue.");
         setEvents([]);
@@ -194,55 +194,54 @@ const ApprovalDashboard = () => {
         return;
       }
 
-      const workflowMessage = data.message;
-      const workflowContent: WorkflowApiItem[] = Array.isArray(workflowMessage?.workflowContent)
-        ? workflowMessage.workflowContent
-        : [];
-      const eventPayload: WorkflowApiEvent | null = workflowMessage?.event || null;
-
-      if (!eventPayload) {
-        setEvents([]);
-        setSelectedEvent(null);
-        return;
-      }
-
-      const latestItem = workflowContent.length > 0 ? workflowContent[workflowContent.length - 1] : null;
-      const eventStatus =
-        eventPayload.isApproved
-          ? "Approved"
-          : latestItem?.status === "rejected"
-            ? "Overdue"
-            : latestItem?.status === "approved"
-              ? "In Review"
+      const workflows = Array.isArray(data.message) ? data.message : [];
+      const mappedEvents: DashboardEvent[] = workflows.map((workflow: any) => {
+        const eventPayload = workflow.event || {};
+        const workflowContent: WorkflowApiItem[] = Array.isArray(workflow.history)
+          ? workflow.history.map((item: any) => ({
+              _id: item.at || Math.random().toString(),
+              role: item.role || "",
+              status: item.decision || "",
+              updatedAt: item.at,
+              message: item.comment || "",
+            }))
+          : [];
+        const latestItem = workflowContent.length > 0 ? workflowContent[workflowContent.length - 1] : null;
+        const eventStatus =
+          workflow.status === "approved"
+            ? "Approved"
+            : workflow.status === "returned"
+              ? "Overdue"
               : "Pending";
+        const mappedComments: DashboardComment[] = workflowContent.map((item) => ({
+          author: formatRole(item.role),
+          role: "Workflow Step",
+          time: formatDateTime(item.updatedAt),
+          text: item.message?.trim() ? item.message : `Status changed to ${item.status}.`,
+        }));
 
-      const mappedComments: DashboardComment[] = workflowContent.map((item) => ({
-        author: formatRole(item.role),
-        role: "Workflow Step",
-        time: formatDateTime(item.updatedAt),
-        text: item.message?.trim() ? item.message : `Status changed to ${item.status}.`,
-      }));
+        return {
+          id: String(eventPayload._id),
+          workflowId: String(workflow._id || ""),
+          title: eventPayload.title || eventPayload.eventTitle || "Untitled Event",
+          organizer:
+            eventPayload?.organization?.organizationName ||
+            eventPayload?.president?.fullName ||
+            "Organizer",
+          submissionDate: latestItem?.updatedAt ? formatDateTime(latestItem.updatedAt) : "-",
+          status: eventStatus,
+          eventDate: eventPayload.eventDate || "-",
+          location: eventPayload.venueName || eventPayload.venue?.venueName || "-",
+          expectedAttendees: eventPayload.expectedAttendees || 0,
+          description: eventPayload.description || "",
+          documents: [],
+          comments: mappedComments,
+          workflowContent,
+        };
+      });
 
-      const mappedEvent: DashboardEvent = {
-        id: String(eventPayload._id),
-        workflowId: String(workflowMessage?.workflowId || ""),
-        title: eventPayload.eventTitle,
-        organizer: eventPayload.organizerProfile?.advisorName || eventPayload.organizerProfile?.clubSociety || "Organizer",
-        submissionDate: latestItem?.updatedAt ? formatDateTime(latestItem.updatedAt) : "-",
-        status: eventStatus,
-        eventDate: eventPayload.eventDate,
-        location: eventPayload.classRoomName
-          ? `${eventPayload.venue} (${eventPayload.classRoomName})`
-          : eventPayload.venue,
-        expectedAttendees: eventPayload.expectedAttendees,
-        description: eventPayload.description,
-        documents: [],
-        comments: mappedComments,
-        workflowContent,
-      };
-
-      setEvents([mappedEvent]);
-      setSelectedEvent(mappedEvent);
+      setEvents(mappedEvents);
+      setSelectedEvent(mappedEvents[0] || null);
     } catch (error: any) {
       toast.error(error?.message || "Failed to fetch approval queue.");
       setEvents([]);
@@ -273,9 +272,13 @@ const ApprovalDashboard = () => {
   }
 
   useEffect(() => {
+    if (userData?.role === "student") {
+      navigate("/");
+      return;
+    }
     fetchWorkflowQueue();
     getUserProfile();
-  }, [backendUrl]);
+  }, [backendUrl, userData?.role]);
 
   const handleWorkflowAction = async (status: "approved" | "rejected") => {
     if (!selectedEvent) return;
@@ -286,9 +289,10 @@ const ApprovalDashboard = () => {
 
     try {
       axios.defaults.withCredentials = true;
-      const { data } = await axios.post(`${backendUrl}/api/workflow/update`, {
+      const { data } = await axios.post(`${backendUrl}/api/workflow/decision`, {
+        eventId: selectedEvent.id,
         status,
-        message: comment.trim(),
+        comment: comment.trim(),
       });
 
       if (!data?.success) {
@@ -302,6 +306,10 @@ const ApprovalDashboard = () => {
     } catch (error: any) {
       toast.error(error?.message || "Failed to update workflow.");
     }
+  };
+
+  const openEventDetailPage = (eventId: string) => {
+    navigate(`/approval-dashboard/event/${eventId}`);
   };
 
   const filteredEvents = events.filter((event) => {
@@ -486,6 +494,15 @@ const ApprovalDashboard = () => {
               </button>
 
               <button
+                onClick={() => navigate("/workspace")}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-500
+                  bg-white border border-slate-200 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50
+                  transition-all duration-200 shadow-sm">
+                <Settings size={14} />
+                Workspace
+              </button>
+
+              <button
                 onClick={() => navigate("/")}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-500
                   bg-white border border-slate-200 hover:border-green-200 hover:text-green-600 hover:bg-green-50
@@ -637,7 +654,7 @@ const ApprovalDashboard = () => {
                         {/* Actions */}
                         <td className="p-3.5">
                           <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                            <button className="action-icon action-icon-view"    title="View"><Eye size={13} /></button>
+                            <button className="action-icon action-icon-view"    title="View" onClick={() => openEventDetailPage(event.id)}><Eye size={13} /></button>
                             <button className="action-icon action-icon-comment" title="Comment"><MessageCircle size={13} /></button>
                             <button className="action-icon action-icon-check"   title="Approve" onClick={() => { setSelectedEvent(event); handleWorkflowAction("approved"); }}><Check size={13} /></button>
                             <button className="action-icon action-icon-x"       title="Reject" onClick={() => { setSelectedEvent(event); handleWorkflowAction("rejected"); }}><X size={13} /></button>

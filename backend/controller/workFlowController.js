@@ -5,6 +5,85 @@ const Venue = require('../models/Venue');
 const WorkFlow = require('../models/WorkFlow');
 const { categoryRole, afterSixPm } = require('./eventController');
 
+const formatPopulatedUser = (user) => {
+  if (!user) return null;
+
+  return {
+    fullName: user.fullName || '',
+    email: user.email || '',
+    role: user.adminProfile?.role || 'student',
+    department: user.adminProfile?.department || '',
+    organization: user.adminProfile?.organization || null,
+    organizerProfile: user.organizerProfile || null,
+    lectureProfile: user.lectureProfile || null,
+  };
+};
+
+const formatWorkflowDetail = (workflow) => ({
+  status: workflow.status || '',
+  currentStage: workflow.currentStage || '',
+  currentRole: workflow.currentRole || '',
+  requiresSecurity: Boolean(workflow.requiresSecurity),
+  securityImageUrl: workflow.securityImageUrl || '',
+  securitySubmittedAt: workflow.securitySubmittedAt || null,
+  returnedToPresidentAt: workflow.returnedToPresidentAt || null,
+  finalApprovedAt: workflow.finalApprovedAt || null,
+  history: (workflow.history || []).map((item) => ({
+    stage: item.stage || '',
+    role: item.role || '',
+    decision: item.decision || '',
+    comment: item.comment || '',
+    at: item.at || null,
+    actor: formatPopulatedUser(item.actor),
+  })),
+});
+
+const formatEventDetail = (event) => ({
+  title: event.title || '',
+  description: event.description || '',
+  category: event.category || '',
+  eventDate: event.eventDate || '',
+  startTime: event.startTime || '',
+  endTime: event.endTime || '',
+  expectedAttendees: event.expectedAttendees || 0,
+  venueName: event.venueName || event.venue?.venueName || '',
+  coverImageUrl: event.coverImageUrl || '',
+  classroomName: event.classroomName || '',
+  status: event.status || '',
+  approvalStage: event.approvalStage || '',
+  approvalRole: event.approvalRole || '',
+  requiresSecurity: Boolean(event.requiresSecurity),
+  publicVisible: Boolean(event.publicVisible),
+  approvedAt: event.approvedAt || null,
+  rejectedAt: event.rejectedAt || null,
+});
+
+const formatOrganizationDetail = (organization) => ({
+  name: organization.organizationName || '',
+  type: organization.organizationType || '',
+  authorityType: organization.authorityType || 'advisor',
+  presidentName: organization.presidentName || '',
+  email: organization.email || '',
+  projectCount: organization.projectCount || 0,
+});
+
+const formatProjectDetail = (project) => ({
+  name: project.projectName || '',
+  description: project.description || '',
+  status: project.status || '',
+  organizationAuthorityType: project.organizationAuthorityType || 'advisor',
+  organizationAuthority: formatPopulatedUser(project.organizationAuthorityRef),
+  president: formatPopulatedUser(project.president),
+});
+
+const formatVenueDetail = (venue) => ({
+  name: venue.venueName || '',
+  capacity: venue.capacity || 0,
+  type: venue.type || '',
+  ownerType: venue.ownerType || '',
+  owner: formatPopulatedUser(venue.ownerRef),
+});
+
 const getSingleRoleUser = async (role) => User.findOne({ 'adminProfile.role': role });
 
 const resolveCurrentAssignee = async (event, workflow, currentStage) => {
@@ -327,9 +406,56 @@ const getWorkflowByOrganizer = async (req, res) => {
   }
 };
 
+const getWorkflowEventDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
+    }
+
+    const eventId = req.params?.eventId || req.body?.eventId || req.query?.eventId;
+    if (!eventId) {
+      return res.send({ success: false, message: 'Missing event id' });
+    }
+
+    const workflow = await WorkFlow.findOne({ event: eventId }).populate({
+      path: 'event',
+      populate: [
+        { path: 'organization' },
+        { path: 'project' },
+        { path: 'venue' },
+        { path: 'president' },
+      ],
+    });
+
+    if (!workflow) {
+      return res.send({ success: false, message: 'Workflow not found' });
+    }
+
+    const event = workflow.event;
+
+    return res.send({
+      success: true,
+      message: {
+        event: formatEventDetail(event),
+        relations: {
+          organization: formatOrganizationDetail(event.organization),
+          project: formatProjectDetail(event.project),
+          venue: formatVenueDetail(event.venue),
+          president: formatPopulatedUser(event.president),
+        },
+        workflow: formatWorkflowDetail(workflow),
+      },
+    });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
 module.exports = {
   getWorkflowQueue,
   updateWorkflowStatus,
   submitSecurityProof,
   getWorkflowByOrganizer,
+  getWorkflowEventDetails,
 };
