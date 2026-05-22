@@ -23,6 +23,33 @@ type EventData = {
   classRoomName?: string;
 };
 
+type WorkflowDetailItem = {
+  stage: string;
+  role: string;
+  decision: string;
+  comment: string;
+  at?: string | null;
+};
+
+type WorkflowEventDetailResponse = {
+  event: {
+    title: string;
+    description: string;
+    category: string;
+    eventDate: string;
+    startTime: string;
+    endTime: string;
+    expectedAttendees: number;
+    venueName: string;
+    coverImageUrl: string;
+    classroomName?: string;
+    status: string;
+  };
+  workflow: {
+    history: WorkflowDetailItem[];
+  };
+};
+
 type WorkflowItem = {
   _id: string;
   role: string;
@@ -111,22 +138,42 @@ const EventDetail = () => {
     try {
       axios.defaults.withCredentials = true;
 
-      const eventResponse = await axios.get(`${backendUrl}/api/event/organization-events`);
-      if (eventResponse.data?.success && Array.isArray(eventResponse.data?.message)) {
-        const matchedEvent = (eventResponse.data.message as EventData[]).find((event) => event._id === id) || null;
-        setEventData(matchedEvent);
-      } else {
+      const { data } = await axios.get(`${backendUrl}/api/workflow/event/${id}`);
+      if (!data?.success) {
+        toast.error(data?.message || "Failed to load event details.");
         setEventData(null);
+        setWorkflowItems([]);
+        return;
       }
 
-      const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, { eventId: id });
-      if (workflowResponse.data?.success) {
-        const workflowContent = workflowResponse.data?.message?.workflow?.history || workflowResponse.data?.message?.workflow?.workFlowContent;
-        setWorkflowItems(Array.isArray(workflowContent) ? workflowContent : []);
-      } else {
-        setWorkflowItems([]);
-        toast.error(workflowResponse.data?.message || "Failed to load workflow.");
-      }
+      const payload = data.message as WorkflowEventDetailResponse;
+      setEventData({
+        _id: id,
+        eventTitle: payload.event.title || "Untitled Event",
+        description: payload.event.description || "",
+        category: payload.event.category || "",
+        eventDate: payload.event.eventDate || "",
+        expectedAttendees: payload.event.expectedAttendees || 0,
+        startTime: payload.event.startTime || "",
+        endTime: payload.event.endTime || "",
+        venue: payload.event.venueName || "",
+        imageLink: payload.event.coverImageUrl || "",
+        isApproved: payload.event.status === "approved",
+        organizationId: "",
+        classRoomName: payload.event.classroomName || "",
+      });
+
+      setWorkflowItems(
+        Array.isArray(payload.workflow?.history)
+          ? payload.workflow.history.map((item, index) => ({
+              _id: `${item.stage}-${index}`,
+              role: item.role || "",
+              status: item.decision === "submitted" ? "pending" : item.decision,
+              message: item.comment || "",
+              updatedAt: item.at || undefined,
+            }))
+          : []
+      );
     } catch (error: any) {
       toast.error(error?.message || "Failed to load event details.");
       setEventData(null);

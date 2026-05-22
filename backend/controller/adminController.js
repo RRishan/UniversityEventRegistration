@@ -487,6 +487,16 @@ const getAdminCatalog = async (req, res) => {
   }
 };
 
+const getVenues = async (req, res) => {
+  try {
+    const venues = await Venue.find().populate('ownerRef', 'fullName email adminProfile');
+
+    return res.send({ success: true, message: venues });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
 module.exports = {
   createAdvisor,
   createDean,
@@ -495,4 +505,5 @@ module.exports = {
   createUniversityRole,
   createVenue,
   getAdminCatalog,
+  getVenues,
 };

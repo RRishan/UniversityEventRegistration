@@ -7,8 +7,6 @@ import { ArrowLeft, ArrowRight, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { AppContext } from "@/context/AppContext";
-import { venueOptions } from "@/lib/data";
-import { VenuePlace } from "@/lib/types";
 
 /* ─────────────────────────────────────────
    ICONS
@@ -87,7 +85,9 @@ const EventRegistration = () => {
   const { backendUrl, userData } = useContext(AppContext);
   const [dragOver, setDragOver] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingVenues, setLoadingVenues] = useState(true);
 
   const [formData, setFormData] = useState({
     projectId: "",
@@ -102,6 +102,7 @@ const EventRegistration = () => {
     registrationNumber: "",
     imageLink: "",
     venue: "",
+    venueId: "",
     classRoomName: "",
     documents: [] as File[],
   });
@@ -124,8 +125,26 @@ const EventRegistration = () => {
       }
     };
 
+    const loadVenues = async () => {
+      try {
+        setLoadingVenues(true);
+        axios.defaults.withCredentials = true;
+        const { data } = await axios.get(`${backendUrl}/api/admin/venues`);
+        if (data?.success) {
+          setVenues(Array.isArray(data.message) ? data.message : []);
+        } else {
+          toast.error(data?.message || "Unable to load venues.");
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || error?.message || "Unable to load venues.");
+      } finally {
+        setLoadingVenues(false);
+      }
+    };
+
     if (userData?.role === "president") {
       loadProjects();
+      loadVenues();
     }
   }, [backendUrl, userData?.role]);
 
@@ -143,7 +162,14 @@ const EventRegistration = () => {
 
     if (currentStep === 2) {
       if (!formData.venue.trim()) return "Please select a venue.";
-      if (formData.venue === VenuePlace.Faculty && !formData.classRoomName.trim()) {
+      const selectedVenue = venues.find((venue) => venue._id === formData.venueId);
+      const requiresClassroom = Boolean(
+        selectedVenue && (
+          String(selectedVenue.type || "").toLowerCase().includes("faculty") ||
+          String(selectedVenue.ownerType || "").toLowerCase() === "dean"
+        )
+      );
+      if (requiresClassroom && !formData.classRoomName.trim()) {
         return "Please enter the classroom name.";
       }
     }
@@ -178,6 +204,7 @@ const EventRegistration = () => {
           expectedAttendees: formData.expectedAttendees,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          venueId: formData.venueId,
           venueName: formData.venue,
           coverImageUrl: formData.imageLink,
           classroomName: formData.classRoomName,
@@ -185,7 +212,7 @@ const EventRegistration = () => {
         if (data.success) {
           toast.success("Event submitted successfully!");
           setCurrentStep(5);
-          navigate("/workspace");
+          navigate("/my-events");
         } else {
           toast.error(data.message);
         }
@@ -342,12 +369,23 @@ const EventRegistration = () => {
                 <IconMapPin /> Venue / Place <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <select value={formData.venue}
-                  onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                <select value={formData.venueId}
+                  onChange={(e) => {
+                    const selectedVenue = venues.find((venue) => venue._id === e.target.value);
+                    setFormData({
+                      ...formData,
+                      venueId: e.target.value,
+                      venue: selectedVenue?.venueName || selectedVenue?.name || "",
+                      classRoomName: selectedVenue && String(selectedVenue.type || "").toLowerCase().includes("faculty") ? formData.classRoomName : formData.classRoomName,
+                    });
+                  }}
                   className="form-input appearance-none pr-10 cursor-pointer">
                   <option value="">Select a place</option>
-                  {venueOptions.map((venue, index) => (
-                    <option key={index} value={venue}>{venue}</option>
+                  {loadingVenues && <option value="">Loading venues...</option>}
+                  {!loadingVenues && venues.map((venue) => (
+                    <option key={venue._id} value={venue._id}>
+                      {venue.venueName || venue.name}
+                    </option>
                   ))}
                 </select>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none">
@@ -356,7 +394,17 @@ const EventRegistration = () => {
               </div>
             </div>
 
-            {formData.venue === VenuePlace.Faculty && (
+            {(() => {
+              const selectedVenue = venues.find((venue) => venue._id === formData.venueId);
+              const requiresClassroom = Boolean(
+                selectedVenue && (
+                  String(selectedVenue.type || "").toLowerCase().includes("faculty") ||
+                  String(selectedVenue.ownerType || "").toLowerCase() === "dean"
+                )
+              );
+
+              return requiresClassroom;
+            })() && (
               <div className="fade-in">
                 <label className="field-label">Classroom Name <span className="text-red-400">*</span></label>
                 <input type="text" placeholder="Enter classroom name"

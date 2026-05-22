@@ -133,6 +133,8 @@ const ApprovalEventDetail = () => {
   const { backendUrl } = appContext;
   const [detail, setDetail] = useState<ApprovalDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [workflowComment, setWorkflowComment] = useState("");
+  const [isSubmittingDecision, setIsSubmittingDecision] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -164,8 +166,46 @@ const ApprovalEventDetail = () => {
     fetchDetail();
   }, [backendUrl, eventId]);
 
-  const currentStep = useMemo(() => formatRole(detail?.workflow.currentStage), [detail?.workflow.currentStage]);
-  const currentRole = useMemo(() => formatRole(detail?.workflow.currentRole), [detail?.workflow.currentRole]);
+  const currentStep = useMemo(() => formatRole(detail?.workflow?.currentStage), [detail?.workflow?.currentStage]);
+  const currentRole = useMemo(() => formatRole(detail?.workflow?.currentRole), [detail?.workflow?.currentRole]);
+  const canActOnWorkflow = detail?.workflow?.status === "pending";
+
+  const submitWorkflowDecision = async (status: "approved" | "rejected") => {
+    if (!eventId || !detail) return;
+
+    if (status === "rejected" && !workflowComment.trim()) {
+      toast.error("Please add a rejection message.");
+      return;
+    }
+
+    try {
+      setIsSubmittingDecision(true);
+      axios.defaults.withCredentials = true;
+
+      const { data } = await axios.post(`${backendUrl}/api/workflow/decision`, {
+        eventId,
+        status,
+        comment: workflowComment.trim(),
+      });
+
+      if (!data?.success) {
+        toast.error(data?.message || "Failed to update workflow.");
+        return;
+      }
+
+      toast.success(status === "approved" ? "Workflow approved." : "Workflow rejected.");
+      setWorkflowComment("");
+
+      const refreshed = await axios.get(`${backendUrl}/api/workflow/event/${eventId}`);
+      if (refreshed.data?.success) {
+        setDetail(refreshed.data.message as ApprovalDetailResponse);
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Failed to update workflow.");
+    } finally {
+      setIsSubmittingDecision(false);
+    }
+  };
 
   return (
     <MainLayout title="Approval Event Detail" subtitle="Event, relation, and workflow context without raw identifiers">
@@ -283,6 +323,55 @@ const ApprovalEventDetail = () => {
                       </article>
                     ))}
                   </div>
+                </div>
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList size={18} className="text-blue-500" />
+                    <h2 className="text-xl font-semibold text-slate-900">Workflow action</h2>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Add a short note before approving or rejecting the workflow step.
+                  </p>
+
+                  <div className="mt-4">
+                    <label htmlFor="workflow-comment" className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      Message
+                    </label>
+                    <textarea
+                      id="workflow-comment"
+                      value={workflowComment}
+                      onChange={(event) => setWorkflowComment(event.target.value)}
+                      rows={4}
+                      placeholder="Leave a note for the next reviewer or for the organizer."
+                      className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      disabled={!canActOnWorkflow || isSubmittingDecision}
+                    />
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => submitWorkflowDecision("approved")}
+                      disabled={!canActOnWorkflow || isSubmittingDecision}
+                      className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmittingDecision ? "Submitting..." : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => submitWorkflowDecision("rejected")}
+                      disabled={!canActOnWorkflow || isSubmittingDecision}
+                      className="inline-flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
+                  </div>
+
+                  {!canActOnWorkflow && (
+                    <p className="mt-3 text-xs text-slate-400">
+                      Workflow actions are disabled because this event is no longer pending.
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -120,13 +120,19 @@ const EventEditMode = () => {
           return;
         }
 
-        const workflowResponse = await axios.post(`${backendUrl}/api/workflow/getByOrganizer`, {
-          eventId: id,
-        });
+        const workflowResponse = await axios.get(`${backendUrl}/api/workflow/event/${id}`);
 
         if (workflowResponse.data?.success) {
-          const workflowContent = workflowResponse.data?.message?.workflow?.workFlowContent as WorkflowItem[] | undefined;
-          const items = Array.isArray(workflowContent) ? workflowContent : [];
+          const workflowContent = workflowResponse.data?.message?.workflow?.history as Array<{ role?: string; decision?: string; comment?: string; at?: string }> | undefined;
+          const items: WorkflowItem[] = Array.isArray(workflowContent)
+            ? workflowContent.map((item, index) => ({
+                _id: item.at || `${item.role || "step"}-${index}`,
+                role: item.role || "",
+                status: item.decision === "submitted" ? "pending" : (item.decision || ""),
+                message: item.comment || "",
+                updatedAt: item.at,
+              }))
+            : [];
           const lastItem = items.length > 0 ? items[items.length - 1] : null;
           const rejectedItem = [...items].reverse().find((item) => item.status === "rejected");
 

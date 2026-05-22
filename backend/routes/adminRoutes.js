@@ -6,6 +6,7 @@ const userAuth = require('../middleware/userAuth.js');
 const router = express.Router();
 
 router.get('/catalog', userAuth, adminController.getAdminCatalog);
+router.get('/venues', userAuth, adminController.getVenues);
 router.post('/faculty', userAuth, adminController.createFaculty);
 router.post('/dean', userAuth, adminController.createDean);
 router.post('/venue', userAuth, adminController.createVenue);

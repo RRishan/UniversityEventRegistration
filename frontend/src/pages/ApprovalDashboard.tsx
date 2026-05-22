@@ -617,7 +617,7 @@ const ApprovalDashboard = () => {
                         key={event.id}
                         className={`table-row row-fade cursor-pointer ${selectedEvent?.id === event.id ? "selected" : ""} ${event.status === "Overdue" ? "overdue-row" : ""}`}
                         style={{ animationDelay:`${idx*0.05}s` }}
-                        onClick={() => setSelectedEvent(event)}
+                        onClick={() => navigate(`/approval-dashboard/event/${event.id}`)}
                       >
                         <td className="p-3.5 w-10">
                           <input type="checkbox" className="w-4 h-4 accent-blue-500 rounded"
