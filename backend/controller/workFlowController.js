@@ -1,302 +1,335 @@
-const WorkFlow = require('../models/WorkFlow');
-const User = require('../models/User');
 const Event = require('../models/Event');
+const Project = require('../models/Project');
+const User = require('../models/User');
+const Venue = require('../models/Venue');
+const WorkFlow = require('../models/WorkFlow');
+const { categoryRole, afterSixPm } = require('./eventController');
 
+const getSingleRoleUser = async (role) => User.findOne({ 'adminProfile.role': role });
 
-const workflowController = [
-    {
-        role: "advisor",
-        approvedCondition: (workflow, message , eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "advisor").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "advisor").message = message;
-            workflow.workFlowContent.push({role: "welfareOfficer", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        },
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "advisor").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "advisor").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-    },
-    {
-        role: "welfareOfficer",
-        approvedCondition: (workflow, message, eventObj) => {
-            if(workflow.workFlowContent.filter(item => item.role === "welfareOfficer").every(item => item.status === "rejected" || item.status === "pending")) {
-                workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").status = "approved";
-                workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").message = message;
-                if (eventObj.venue == "Faculty" || eventObj.venue == "Hadwila Auditorium" || eventObj.venue == "Ehelavala") {
-                    workflow.workFlowContent.push({role: "facultyDean", status: "pending", message: ""});
-                }else {
-                    workflow.workFlowContent.push({role: "sportDerector", status: "pending", message: ""});
-                }
-                
-                return workflow.workFlowContent;
-            }else {
-                workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").status = "approved";
-                workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").message = message;
-                workflow.workFlowContent.push({role: "completed", status: "approved", message: ""});
-                return workflow.workFlowContent;
-            }
-        },
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "welfareOfficer").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        },
-    },
-    {
-        role: "facultyDean",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "facultyDean").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "facultyDean").message = message;
-            workflow.workFlowContent.push({role: "sportDerector", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-        ,
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "facultyDean").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "facultyDean").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
+const resolveCurrentAssignee = async (event, workflow, currentStage) => {
+  const project = await Project.findById(event.project).populate('organization');
+  const venue = event.venue ? await Venue.findById(event.venue) : await Venue.findOne({ venueName: event.venueName });
+  const categoryTarget = categoryRole(event.category);
 
-    },
-    {
-        role: "sportDerector",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "sportDerector").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "sportDerector").message = message;
-            if (eventObj.category === "cultural") {
-                workflow.workFlowContent.push({role: "chairmanOfArt", status: "pending", message: ""});
-            }else {
-                workflow.workFlowContent.push({role: "proctor", status: "pending", message: ""});
-            }
-            
-            return workflow.workFlowContent;
-        }
-        ,
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "sportDerector").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "sportDerector").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-    },
-    {
-        role: "chairmanOfArt",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").message = message;
-            workflow.workFlowContent.push({role: "proctor", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        },
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "chairmanOfArt").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-    },
-    {
-        role: "proctor",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "proctor").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "proctor").message = message;
-            workflow.workFlowContent.push({role: "viceChancellor", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        },
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "proctor").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "proctor").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-    },
-    {
-        role: "viceChancellor",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "viceChancellor").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "viceChancellor").message = message;
+  if (currentStage === 'organizationAuthority') {
+    return project?.organizationAuthorityRef || null;
+  }
 
-            const [hour, minute] = eventObj.endTime.split(":").map(Number);
+  if (currentStage === 'welfareOfficer') {
+    return getSingleRoleUser('welfareOfficer').then((user) => user?._id || null);
+  }
 
-            if (hour > 18 || (hour === 18 && minute > 0)) {
-                workflow.workFlowContent.push({role: "headOfSection", status: "pending", message: ""});
-            }else {
-                workflow.workFlowContent.push({role: "welfareOfficer", status: "pending", message: ""});
-            }
-            
-            return workflow.workFlowContent;
-        },
-        rejectCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "viceChancellor").status = "rejected";
-            workflow.workFlowContent.findLast(item => item.role === "viceChancellor").message = message;
-            workflow.workFlowContent.push({role: "president", status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
-    },
-    {
-        role: "president",
-        approvedCondition: (workflow, message, eventObj) => {
-            workflow.workFlowContent.findLast(item => item.role === "president").status = "approved";
-            workflow.workFlowContent.findLast(item => item.role === "president").message = message;
-            const rejectedRole = workflow.workFlowContent.findLast(item => item.status === "rejected").role;
-            workflow.workFlowContent.push({role: rejectedRole, status: "pending", message: ""});
-            return workflow.workFlowContent;
-        }
+  if (currentStage === 'venueOwner') {
+    return venue?.ownerRef || null;
+  }
+
+  if (currentStage === 'categoryCheck') {
+    if (!categoryTarget) return null;
+    const user = await getSingleRoleUser(categoryTarget);
+    return user?._id || null;
+  }
+
+  if (currentStage === 'securityUpload') {
+    return event.president;
+  }
+
+  if (currentStage === 'proctor') {
+    const user = await getSingleRoleUser('proctor');
+    return user?._id || null;
+  }
+
+  if (currentStage === 'viceChancellor') {
+    const user = await getSingleRoleUser('viceChancellor');
+    return user?._id || null;
+  }
+
+  if (currentStage === 'welfareFinal') {
+    const user = await getSingleRoleUser('welfareOfficer');
+    return user?._id || null;
+  }
+
+  return workflow.currentAssignee || null;
+};
+
+const getNextStage = async (event, workflow) => {
+  const venue = event.venue ? await Venue.findById(event.venue) : await Venue.findOne({ venueName: event.venueName });
+  const categoryTarget = categoryRole(event.category);
+
+  switch (workflow.currentStage) {
+    case 'organizationAuthority':
+      return { stage: 'welfareOfficer' };
+    case 'welfareOfficer':
+      if (venue?.ownerType && venue.ownerType !== 'Welfare') {
+        return { stage: 'venueOwner' };
+      }
+      if (categoryTarget) {
+        return { stage: 'categoryCheck' };
+      }
+      if (workflow.requiresSecurity) {
+        return { stage: 'securityUpload' };
+      }
+      return { stage: 'proctor' };
+    case 'venueOwner':
+      if (categoryTarget) {
+        return { stage: 'categoryCheck' };
+      }
+      if (workflow.requiresSecurity) {
+        return { stage: 'securityUpload' };
+      }
+      return { stage: 'proctor' };
+    case 'categoryCheck':
+      if (workflow.requiresSecurity) {
+        return { stage: 'securityUpload' };
+      }
+      return { stage: 'proctor' };
+    case 'securityUpload':
+      return { stage: 'proctor' };
+    case 'proctor':
+      return { stage: 'viceChancellor' };
+    case 'viceChancellor':
+      return { stage: 'welfareFinal' };
+    case 'welfareFinal':
+      return { stage: 'approved' };
+    default:
+      return { stage: workflow.currentStage };
+  }
+};
+
+const roleForStage = async (event, stage) => {
+  const venue = event.venue ? await Venue.findById(event.venue) : await Venue.findOne({ venueName: event.venueName });
+  const categoryTarget = categoryRole(event.category);
+
+  if (stage === 'organizationAuthority') {
+    const project = await Project.findById(event.project);
+    return project?.organizationAuthorityType || 'advisor';
+  }
+
+  if (stage === 'welfareOfficer') return 'welfareOfficer';
+  if (stage === 'venueOwner') {
+    if (!venue) return null;
+    if (venue.ownerType === 'Dean') return 'dean';
+    if (venue.ownerType === 'Sports Director') return 'sportsDirector';
+    return 'welfareOfficer';
+  }
+  if (stage === 'categoryCheck') return categoryTarget;
+  if (stage === 'securityUpload') return 'president';
+  if (stage === 'proctor') return 'proctor';
+  if (stage === 'viceChancellor') return 'viceChancellor';
+  if (stage === 'welfareFinal') return 'welfareOfficer';
+  return null;
+};
+
+const getWorkflowQueue = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
     }
-];
 
+    const workflows = await WorkFlow.find({
+      status: 'pending',
+      currentRole: user.adminProfile?.role,
+    }).populate({
+      path: 'event',
+      populate: [
+        { path: 'organization' },
+        { path: 'project' },
+        { path: 'venue' },
+        { path: 'president' },
+      ],
+    });
 
-const getWorkFlowByRole = async (req, res) => {
-    try {
+    const visibleWorkflows = workflows.filter((workflow) => {
+      if (!workflow.currentAssignee) return true;
+      return String(workflow.currentAssignee) === String(user._id);
+    });
 
-        const {userId} = req.body;
+    return res.send({ success: true, message: visibleWorkflows });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
 
-        const user = await User.findById(userId);
-
-        if(!user) {
-            return res.send({success: false, message: "Invalid User"})
-        }
-
-        const role = user.adminProfile.role;
-
-        const workflow = await WorkFlow.findOne({
-            $expr: {
-                $eq: [
-                    { $arrayElemAt: ["$workFlowContent.role", -1] },
-                    role
-                ]
-            }
-        });
-
-        if(!workflow) {
-            return res.send({success: false, message: "No workflow found for the user's role"})
-        }
-
-        const event = await Event.findById(workflow.eventId);
-
-        const organizer = await User.findById(event.organizationId);
-
-        const eventObj = event.toObject();
-
-        delete eventObj.organizationId;
-
-        eventObj.organizerProfile = organizer
-            ? organizer.organizerProfile
-            : { name: "Unknown Organizer" };
-        
-        return res.send({success: true, message: {workflowId: workflow._id, workflowContent: workflow.workFlowContent, event: eventObj}})
-
-    } catch (error) {
-        return res.send({success: false, message: "Error fetching workflow: " + error.message})
+const updateWorkflowStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
     }
-}
 
-
-const updateWorkFlowStatus = async (req, res) => {
-    try {
-        const {userId, status, message} = req.body;
-
-        const user = await User.findById(userId);
-
-        if(!user) {
-            return res.send({success: false, message: "Invalid User"})
-        }
-
-        const role = user.adminProfile.role;
-
-        
-
-        const workflow = await WorkFlow.findOne({
-            $expr: {
-                $eq: [
-                    { $arrayElemAt: ["$workFlowContent.role", -1] },
-                    role
-                ]
-            }
-        });
-
-        if(!workflow) {
-            return res.send({success: false, message: "No workflow found for the user's role"})
-        }
-
-        const event = await Event.findById(workflow.eventId);
-
-        const organizer = await User.findById(event.organizationId);
-
-        const eventObj = event.toObject();
-
-        delete eventObj.organizationId;
-
-        eventObj.organizerProfile = organizer
-            ? organizer.organizerProfile
-            : { name: "Unknown Organizer" };
-
-        const workflowHandler = workflowController.find(item => item.role == role);
-        
-        if(!workflowHandler) {
-            return res.send({success: false, message: "No workflow handler found for the user's role"})
-        }
-
-        if(status === "approved") {
-            
-            workflow.workFlowContent = workflowHandler.approvedCondition(workflow, message, eventObj);
-
-        } else if(status === "rejected") {
-            
-            workflow.workFlowContent = workflowHandler.rejectCondition(workflow, message, eventObj);
-            
-        }
-
-        if (workflow.workFlowContent.findLast(item => item.role === "completed")) {
-            event.isApproved = true;
-            await event.save();
-        }
-        
-        await workflow.save();
-        
-        return res.send({success: true, message: "Workflow approved successfully", workflowContent: workflow.workFlowContent, event: eventObj})
-
-        
-    } catch (error) {
-        return res.send({success: false, message: "Error updating workflow: " + error.message })
+    const { eventId, status, comment = '' } = req.body;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.send({ success: false, message: 'Event not found' });
     }
-}
 
-const getWorkFlowByOrganizer = async (req, res) => {
-    try {
-        const {userId, eventId} = req.body;
-
-        const user = await User.findById(userId);
-
-        if(!user) {
-            return res.send({success: false, message: "Invalid User"})
-        }
-
-        const role = user.adminProfile.role;
-
-        if(role !== "president") {
-            return res.send({success: false, message: "User is not an organizer"})
-        }
-
-        console.log("Fetching workflow for eventId:", eventId);
-
-        const workflow = await WorkFlow.findOne({eventId});
-
-
-        return res.send({success: true, message: {
-            workflow
-        }})
-
-    } catch (error) {
-        return res.send({success: false, message: "Error fetching workflow: " + error.message})
+    const workflow = await WorkFlow.findOne({ event: event._id });
+    if (!workflow) {
+      return res.send({ success: false, message: 'Workflow not found' });
     }
-}
 
+    if (workflow.currentRole !== user.adminProfile?.role) {
+      return res.send({ success: false, message: 'You are not the assigned reviewer for this step' });
+    }
 
-exports.getWorkFlowByRole = getWorkFlowByRole;
-exports.updateWorkFlowStatus = updateWorkFlowStatus;
-exports.getWorkFlowByOrganizer = getWorkFlowByOrganizer;
+    if (workflow.currentAssignee && String(workflow.currentAssignee) !== String(user._id)) {
+      return res.send({ success: false, message: 'This workflow item is assigned to another user' });
+    }
+
+    if (workflow.currentStage === 'securityUpload') {
+      return res.send({ success: false, message: 'Use the security upload endpoint for this step' });
+    }
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.send({ success: false, message: 'Invalid workflow decision' });
+    }
+
+    workflow.history.push({
+      stage: workflow.currentStage,
+      role: workflow.currentRole,
+      decision: status,
+      comment,
+      actor: user._id,
+    });
+
+    if (status === 'rejected') {
+      workflow.status = 'returned';
+      workflow.currentStage = 'returnedToPresident';
+      workflow.currentRole = 'president';
+      workflow.currentAssignee = event.president;
+      workflow.returnedToPresidentAt = new Date();
+      event.status = 'returned';
+      event.approvalStage = 'returnedToPresident';
+      event.approvalRole = 'president';
+      event.publicVisible = false;
+      event.rejectedAt = new Date();
+      await event.save();
+      await workflow.save();
+      return res.send({ success: true, message: workflow });
+    }
+
+    const next = await getNextStage(event, workflow);
+    const nextRole = await roleForStage(event, next.stage);
+    const nextAssignee = await resolveCurrentAssignee(event, workflow, next.stage);
+
+    workflow.currentStage = next.stage;
+    workflow.currentRole = nextRole || workflow.currentRole;
+    workflow.currentAssignee = nextAssignee;
+
+    if (next.stage === 'approved') {
+      workflow.status = 'approved';
+      workflow.finalApprovedAt = new Date();
+      event.status = 'approved';
+      event.approvalStage = 'approved';
+      event.approvalRole = 'welfareOfficer';
+      event.publicVisible = true;
+      event.approvedAt = new Date();
+      await event.save();
+    } else if (next.stage === 'securityUpload') {
+      workflow.currentRole = 'president';
+      workflow.currentAssignee = event.president;
+      event.approvalStage = 'securityUpload';
+      event.approvalRole = 'president';
+      await event.save();
+    } else {
+      event.approvalStage = next.stage;
+      event.approvalRole = nextRole || event.approvalRole;
+      await event.save();
+    }
+
+    await workflow.save();
+    return res.send({ success: true, message: workflow });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
+const submitSecurityProof = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user || user.adminProfile?.role !== 'president') {
+      return res.send({ success: false, message: 'Only the president can submit security proof' });
+    }
+
+    const { eventId, imageUrl } = req.body;
+    if (!eventId || !imageUrl?.trim()) {
+      return res.send({ success: false, message: 'Missing security image' });
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.send({ success: false, message: 'Event not found' });
+    }
+
+    if (String(event.president) !== String(user._id)) {
+      return res.send({ success: false, message: 'You are not the owner of this event' });
+    }
+
+    const workflow = await WorkFlow.findOne({ event: event._id });
+    if (!workflow || workflow.currentStage !== 'securityUpload') {
+      return res.send({ success: false, message: 'Security upload is not required at this stage' });
+    }
+
+    workflow.securityImageUrl = imageUrl.trim();
+    workflow.securitySubmittedAt = new Date();
+    workflow.history.push({
+      stage: 'securityUpload',
+      role: 'president',
+      decision: 'uploaded',
+      comment: 'Security signatures submitted',
+      actor: user._id,
+    });
+
+    const nextAssignee = await resolveCurrentAssignee(event, workflow, 'proctor');
+    workflow.currentStage = 'proctor';
+    workflow.currentRole = 'proctor';
+    workflow.currentAssignee = nextAssignee;
+    await workflow.save();
+
+    event.securityImageUrl = imageUrl.trim();
+    event.securityUploadedAt = new Date();
+    event.approvalStage = 'proctor';
+    event.approvalRole = 'proctor';
+    await event.save();
+
+    return res.send({ success: true, message: workflow });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
+const getWorkflowByOrganizer = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
+    }
+
+    const { eventId } = req.body;
+    const workflow = await WorkFlow.findOne({ event: eventId }).populate({
+      path: 'event',
+      populate: [
+        { path: 'organization' },
+        { path: 'project' },
+        { path: 'venue' },
+        { path: 'president' },
+      ],
+    });
+
+    if (!workflow) {
+      return res.send({ success: false, message: 'Workflow not found' });
+    }
+
+    return res.send({ success: true, message: workflow });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
+module.exports = {
+  getWorkflowQueue,
+  updateWorkflowStatus,
+  submitSecurityProof,
+  getWorkflowByOrganizer,
+};

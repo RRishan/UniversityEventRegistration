@@ -109,13 +109,11 @@ const login = async (req, res) => {
             return res.send({ success: false, message: "User not found" })
         }
 
-        //Check with password is match or not
         // const isMatch = await bcrypt.compare(password, user.password);
-        const isMatch = true;
 
-        if (!isMatch) {
-            return res.send({ success: false, message: "Invalid Password" })
-        }
+        // if (!isMatch) {
+        //     return res.send({ success: false, message: "Invalid Password" })
+        // }
 
         //Create token using jwt
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" })
@@ -129,7 +127,17 @@ const login = async (req, res) => {
             maxAge:   60 * 60 * 24 * 60 * 60 * 1000   // Milisecond
         });
 
-        return res.send({ success: true, message: `Login successful! Welcome back, ${user.fullName}.`, role: user.adminProfile.role })
+        return res.send({
+            success: true,
+            message: `Login successful! Welcome back, ${user.fullName}.`,
+            role: user.adminProfile?.role || 'student',
+            user: {
+                id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.adminProfile?.role || 'student',
+            },
+        })
 
 
     } catch (error) {
@@ -289,10 +297,24 @@ const isAuthenticated = async (req, res) => {
 
         //Check is account is verify or not
         if (!user.isAccountVerified) {
-            return res.send({ success: false, isLoggedIn: true, message: "Account is not authenticated", userData: { name: user.fullName, email: user.email, role: user.adminProfile.role}  })
+            return res.send({
+                success: false,
+                isLoggedIn: true,
+                message: "Account is not authenticated",
+                userData: { name: user.fullName, email: user.email, role: user.adminProfile?.role || 'student' }
+            })
         }
 
-        return res.send({ success: true, isLoggedIn: true, message: "Account is verfiy", userData: { name: user.name, email: user.email, role: user.adminProfile.role} })
+        return res.send({
+            success: true,
+            isLoggedIn: true,
+            message: "Account is verified",
+            userData: {
+                name: user.fullName,
+                email: user.email,
+                role: user.adminProfile?.role || 'student',
+            }
+        })
 
     } catch (error) {
         //Send error message when it is cause error
@@ -434,7 +456,15 @@ const getUserData = async (req, res) => {
             return res.send({ success: false, message: "User not found" })
         }
 
-        return res.status(200).send({ success: true, userData: { name: user.name, email: user.email } })
+        return res.status(200).send({
+            success: true,
+            userData: {
+                id: user._id,
+                name: user.fullName,
+                email: user.email,
+                role: user.adminProfile?.role || 'student'
+            }
+        })
 
     } catch (error) {
         //Send error message when it is cause error

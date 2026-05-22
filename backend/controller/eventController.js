@@ -1,289 +1,275 @@
 const Event = require('../models/Event');
+const Project = require('../models/Project');
+const Organization = require('../models/Organization');
+const Venue = require('../models/Venue');
 const WorkFlow = require('../models/WorkFlow');
-const validator = require('validator');
 const User = require('../models/User');
 
-// Event Registration 
-const addEvent = async (req, res) => {
-    try {
-        // Get the attributes from request
-        const {eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, userId, classRoomName} = req.body;
-        
-        // Check attributes are valid or not
-        if(!eventTitle) {
-            return res.send({success: false, message: "Missing tittle"})
-        }
+const afterSixPm = (startTime, endTime) => {
+  const candidate = endTime || startTime;
+  if (!candidate) return false;
 
-        if(!description) {
-            return res.send({success: false, message: "Missing Description"})
-        }
+  const [hour, minute] = String(candidate).split(':').map(Number);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return false;
+  return hour > 18 || (hour === 18 && minute > 0);
+};
 
-        if(!category) {
-            return res.send({success: false, message: "Missing Category"})
-        }
+const categoryRole = (category) => {
+  const normalized = String(category || '').toLowerCase();
+  if (['music', 'arts', 'art', 'cultural', 'culture'].some((item) => normalized.includes(item))) {
+    return 'chairmanOfArt';
+  }
 
-        if(!expectedAttendees) {
-            return res.send({success: false, message: "Missing Expected Attendees"})
-        }
+  if (normalized.includes('sport')) {
+    return 'sportsDirector';
+  }
 
-        if(!eventDate) {
-            return res.send({success: false, message: "Missing Event Date"})
-        }
+  return null;
+};
 
-        if(!startTime) {
-            return res.send({success: false, message: "Missing Start Time"})
-        }else if (!validator.isTime(startTime)) {
-            return res.send({success: false, message: "Invlid Start Time"})
-        }
+const createWorkflow = async ({ event, initialRole, requiresSecurity }) => {
+  const project = await Project.findById(event.project);
+  const workflow = new WorkFlow({
+    event: event._id,
+    currentStage: 'organizationAuthority',
+    currentRole: initialRole,
+    currentAssignee: project?.organizationAuthorityRef || null,
+    requiresSecurity,
+    status: 'pending',
+    history: [
+      {
+        stage: 'organizationAuthority',
+        role: initialRole,
+        decision: 'submitted',
+        comment: 'Event submitted for initial organization approval',
+        actor: event.president,
+      },
+    ],
+  });
 
-        if(!endTime) {
-            return res.send({success: false, message: "Missing End Time"})
-        }else if (!validator.isTime(endTime)) {
-            return res.send({success: false, message: "Invlid End Time"})
-        }
+  return workflow.save();
+};
 
-        if(!imageLink) {
-            return res.send({success: false, message: "Missing Image Link"})
-        }
-
-        if(!venue) {
-            return res.send({success: false, message: "Missing Venue"})
-        }
-
-        // Check user role
-        const user = await User.findById(userId);
-
-        if(!user) {
-            return res.send({success: false, message: "Invalid User"})
-        }
-
-        if(user.adminProfile.role !== "president") {
-            return res.send({success: false, message: "Unauthorized User"})
-        }
-
-        // Build the event model
-        const event = new Event({eventTitle, description, category, eventDate, expectedAttendees, startTime, endTime, imageLink, venue, organizationId: userId, classRoomName});
-
-        // Save event model
-        const savedEvent = await event.save();
-
-        // Build the workflow model
-        const workFlow = new WorkFlow({eventId: savedEvent._id, workFlowContent: [
-            {role: "advisor"}
-        ]})
-        
-        // Save workflow model
-        await workFlow.save();
-
-        return res.send({success: true, message: `Succsfully fill form`})
-
-    } catch (error) {
-        //Send error message when it is cause error
-        return res.send({success: false, message: error.message})
+const createEvent = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user || user.adminProfile?.role !== 'president') {
+      return res.send({ success: false, message: 'Only a President can create events' });
     }
-}
 
-// Get an event 
+    const {
+      projectId,
+      title,
+      description,
+      category,
+      eventDate,
+      startTime,
+      endTime,
+      expectedAttendees,
+      venueId,
+      venueName,
+      coverImageUrl,
+      classroomName,
+    } = req.body;
+
+    if (!projectId || !title?.trim() || !description?.trim() || !category?.trim() || !eventDate?.trim() || !startTime?.trim() || !endTime?.trim() || !expectedAttendees) {
+      return res.send({ success: false, message: 'Missing required event fields' });
+    }
+
+    const project = await Project.findById(projectId).populate('organization');
+    if (!project) {
+      return res.send({ success: false, message: 'Project not found' });
+    }
+
+    if (String(project.president) !== String(user._id)) {
+      return res.send({ success: false, message: 'You are not the assigned president for this project' });
+    }
+
+    const venue = venueId ? await Venue.findById(venueId) : await Venue.findOne({ venueName });
+    if (!venue && !venueName?.trim()) {
+      return res.send({ success: false, message: 'Venue not found' });
+    }
+
+    const eventVenueName = venue?.venueName || venueName.trim();
+    const requiresSecurity = afterSixPm(startTime, endTime);
+    const initialRole = project.organizationAuthorityType === 'dean' ? 'dean' : 'advisor';
+
+    const event = new Event({
+      title: title.trim(),
+      description: description.trim(),
+      category: category.trim(),
+      eventDate: eventDate.trim(),
+      startTime: startTime.trim(),
+      endTime: endTime.trim(),
+      expectedAttendees: Number(expectedAttendees),
+      venueName: eventVenueName,
+      venue: venue?._id || null,
+      organization: project.organization._id,
+      project: project._id,
+      president: user._id,
+      coverImageUrl: coverImageUrl || '',
+      classroomName: classroomName || '',
+      status: 'pending',
+      approvalStage: 'organizationAuthority',
+      approvalRole: initialRole,
+      requiresSecurity,
+      publicVisible: false,
+    });
+
+    const savedEvent = await event.save();
+    const workflow = await createWorkflow({ event: savedEvent, initialRole, requiresSecurity });
+
+    return res.send({
+      success: true,
+      message: {
+        event: savedEvent,
+        workflow,
+      },
+    });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
 const getEvent = async (req, res) => {
-    try {
-        //Get attributes
-        const eventId = req.body?.eventId || req.query?.eventId;
-
-        //Check event id valid or not
-        if(!eventId) {
-            return res.send({success: false, message: "Invalid Event"})
-        }
-
-        // Get event from database
-        const event = await Event.findById(eventId)
-
-        // Check the event valid or not
-        if (!event) {
-            return res.send({success: false, message: "Invalid Event"})
-        }
-
-        // Send event
-        return res.status(200).send({success: true, message: event })
-
-    } catch (error) {
-        //Send error message when it is cause error
-        return res.send({success: false, message: error.message})
+  try {
+    const eventId = req.body?.eventId || req.query?.eventId;
+    if (!eventId) {
+      return res.send({ success: false, message: 'Missing event id' });
     }
-}
 
-// Get all the events 
-const getAllEvent = async (req, res) => {
-    try {
-        // Get event array from database 
-        const events = await Event.find({ isApproved: true });
+    const event = await Event.findById(eventId)
+      .populate('venue')
+      .populate('organization')
+      .populate('project')
+      .populate('president', 'fullName email adminProfile');
 
-        
-
-        // Check events invalid or not
-        if(!events) {
-            return res.send({success: false, message: "Invalid Events"})
-        }
-
-        // Send Events 
-        return res.status(200).send({success: true, message: events})
-
-    } catch (error) {
-        //Send error message when it is cause error
-        return res.send({success: false, message: error.message})
+    if (!event) {
+      return res.send({ success: false, message: 'Event not found' });
     }
-}
 
-// Update the events
-const updateEvent = async (req, res) => {
-    try {
-        // Get the attributes from request
-        const {title,description, category, venue, startDate, startTime, endDate, endTime, participantsCount, imageLink, _id, userId} = req.body;
+    const workflow = await WorkFlow.findOne({ event: event._id });
 
-        // Check attributes are valid or not
-        if(!title) {
-            return res.send({success: false, message: "Missing tittle"})
-        }
+    return res.send({ success: true, message: { event, workflow } });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
 
-        if(!description) {
-            return res.send({success: false, message: "Missing Description"})
-        }
+const getApprovedEvents = async (req, res) => {
+  try {
+    const events = await Event.find({ status: 'approved', publicVisible: true })
+      .populate('venue')
+      .populate('organization')
+      .populate('project')
+      .populate('president', 'fullName email adminProfile');
 
-        if(!category) {
-            return res.send({success: false, message: "Missing Category"})
-        }
+    return res.send({ success: true, message: events });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
 
-        if(!venue) {
-            return res.send({success: false, message: "Missing Venue"})
-        }
-
-        if(!startDate) {
-            return res.send({success: false, message: "Missing Start Date"})
-        }else if (!validator.isDate(startDate)) {
-            return res.send({success: false, message: "Invlid Start Date"})
-        }
-
-        if(!startTime) {
-            return res.send({success: false, message: "Missing Start Time"})
-        }else if (!validator.isTime(startTime)) {
-            return res.send({success: false, message: "Invlid Start Time"})
-        }
-
-        if(!endDate) {
-            return res.send({success: false, message: "Missing End Date"})
-        }else if (!validator.isDate(endDate)) {
-            return res.send({success: false, message: "Invlid End Date"})
-        }
-
-        if(!endTime) {
-            return res.send({success: false, message: "Missing End Time"})
-        }else if (!validator.isTime(endTime)) {
-            return res.send({success: false, message: "Invlid End Time"})
-        }
-
-        if(!participantsCount) {
-            return res.send({success: false, message: "Missing Participants Count"})
-        }
-
-        const eventRecord = await Event.findOne({_id, organizationId: userId});
-
-        if(!eventRecord) {
-            return res.send({success: false, message: "Invalid Event or Unauthorized organizer"})
-        }
-
-        const workflow = await WorkFlow.findOne({eventId: _id});
-
-        if(!workflow || !Array.isArray(workflow.workFlowContent) || workflow.workFlowContent.length === 0) {
-            return res.send({success: false, message: "Workflow not found for this event"})
-        }
-
-        const latestWorkflowItem = workflow.workFlowContent[workflow.workFlowContent.length - 1];
-        const hasRejectedStep = workflow.workFlowContent.some(item => item.status === "rejected");
-
-        if(!(latestWorkflowItem.role === "president" && latestWorkflowItem.status === "pending" && hasRejectedStep)) {
-            return res.send({success: false, message: "Event can only be edited after rejection and when returned to organizer"})
-        }
-
-        // Update the event from database
-        const eventDateToSave = startDate || endDate;
-
-        const event = await Event.updateOne(
-            {_id},
-            {$set: {
-                eventTitle: title,
-                description,
-                category,
-                venue,
-                eventDate: eventDateToSave,
-                startTime,
-                endTime,
-                expectedAttendees: participantsCount,
-                ...(imageLink ? { imageLink } : {})
-            }}
-        )
-
-        //Check event valid or not
-        if(!event) {
-            return res.send({success: false, message: "Invalid Event"})
-        }
-
-        //Send message
-        return res.status(200).send({success: true, message: "Succsfully updated !!"})
-
-    } catch (error) {
-        //Send error message when it is cause error
-        return res.send({success: false, message: error.message})
+const getMyEvents = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
     }
-}
 
-// delete the events
-const deleteEvent = async (req, res) => {
-    try {
-        //Get attributes
-        const {eventId} = req.query;
+    const query = user.adminProfile?.role === 'president'
+      ? { president: user._id }
+      : user.adminProfile?.organization
+        ? { organization: user.adminProfile.organization }
+        : {};
 
-        //Check event id valid or not
-        if(!eventId) {
-            return res.send({success: false, message: "Invalid Event"})
-        }
+    const events = await Event.find(query)
+      .populate('venue')
+      .populate('organization')
+      .populate('project')
+      .populate('president', 'fullName email adminProfile');
 
-        // get response form the database
-        const response = await Event.deleteOne({_id: eventId})
+    return res.send({ success: true, message: events });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
 
-        // check the reponse
-        if(!response) {
-            return res.send({success: false, message: "Invalid event Id"})
-        }
-
-        // send the response
-        return res.status(201).send({success: true, message: "Succsfully deleted the event !!"})
-
-    } catch (error) {
-        //Send error message when it is cause error
-        return res.send({success: false, message: error.message})
+const updateReturnedEvent = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user || user.adminProfile?.role !== 'president') {
+      return res.send({ success: false, message: 'Only the president can resubmit the event' });
     }
-}
 
-// get event by organization id
-const getEventsByOrganization = async (req, res) => {
-    try {
-        const {userId} = req.body;
-        
-        const events = await Event.find({organizationId: userId});
-
-        if(!events) {
-            return res.send({success: false, message: "No events found"})
-        }
-
-        return res.send({success: true, message: events})
-
-    } catch (error) {
-        return res.send({success: false, message: error.message})
+    const { eventId, title, description, category, eventDate, startTime, endTime, expectedAttendees, venueId, venueName, coverImageUrl, classroomName } = req.body;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.send({ success: false, message: 'Event not found' });
     }
-}
 
-exports.addEvent = addEvent;
-exports.getEvent = getEvent;
-exports.getAllEvent = getAllEvent;
-exports.updateEvent = updateEvent;
-exports.deleteEvent = deleteEvent;
-exports.getEventsByOrganization = getEventsByOrganization;
+    if (String(event.president) !== String(user._id)) {
+      return res.send({ success: false, message: 'You are not the owner of this event' });
+    }
+
+    const workflow = await WorkFlow.findOne({ event: event._id });
+    if (!workflow || workflow.status !== 'returned') {
+      return res.send({ success: false, message: 'This event is not in a returned state' });
+    }
+
+    const venue = venueId ? await Venue.findById(venueId) : await Venue.findOne({ venueName });
+    const eventVenueName = venue?.venueName || venueName || event.venueName;
+    const requiresSecurity = afterSixPm(startTime || event.startTime, endTime || event.endTime);
+    const project = await Project.findById(event.project);
+    const initialRole = project?.organizationAuthorityType === 'dean' ? 'dean' : 'advisor';
+
+    event.title = title?.trim() || event.title;
+    event.description = description?.trim() || event.description;
+    event.category = category?.trim() || event.category;
+    event.eventDate = eventDate?.trim() || event.eventDate;
+    event.startTime = startTime?.trim() || event.startTime;
+    event.endTime = endTime?.trim() || event.endTime;
+    event.expectedAttendees = Number(expectedAttendees || event.expectedAttendees);
+    event.venueName = eventVenueName;
+    event.venue = venue?._id || event.venue;
+    event.coverImageUrl = coverImageUrl || event.coverImageUrl;
+    event.classroomName = classroomName ?? event.classroomName;
+    event.status = 'pending';
+    event.approvalStage = 'organizationAuthority';
+    event.approvalRole = initialRole;
+    event.requiresSecurity = requiresSecurity;
+    event.publicVisible = false;
+    event.rejectedAt = null;
+    await event.save();
+
+    workflow.currentStage = 'organizationAuthority';
+    workflow.currentRole = initialRole;
+    workflow.status = 'pending';
+    workflow.requiresSecurity = requiresSecurity;
+    workflow.securityImageUrl = '';
+    workflow.securitySubmittedAt = null;
+    workflow.returnedToPresidentAt = null;
+    workflow.history.push({
+      stage: 'organizationAuthority',
+      role: initialRole,
+      decision: 'submitted',
+      comment: 'Event resubmitted by president',
+      actor: user._id,
+    });
+    await workflow.save();
+
+    return res.send({ success: true, message: { event, workflow } });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
+module.exports = {
+  createEvent,
+  getApprovedEvents,
+  getEvent,
+  getMyEvents,
+  updateReturnedEvent,
+  afterSixPm,
+  categoryRole,
+};

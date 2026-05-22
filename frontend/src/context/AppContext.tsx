@@ -2,6 +2,7 @@ import axios from "axios";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
 interface UserData {
+  id?: string;
   name?: string;
   email?: string;
   role: string;
@@ -27,9 +28,7 @@ interface AppContextProviderProps {
 export const AppContextProvider =({ children }: AppContextProviderProps) => {
     const backendUrl: string = import.meta.env.VITE_BACKEND_URL as string;
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState<UserData | null>({
-      name: "Student", email : "student@example.com", role: "student"
-    });
+    const [userData, setUserData] = useState<UserData | null>(null);
     const [authLoading, setAuthLoading] = useState(true);
 
     const checkAuth =  async () => {
@@ -40,6 +39,9 @@ export const AppContextProvider =({ children }: AppContextProviderProps) => {
         if (data.isLoggedIn) {
           setUserData(data.userData);
           setIsLoggedIn(true);
+        } else {
+          setUserData(null);
+          setIsLoggedIn(false);
         }
       } catch (error) {
         console.log("Error during login:", error);

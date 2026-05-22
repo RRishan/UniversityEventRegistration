@@ -1,28 +1,16 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import CreateProfile from "./pages/CreateProfile";
-import OrganizerProfile from "./pages/OrganizerProfile";
-import StudentProfile from "./pages/StudentProfile";
-import LecturerProfile from "./pages/LecturerProfile";
-import Home from "./pages/Home";
-import Events from "./pages/Events";
-import MyEvents from "./pages/MyEvents";
-import EventRegistration from "./pages/EventRegistration";
-import EventDetail from "./pages/EventDetail";
-import EventEditMode from "./pages/EventEditMode";
-import ApprovalDashboard from "./pages/ApprovalDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Reports from "./pages/Reports";
-import NotFound from "./pages/NotFound";
-import { AppContextProvider } from "./context/AppContext";
-import ProtectedRoute from "./pages/protectedRoute";
-import Profile from "./pages/Profile";
-import EventProfile from "./pages/EventProfile";
+import { AppContextProvider } from "@/context/AppContext";
+import ProtectedRoute from "@/pages/protectedRoute";
+import Home from "@/pages/Home";
+import SignIn from "@/pages/SignIn";
+import Events from "@/pages/Events";
+import AdminDashboard from "@/pages/AdminDashboard";
+import Workspace from "@/pages/Workspace";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -35,22 +23,25 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/sign-in" element={<SignIn />} />
-            <Route path="/sign-up" element={<SignUp />} />
-            <Route path="/create-profile" element={<CreateProfile />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/organizer" element={<OrganizerProfile />} />
-            <Route path="/profile/student" element={<StudentProfile />} />
-            <Route path="/profile/lecturer" element={<LecturerProfile />} />
             <Route path="/events" element={<Events />} />
-            <Route path="/my-events" element={<MyEvents />} />
-            <Route path="/event-registration" element={<EventRegistration />} />
-            <Route path="/event/:id" element={<EventProfile />} />
-            <Route path="/event-detail/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
-            <Route path="/event-edit/:id" element={<ProtectedRoute><EventEditMode /></ProtectedRoute>} />
-            <Route path="/approval-dashboard" element={<ApprovalDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspace"
+              element={
+                <ProtectedRoute>
+                  <Workspace />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/approval-dashboard" element={<Navigate to="/workspace" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

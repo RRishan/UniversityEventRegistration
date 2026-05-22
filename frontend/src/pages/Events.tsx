@@ -125,7 +125,7 @@ const EventCard = ({ event }: { event: any }) => {
     <div className="event-card group bg-white border border-slate-200/80 rounded-2xl overflow-hidden
       hover:border-blue-300/60 hover:-translate-y-[4px]
       hover:shadow-[0_8px_16px_rgba(0,0,0,0.06),0_24px_48px_rgba(59,130,246,0.12)]
-      transition-all duration-[230ms]">
+      transition-all duration-200">
 
       {/* Image */}
       <div className="relative h-[200px] overflow-hidden">

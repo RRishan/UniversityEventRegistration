@@ -4,7 +4,7 @@ const Faculty = require('../models/Faculty.js')
 const getAllFaculty = async (req, res) => {
     try {
 
-        const faculty = await Faculty.find();
+        const faculty = await Faculty.find().populate('dean', 'fullName email adminProfile');
 
         if (!faculty) {
             return res.send({ success: false, message: "No faculty found" });

@@ -8,7 +8,24 @@ const userSchema = new Schema({
   // 👨‍💼 Admin Profile (only for admins)
   adminProfile: {
     department: { type: String },
-    role: { type: String, enum: ["president","advisor", 'welfareOfficer'], default: 'student' }
+    role: {
+      type: String,
+      enum: [
+        "student",
+        "lecture",
+        "president",
+        "advisor",
+        "welfareOfficer",
+        "dean",
+        "sportsDirector",
+        "chairmanOfArt",
+        "proctor",
+        "viceChancellor",
+      ],
+      default: "student",
+    },
+    faculty: { type: Schema.Types.ObjectId, ref: "Faculty", default: null },
+    organization: { type: Schema.Types.ObjectId, ref: "Organization", default: null },
   },
 
   // 👨‍🎓 Student Profile (only for students)
