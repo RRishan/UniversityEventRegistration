@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import axios from "axios";
 import { AppContext } from "@/context/AppContext";
 import { api } from "@/lib/api";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 type WorkflowItem = any;
 type ProjectItem = any;
@@ -73,7 +75,6 @@ const Workspace = () => {
   const tabs = useMemo(
     () =>
       [
-        { key: "queue", label: "My Workflow Queue", show: canApprove },
         { key: "project", label: "Project Setup", show: canCreateProject },
         { key: "events", label: "My Events", show: canCreateEvent },
         { key: "security", label: "Security Upload", show: canCreateEvent },
@@ -245,6 +246,7 @@ const Workspace = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-body">
+      <Header />
       <div className="flex">
         <aside className="w-72 min-h-screen bg-white border-r border-slate-200 p-5">
           <h2 className="font-display text-xl text-slate-800">Workflow Workspace</h2>
@@ -270,10 +272,7 @@ const Workspace = () => {
           <header className="sticky top-0 z-20 bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between">
             <h1 className="font-display text-xl text-slate-800">Workspace</h1>
             <div className="flex gap-2">
-              <button onClick={() => navigate("/approval-dashboard")} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50">Approval Dashboard</button>
               <button onClick={loadData} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50"><RefreshCcw className="w-4 h-4 inline mr-1" />Refresh</button>
-              <button onClick={() => navigate("/")} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-slate-50"><Home className="w-4 h-4 inline mr-1" />Home</button>
-              <button onClick={logout} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-red-50 text-slate-600 hover:text-red-600"><LogOut className="w-4 h-4 inline mr-1" />Logout</button>
             </div>
           </header>
 
@@ -420,6 +419,7 @@ const Workspace = () => {
           </main>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

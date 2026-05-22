@@ -6,6 +6,7 @@ import { CheckCircle2, Clock3, XCircle, Calendar, MapPin, Users } from "lucide-r
 
 import MainLayout from "@/components/layout/MainLayout";
 import { AppContext } from "@/context/AppContext";
+import { formatDate, formatDateTime, formatRole, formatTime } from "../lib/formatters";
 
 type EventData = {
   _id: string;
@@ -56,61 +57,6 @@ type WorkflowItem = {
   status: "approved" | "pending" | "rejected" | string;
   message?: string;
   updatedAt?: string;
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  headOfSection: "Head of Section",
-  welfareOfficer: "Welfare Officer",
-  sportDerector: "Sport Director",
-  facultyDean: "Faculty Dean",
-  chairmanOfArt: "Chairman of Art",
-  proctor: "Proctor",
-  viceChancellor: "Vice Chancellor",
-  organizer: "Organizer",
-  completed: "Completed",
-};
-
-const toTitleCase = (value: string) => {
-  if (!value) return "Unknown";
-  return value
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[_-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-const formatRole = (role: string) => ROLE_LABELS[role] || toTitleCase(role);
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return dateString;
-  return new Intl.DateTimeFormat("en-US", { weekday: "short", year: "numeric", month: "long", day: "numeric" }).format(date);
-};
-
-const formatDateTime = (dateString?: string) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return dateString;
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-};
-
-const formatTime = (time24: string) => {
-  const [hourRaw, minuteRaw] = time24.split(":");
-  const hour = Number(hourRaw);
-  const minute = Number(minuteRaw);
-  if (Number.isNaN(hour) || Number.isNaN(minute)) return time24;
-
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).format(date);
 };
 
 const EventDetail = () => {

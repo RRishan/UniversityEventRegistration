@@ -216,14 +216,23 @@ const AdminDashboard = () => {
                     <option value="Dean">Owned by Dean</option>
                     <option value="Sports Director">Owned by Sports Director</option>
                   </select>
-                  <select className="rounded-xl border p-2.5" value={venueForm.ownerRef} onChange={(e) => setVenueForm((v) => ({ ...v, ownerRef: e.target.value }))}>
-                    <option value="">Select Owner (Optional)</option>
-                    {ownerCandidates.map((owner) => <option key={owner._id} value={owner._id}>{owner.fullName}</option>)}
-                  </select>
-                  <select className="rounded-xl border p-2.5" value={venueForm.facultyId} onChange={(e) => setVenueForm((v) => ({ ...v, facultyId: e.target.value }))}>
-                    <option value="">Faculty (Optional)</option>
-                    {catalog.faculties.map((faculty) => <option key={faculty._id} value={faculty._id}>{faculty.facultyName}</option>)}
-                  </select>
+                  {
+                    venueForm.ownerType === "Dean" && (
+                      <select className="rounded-xl border p-2.5" value={venueForm.ownerRef} onChange={(e) => setVenueForm((v) => ({ ...v, ownerRef: e.target.value }))}>
+                        <option value="">Select Owner (Optional)</option>
+                        {ownerCandidates.map((owner) => <option key={owner._id} value={owner._id}>{owner.fullName}</option>)}
+                      </select>
+                     )
+                  }
+                  {
+                    venueForm.ownerType === "Dean" && (
+                      <select className="rounded-xl border p-2.5" value={venueForm.facultyId} onChange={(e) => setVenueForm((v) => ({ ...v, facultyId: e.target.value }))}>
+                        <option value="">Faculty (Optional)</option>
+                        {catalog.faculties.map((faculty) => <option key={faculty._id} value={faculty._id}>{faculty.facultyName}</option>)}
+                      </select>
+                    )
+                  }
+                  
                 </div>
                 <button className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white" onClick={() => submitAndRefresh("/api/admin/venue", venueForm, () => setVenueForm({ venueName: "", capacity: "", type: "", ownerType: "Welfare", ownerRef: "", facultyId: "" }))}>
                   <Plus className="h-4 w-4" /> Add Venue
@@ -278,7 +287,7 @@ const AdminDashboard = () => {
                         <option value="">Faculty Name</option>
                         {catalog.faculties.map((f) => <option key={f._id} value={f._id}>{f.facultyName}</option>)}
                       </select>
-                      <input className="rounded-xl border p-2.5" placeholder="President Name" value={organizationForm.presidentName} onChange={(e) => setOrganizationForm((v) => ({ ...v, presidentName: e.target.value }))} />
+                      
                     </>
                   )}
                 </div>

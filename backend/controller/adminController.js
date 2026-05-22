@@ -166,7 +166,8 @@ const createVenue = async (req, res) => {
       return;
     }
 
-    const { venueName, capacity, type, ownerType, ownerRef, facultyId } = req.body;
+    const { venueName, capacity, type, ownerType, facultyId } = req.body;
+
 
     if (!venueName?.trim()) {
       return res.send({ success: false, message: 'Missing Venue Name' });
@@ -180,12 +181,15 @@ const createVenue = async (req, res) => {
     if (!type?.trim()) {
       return res.send({ success: false, message: 'Missing Venue Type' });
     }
-
+    console.log('Owner Type:', ownerType);
     if (!ownerType || !['Welfare', 'Dean', 'Sports Director'].includes(ownerType)) {
       return res.send({ success: false, message: 'Invalid Ownership / Authority' });
     }
 
-    const venueOwner = ownerRef ? await User.findById(ownerRef) : null;
+    // const venueOwner = ownerRef ? await User.findById(ownerRef) : null;
+    const venueOwner = await User.findOne({ "adminProfile.role": ownerType === 'Welfare' ? 'welfareOfficer' : ownerType === 'Dean' ? 'dean' : 'sportsDirector' });
+
+    const ownerRef = venueOwner ? venueOwner._id : null;
     if (ownerRef && !venueOwner) {
       return res.send({ success: false, message: 'Venue owner not found' });
     }
@@ -212,6 +216,8 @@ const createVenue = async (req, res) => {
     if (duplicateVenue) {
       return res.send({ success: false, message: 'Venue already exists' });
     }
+
+
 
     const venue = new Venue({
       venueName: venueName.trim(),
@@ -345,10 +351,6 @@ const createOrganization = async (req, res) => {
       faculty = await Faculty.findById(facultyId).populate('dean');
       if (!faculty) {
         return res.send({ success: false, message: 'Faculty not found' });
-      }
-
-      if (!presidentName?.trim()) {
-        return res.send({ success: false, message: 'Missing President Name' });
       }
 
       if (!faculty.dean) {
