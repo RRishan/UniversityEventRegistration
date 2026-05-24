@@ -11,6 +11,11 @@ import Footer from "@/components/layout/Footer";
 type WorkflowItem = any;
 type ProjectItem = any;
 type EventItem = any;
+type OrganizationItem = {
+  _id: string;
+  organizationName: string;
+  organizationType?: string;
+};
 
 const stageLabel: Record<string, string> = {
   organizationAuthority: "Organization Authority",
@@ -41,6 +46,7 @@ const Workspace = () => {
   const [queue, setQueue] = useState<WorkflowItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [myEvents, setMyEvents] = useState<EventItem[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationItem[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowItem | null>(null);
   const [comment, setComment] = useState("");
   const [securityFile, setSecurityFile] = useState<File | null>(null);
@@ -86,9 +92,10 @@ const Workspace = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [queueRes, projectRes, eventRes] = await Promise.allSettled([
+      const [queueRes, projectRes, organizationRes, eventRes] = await Promise.allSettled([
         api.get("/api/workflow/queue"),
         api.get("/api/project/list"),
+        api.get("/api/project/organizations"),
         api.get("/api/event/mine"),
       ]);
 
@@ -105,6 +112,12 @@ const Workspace = () => {
         setProjects(Array.isArray(projectRes.value.data.message) ? projectRes.value.data.message : []);
       } else {
         setProjects([]);
+      }
+
+      if (organizationRes.status === "fulfilled" && organizationRes.value.data?.success) {
+        setOrganizations(Array.isArray(organizationRes.value.data.message) ? organizationRes.value.data.message : []);
+      } else {
+        setOrganizations([]);
       }
 
       if (eventRes.status === "fulfilled" && eventRes.value.data?.success) {
@@ -327,7 +340,18 @@ const Workspace = () => {
             {activeTab === "project" && canCreateProject && (
               <section className="bg-white border rounded-2xl p-5 grid md:grid-cols-2 gap-3">
                 <h3 className="md:col-span-2 font-semibold text-slate-800">Step 0: Create Project + President</h3>
-                <input placeholder="Organization ID" className="border rounded-xl p-2.5 text-sm" value={projectForm.organizationId} onChange={(e) => setProjectForm((s) => ({ ...s, organizationId: e.target.value }))} />
+                <select
+                  className="border rounded-xl p-2.5 text-sm"
+                  value={projectForm.organizationId}
+                  onChange={(e) => setProjectForm((s) => ({ ...s, organizationId: e.target.value }))}
+                >
+                  <option value="">Select Organization</option>
+                  {organizations.map((organization) => (
+                    <option key={organization._id} value={organization._id}>
+                      {organization.organizationName}{organization.organizationType ? ` (${organization.organizationType})` : ""}
+                    </option>
+                  ))}
+                </select>
                 <input placeholder="Project Name" className="border rounded-xl p-2.5 text-sm" value={projectForm.projectName} onChange={(e) => setProjectForm((s) => ({ ...s, projectName: e.target.value }))} />
                 <textarea placeholder="Description" className="md:col-span-2 border rounded-xl p-2.5 text-sm" value={projectForm.description} onChange={(e) => setProjectForm((s) => ({ ...s, description: e.target.value }))} />
                 <input placeholder="President Name" className="border rounded-xl p-2.5 text-sm" value={projectForm.presidentName} onChange={(e) => setProjectForm((s) => ({ ...s, presidentName: e.target.value }))} />

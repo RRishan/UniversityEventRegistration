@@ -143,4 +143,32 @@ const getProjects = async (req, res) => {
   }
 };
 
-module.exports = { createProject, getProjects };
+const getOrganizationOptions = async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.send({ success: false, message: 'Invalid user' });
+    }
+
+    const baseQuery = user.adminProfile?.role === 'welfareOfficer'
+      ? {}
+      : user.adminProfile?.organization
+        ? { _id: user.adminProfile.organization }
+        : user.adminProfile?.role === 'advisor'
+          ? { advisor: user._id }
+          : user.adminProfile?.role === 'dean'
+            ? { authorityRef: user._id }
+            : { _id: null };
+
+    const organizations = await Organization.find(baseQuery).select('_id organizationName organizationType');
+
+    return res.send({
+      success: true,
+      message: organizations,
+    });
+  } catch (error) {
+    return res.send({ success: false, message: `Error : ${error.message}` });
+  }
+};
+
+module.exports = { createProject, getProjects, getOrganizationOptions };

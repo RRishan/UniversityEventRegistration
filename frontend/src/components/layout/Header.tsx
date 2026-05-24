@@ -35,7 +35,7 @@ const Header = () => {
         toast.success("Logout successful!");
         setIsLoggedIn(false);
         setUserData(null);
-        navigate("/");
+        navigate("/sign-in");
       } else {
         toast.error(data.message);
       }

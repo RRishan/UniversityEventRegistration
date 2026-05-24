@@ -167,6 +167,7 @@ const ApprovalEventDetail = () => {
       if (refreshed.data?.success) {
         setDetail(refreshed.data.message as ApprovalDetailResponse);
       }
+      navigate("/approval-dashboard");
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || "Failed to update workflow.");
     } finally {
