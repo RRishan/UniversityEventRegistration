@@ -159,11 +159,7 @@ const EventDetail = () => {
     return null;
   }, [workflowItems]);
 
-  const hasRejectedWorkflow = workflowItems.some((item) => item.status === "rejected");
-  const canOpenEditMode =
-    userData?.role === "president" ||
-    (eventData?.isApproved !== true &&
-      (hasRejectedWorkflow || (latestWorkflowItem?.role === "president" && latestWorkflowItem?.status === "pending")));
+  const canOpenEditMode = Boolean(latestRejectedItem);
 
   const handleSubmitOrganizerResponse = async () => {
     const trimmedMessage = organizerResponseMessage.trim();
@@ -290,7 +286,7 @@ const EventDetail = () => {
                   <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
                     <h2 className="text-lg font-semibold text-slate-900">Edit access</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Presidents can edit the event details here and continue the workflow after saving changes.
+                      Edit access is available only after a workflow rejection.
                     </p>
 
                     {latestRejectedItem?.message?.trim() && (
@@ -344,16 +340,7 @@ const EventDetail = () => {
                       <Link to={`/event-edit/${eventData._id}`} className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
                         Open event edit mode
                       </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled
-                        className="inline-flex w-full cursor-not-allowed justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
-                        title="Editing is available for the president role or after the workflow returns to the president"
-                      >
-                        Edit access available
-                      </button>
-                    )}
+                    ) : null}
                     <Link to="/my-events" className="inline-flex w-full justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                       Back to my events
                     </Link>
