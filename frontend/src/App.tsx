@@ -76,9 +76,7 @@ const App = () => (
             <Route
               path="/event/:id"
               element={
-                <ProtectedRoute>
                   <EventProfile />
-                </ProtectedRoute>
               }
             />
             <Route

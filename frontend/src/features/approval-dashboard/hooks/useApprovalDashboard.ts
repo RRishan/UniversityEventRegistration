@@ -60,8 +60,35 @@ export const useApprovalDashboard = ({ backendUrl, isStudent, onLoggedOut }: Use
               message: item.comment || "",
             }))
           : [];
+
         const latestItem = workflowContent.length > 0 ? workflowContent[workflowContent.length - 1] : null;
-        const eventStatus = workflow.status === "approved" ? "Approved" : workflow.status === "returned" ? "Overdue" : "Pending";
+
+        // Determine display status: Approved, In Review, Pending, Overdue
+        let eventStatus = "Pending";
+        if (workflow.status === "approved") {
+          eventStatus = "Approved";
+        } else if (latestItem) {
+          const latestDecision = String(latestItem.status || "").toLowerCase();
+          if (latestDecision === "pending" || latestDecision === "submitted") {
+            // actively in review
+            eventStatus = "In Review";
+          } else if (latestDecision === "rejected") {
+            // returned to organizer for changes — treat as Pending for queue
+            eventStatus = "Pending";
+          } else {
+            eventStatus = "Pending";
+          }
+
+          // Overdue check: if not approved and last update older than 7 days
+          if (latestItem.updatedAt) {
+            const last = new Date(latestItem.updatedAt).getTime();
+            const ageDays = (Date.now() - last) / (1000 * 60 * 60 * 24);
+            if (ageDays > 7 && eventStatus !== "Approved") {
+              eventStatus = "Overdue";
+            }
+          }
+        }
+
         const mappedComments = workflowContent.map((item) => ({
           author: formatRole(item.role),
           role: "Workflow Step",
@@ -172,14 +199,24 @@ export const useApprovalDashboard = ({ backendUrl, isStudent, onLoggedOut }: Use
   const openEventDetailPage = useCallback((eventId: string) => navigate(`/approval-dashboard/event/${eventId}`), [navigate]);
 
   const filteredEvents = useMemo(
-    () =>
-      events.filter((event) => {
+    () => {
+      // If viewing history, show events where current user's role appears in workflowContent
+      if (activeNav === "history") {
+        return events.filter((event) => {
+          const hasRole = Array.isArray(event.workflowContent) && event.workflowContent.some((item) => formatRole(item.role) === role);
+          const matchSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) || event.organizer.toLowerCase().includes(searchQuery.toLowerCase());
+          return hasRole && matchSearch;
+        });
+      }
+
+      return events.filter((event) => {
         const matchSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) || event.organizer.toLowerCase().includes(searchQuery.toLowerCase());
         const normalized = event.status.toLowerCase().replace(/\s+/g, "-");
         const matchStatus = statusFilter === "all" || normalized === statusFilter;
         return matchSearch && matchStatus;
-      }),
-    [events, searchQuery, statusFilter],
+      });
+    },
+    [events, searchQuery, statusFilter, activeNav, role],
   );
 
   return {
