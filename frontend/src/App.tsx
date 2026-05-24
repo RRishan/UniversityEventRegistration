@@ -10,7 +10,6 @@ import SignIn from "@/pages/SignIn";
 import Events from "@/pages/Events";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Workspace from "@/pages/Workspace";
-import ApprovalDashboard from "@/pages/ApprovalDashboard";
 import ApprovalEventDetail from "./pages/ApprovalEventDetail";
 import NotFound from "@/pages/NotFound";
 import MyEvents from "./pages/MyEvents";
@@ -19,6 +18,7 @@ import EventDetail from "./pages/EventDetail";
 import EventProfile from "./pages/EventProfile";
 import EventEditMode from "./pages/EventEditMode";
 import Profile from "./pages/Profile";
+import ApprovalDashboard from "./pages/ApprovalDashboard";
 
 const queryClient = new QueryClient();
 
@@ -76,9 +76,7 @@ const App = () => (
             <Route
               path="/event/:id"
               element={
-                <ProtectedRoute>
                   <EventProfile />
-                </ProtectedRoute>
               }
             />
             <Route

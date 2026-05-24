@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AppContext } from "@/context/AppContext";
+import { formatDate, formatTime } from "../lib/formatters";
 
 type ApiEvent = {
   _id: string;
@@ -21,39 +22,6 @@ type ApiEvent = {
   isApproved: boolean;
   organizationId: string;
   classRoomName?: string;
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) {
-    return dateString;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-};
-
-const formatTime = (time24: string) => {
-  const [hoursRaw, minutesRaw] = time24.split(":");
-  const hours = Number(hoursRaw);
-  const minutes = Number(minutesRaw);
-
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return time24;
-  }
-
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
-
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
 };
 
 const EventProfile = () => {

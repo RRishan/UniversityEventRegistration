@@ -35,7 +35,7 @@ const Header = () => {
         toast.success("Logout successful!");
         setIsLoggedIn(false);
         setUserData(null);
-        navigate("/");
+        navigate("/sign-in");
       } else {
         toast.error(data.message);
       }
@@ -100,7 +100,15 @@ const Header = () => {
             )
           }
           {
-            userData?.role === "welfareOfficer" && (
+            userData?.role === "dean" && (
+              <Link to="/workspace" className={navLink("/workspace")}>
+                Manage Organizations
+                {isActive("/workspace") && <span className="nav-link-active-bar" />}
+              </Link>
+            )
+          }
+          {
+            userData && userData?.role != "president"  && (
               <Link to="/approval-dashboard" className={navLink("/approval-dashboard")}>
                 Event Workflow
                 {isActive("/approval-dashboard") && <span className="nav-link-active-bar" />}
