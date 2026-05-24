@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -84,10 +84,12 @@ const EventRegistration = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { backendUrl, userData } = useContext(AppContext);
   const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingVenues, setLoadingVenues] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     projectId: "",
@@ -227,9 +229,17 @@ const EventRegistration = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      toast.error("No file selected.");
+      return;
+    }
+
     try {
-      const file = e.target.files[0];
-      if (!file) return toast.error("No file selected.");
+      setUploadingImage(true);
+      setDragOver(false);
+
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", "event-registration");
@@ -237,10 +247,22 @@ const EventRegistration = () => {
         "https://api.cloudinary.com/v1_1/dadxdprtg/image/upload",
         data, { withCredentials: false }
       );
-      setFormData({ ...formData, imageLink: response.data.secure_url });
+      setFormData((prev) => ({ ...prev, imageLink: response.data.secure_url }));
     } catch (error) {
       toast.error("File upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleReplaceImage = () => {
+    setFormData((prev) => ({ ...prev, imageLink: "" }));
+    openFilePicker();
   };
 
   /* ─────────────────────────────────────────
@@ -435,41 +457,81 @@ const EventRegistration = () => {
       case 3:
         return (
           <div className="space-y-5">
-            {formData.imageLink && (
-              <div className="fade-in relative group">
-                <img src={formData.imageLink} alt="Uploaded" className="w-full max-w-sm rounded-2xl object-cover shadow-md border border-slate-200" />
-                <div className="absolute inset-0 max-w-sm rounded-2xl bg-black/0 group-hover:bg-black/10 transition-all" />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <IconCheck /> Uploaded
+            <input ref={fileInputRef} type="file" onChange={handleFileUpload} accept=".png, .jpg, .jpeg" className="hidden" />
+
+            {uploadingImage ? (
+              <div className="fade-in flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/70 p-10 text-center">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+                  <div className="absolute inset-0 rounded-2xl border-2 border-blue-200 border-t-blue-500 animate-spin" />
+                  <IconUpload />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">Processing your image...</p>
+                  <p className="text-xs text-slate-400">Please wait while we upload and prepare the preview.</p>
                 </div>
               </div>
-            )}
+            ) : formData.imageLink ? (
+              <div className="fade-in space-y-4">
+                <div className="relative group overflow-hidden rounded-2xl border border-slate-200 shadow-md">
+                  <img src={formData.imageLink} alt="Uploaded" className="w-full object-cover" />
+                  <div className="absolute inset-0 max-w-sm bg-gradient-to-t from-slate-950/35 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <IconCheck /> Uploaded
+                  </div>
+                </div>
 
-            {/* Drop zone */}
-            <label
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); }}
-              className={`drop-zone flex flex-col items-center justify-center gap-3 rounded-2xl p-10 text-center cursor-pointer
-                border-2 border-dashed transition-all duration-200
-                ${dragOver
-                  ? "border-blue-400 bg-blue-50 scale-[1.01]"
-                  : "border-slate-200 bg-slate-50/80 hover:border-blue-300 hover:bg-blue-50/50"
-                }`}>
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                <IconUpload />
+                <div className="flex flex-wrap justify-center items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleReplaceImage}
+                    className="px-4 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
+                  >
+                    Change image
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, imageLink: "" }))}
+                    className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                  >
+                    Remove image
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-1">
-                  {dragOver ? "Drop it here!" : "Drag & drop or click to upload"}
-                </p>
-                <p className="text-xs text-slate-400">PNG, JPG, JPEG • Max 10MB</p>
+            ) : (
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); }}
+                onClick={openFilePicker}
+                role="button"
+                tabIndex={0}
+                className={`drop-zone flex flex-col items-center justify-center gap-3 rounded-2xl p-10 text-center cursor-pointer
+                  border-2 border-dashed transition-all duration-200
+                  ${dragOver
+                    ? "border-blue-400 bg-blue-50 scale-[1.01]"
+                    : "border-slate-200 bg-slate-50/80 hover:border-blue-300 hover:bg-blue-50/50"
+                  }`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openFilePicker();
+                  }
+                }}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <IconUpload />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">
+                    {dragOver ? "Drop it here!" : "Drag & drop or click to upload"}
+                  </p>
+                  <p className="text-xs text-slate-400">PNG, JPG, JPEG • Max 10MB</p>
+                </div>
+                <span className="px-5 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors">
+                  Choose file
+                </span>
               </div>
-              <span className="px-5 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors">
-                Choose file
-              </span>
-              <input type="file" onChange={handleFileUpload} accept=".png, .jpg, .jpeg" className="hidden" />
-            </label>
+            )}
           </div>
         );
 
