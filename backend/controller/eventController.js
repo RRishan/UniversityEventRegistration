@@ -5,6 +5,7 @@ const Organization = require('../models/Organization');
 const Venue = require('../models/Venue');
 const WorkFlow = require('../models/WorkFlow');
 const User = require('../models/User');
+const { sendApprovalRequestEmail } = require('../utils/emailService');
 
 const afterSixPm = (startTime, endTime) => {
   const candidate = endTime || startTime;
@@ -152,6 +153,7 @@ const categoryRole = (category) => {
 
 const createWorkflow = async ({ event, initialRole, requiresSecurity }) => {
   const project = await Project.findById(event.project);
+
   const workflow = new WorkFlow({
     event: event._id,
     currentStage: 'organizationAuthority',
@@ -172,6 +174,8 @@ const createWorkflow = async ({ event, initialRole, requiresSecurity }) => {
 
   return workflow.save();
 };
+
+
 
 const createEvent = async (req, res) => {
   try {
@@ -270,6 +274,14 @@ const createEvent = async (req, res) => {
 
     const savedEvent = await event.save();
     const workflow = await createWorkflow({ event: savedEvent, initialRole, requiresSecurity });
+
+    const reviewer = await User.findOne({ _id: workflow.currentAssignee });
+
+    const sendEmail = await sendApprovalRequestEmail(reviewer.email, workflow.currentRole, savedEvent.title, savedEvent, `${process.env.FRONTEND_BASE_URL}/approval-dashboard`);
+
+    if(!sendEmail || sendEmail.success === false) {
+      console.error('Failed to send approval request email:', sendEmail?.message || 'Unknown error');
+    }
 
     return res.send({
       success: true,

@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Clock,
   Eye,
-  LogOut,
   MessageCircle,
   Search,
   Settings,
@@ -22,7 +21,6 @@ import StatusBadge from "./components/StatusBadge";
 import { useApprovalDashboard } from "./hooks/useApprovalDashboard";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 
 const ApprovalDashboardFeature = () => {
   const appContext = useContext(AppContext);
