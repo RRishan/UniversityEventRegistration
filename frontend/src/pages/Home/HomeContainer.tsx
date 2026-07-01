@@ -1,8 +1,9 @@
-﻿import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 
 import { AppContext } from "@/context/AppContext";
+import { isEventExpired } from "@/lib/formatters";
 import HomePresenter, {
   type CalendarDay,
   type CalendarEventMap,
@@ -116,14 +117,16 @@ const HomeContainer = () => {
   }, [apiEvents, activeMonthDate]);
 
   const upcomingEvents = useMemo<UpcomingEvent[]>(() => {
-    return apiEvents.map((event) => ({
-      id: event._id,
-      title: event.eventTitle,
-      description: event.description,
-      image: event.imageLink,
-      category: `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`,
-      readTime: `${Math.ceil(event.expectedAttendees / 10)} min read`,
-    }));
+    return apiEvents
+      .filter((event) => !isEventExpired(event.eventDate, event.endTime))
+      .map((event) => ({
+        id: event._id,
+        title: event.eventTitle,
+        description: event.description,
+        image: event.imageLink,
+        category: `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`,
+        readTime: `${Math.ceil(event.expectedAttendees / 10)} min read`,
+      }));
   }, [apiEvents]);
 
   const calendarEventMap = useMemo<CalendarEventMap>(() => {
