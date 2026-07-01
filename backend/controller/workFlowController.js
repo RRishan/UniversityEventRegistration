@@ -308,9 +308,13 @@ const updateWorkflowStatus = async (req, res) => {
       event.approvalRole = 'welfareOfficer';
       event.publicVisible = true;
       event.approvedAt = new Date();
-      const reviewer = await User.findById(workflow.currentAssignee);
-      const president= await User.findById(event.president);
-      await sendFinalApprovalEmail(president.email, reviewer.fullName, event.title, event, `${process.env.FRONTEND_BASE_URL}`);
+      const reviewer = workflow.currentAssignee ? await User.findById(workflow.currentAssignee) : null;
+      const president = await User.findById(event.president);
+      const reviewerName = reviewer?.fullName || 'Welfare Officer';
+
+      if (president?.email) {
+        await sendFinalApprovalEmail(president.email, reviewerName, event.title, event, `${process.env.FRONTEND_BASE_URL}`);
+      }
       await event.save();
       
     } else if (next.stage === 'securityUpload') {
@@ -328,8 +332,18 @@ const updateWorkflowStatus = async (req, res) => {
 
     await workflow.save();
 
-    const reviewerEmail = await User.findById(workflow.currentAssignee);
-    await sendApprovalRequestEmail(reviewerEmail.email, workflow.currentRole, event.title, event, `${process.env.FRONTEND_BASE_URL}/approval-dashboard`);
+    if (next.stage !== 'approved') {
+      const reviewerEmail = workflow.currentAssignee ? await User.findById(workflow.currentAssignee) : null;
+      if (reviewerEmail?.email) {
+        await sendApprovalRequestEmail(
+          reviewerEmail.email,
+          workflow.currentRole,
+          event.title,
+          event,
+          `${process.env.FRONTEND_BASE_URL}/approval-dashboard`
+        );
+      }
+    }
 
     return res.send({ success: true, message: workflow });
   } catch (error) {
