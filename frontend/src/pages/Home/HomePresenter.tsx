@@ -28,6 +28,8 @@ type HomePresenterProps = {
   heroParticles: HeroParticle[];
   heroStats: HeroStat[];
   onRetryEvents: () => void;
+  onPreviousMonth: () => void;
+  onNextMonth: () => void;
 };
 
 const Arrow = () => <span aria-hidden="true">-&gt;</span>;
@@ -97,6 +99,8 @@ const HomePresenter = ({
   heroParticles,
   heroStats,
   onRetryEvents,
+  onPreviousMonth,
+  onNextMonth,
 }: HomePresenterProps) => {
   return (
     <div className="min-h-screen bg-slate-50">
@@ -125,9 +129,9 @@ const HomePresenter = ({
 
             <aside className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur" aria-label="Event date calendar">
               <div className="mb-3 flex items-center justify-between">
-                <button type="button" aria-label="Previous month" className="rounded border border-white/25 px-2 py-1 text-xs">‹</button>
+                <button type="button" onClick={onPreviousMonth} aria-label="Previous month" className="rounded border border-white/25 px-2 py-1 text-xs">‹</button>
                 <p className="font-semibold">{monthYearLabel}</p>
-                <button type="button" aria-label="Next month" className="rounded border border-white/25 px-2 py-1 text-xs">›</button>
+                <button type="button" onClick={onNextMonth} aria-label="Next month" className="rounded border border-white/25 px-2 py-1 text-xs">›</button>
               </div>
               <div className="mb-1 grid grid-cols-7 text-center text-xs text-white/70">
                 {['Mo','Tu','We','Th','Fr','Sa','Su'].map((d) => <div key={d}>{d}</div>)}
@@ -138,8 +142,8 @@ const HomePresenter = ({
                 ))}
               </div>
               <div className="mt-4 space-y-2">
-                {featuredDates.map((date) => (
-                  <div key={date.date} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm">
+                {featuredDates.map((date, index) => (
+                  <div key={`${date.date}-${date.name}-${index}`} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm">
                     <span className="text-blue-300">{date.date}</span> {date.name}
                   </div>
                 ))}

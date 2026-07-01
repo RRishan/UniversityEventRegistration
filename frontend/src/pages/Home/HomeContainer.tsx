@@ -69,11 +69,43 @@ const formatTime12Hour = (time24: string) => {
   }).format(date);
 };
 
+const toMonthKey = (year: number, month: number) => `${year}-${String(month + 1).padStart(2, "0")}`;
+
+const getEventDateParts = (eventDate: string) => {
+  const isoDateMatch = eventDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (isoDateMatch) {
+    const year = Number(isoDateMatch[1]);
+    const month = Number(isoDateMatch[2]) - 1;
+    const day = Number(isoDateMatch[3]);
+    const timestamp = Date.UTC(year, month, day);
+
+    if (!Number.isNaN(timestamp)) {
+      return { year, month, day, timestamp, monthKey: toMonthKey(year, month) };
+    }
+  }
+
+  const parsedDate = new Date(eventDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return {
+    year: parsedDate.getFullYear(),
+    month: parsedDate.getMonth(),
+    day: parsedDate.getDate(),
+    timestamp: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()).getTime(),
+    monthKey: toMonthKey(parsedDate.getFullYear(), parsedDate.getMonth()),
+  };
+};
+
 const getCalendarDays = (date: Date, highlightedDays: number[]): CalendarDay[] => {
   const year = date.getFullYear();
   const month = date.getMonth();
 
-  const firstDayOffset = new Date(year, month, 1).getDay();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const firstDayOffset = (firstDayOfWeek + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const totalCells = firstDayOffset + daysInMonth;
@@ -99,22 +131,64 @@ const HomeContainer = () => {
 
   const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
   const [isEventsLoading, setIsEventsLoading] = useState(true);
+  const [activeMonthDate, setActiveMonthDate] = useState(() => {
+    const initialDate = new Date();
+    initialDate.setDate(1);
+    return initialDate;
+  });
 
   const heroParticles = useMemo(() => HERO_PARTICLES, []);
   const heroStats = useMemo(() => HERO_STATS, []);
-
-  const activeMonthDate = useMemo(() => new Date(), []);
 
   const monthYearLabel = useMemo(() => {
     return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" }).format(activeMonthDate);
   }, [activeMonthDate]);
 
+  const activeMonthKey = useMemo(() => {
+    return toMonthKey(activeMonthDate.getFullYear(), activeMonthDate.getMonth());
+  }, [activeMonthDate]);
+
+  const handlePreviousMonth = useCallback(() => {
+    setActiveMonthDate((previous) => {
+      const nextDate = new Date(previous);
+      nextDate.setMonth(nextDate.getMonth() - 1);
+      nextDate.setDate(1);
+      return nextDate;
+    });
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
+    setActiveMonthDate((previous) => {
+      const nextDate = new Date(previous);
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      nextDate.setDate(1);
+      return nextDate;
+    });
+  }, []);
+
   const eventsForActiveMonth = useMemo(() => {
     return apiEvents.filter((event) => {
-      const date = new Date(event.eventDate);
-      return date.getFullYear() === activeMonthDate.getFullYear() && date.getMonth() === activeMonthDate.getMonth();
+      const dateParts = getEventDateParts(event.eventDate);
+
+      if (!dateParts) {
+        return false;
+      }
+
+      return dateParts.monthKey === activeMonthKey;
     });
-  }, [apiEvents, activeMonthDate]);
+  }, [activeMonthKey, apiEvents]);
+
+  const deduplicatedEventsForActiveMonth = useMemo(() => {
+    const uniqueEvents = new Map<string, ApiEvent>();
+
+    eventsForActiveMonth.forEach((event) => {
+      if (!uniqueEvents.has(event._id)) {
+        uniqueEvents.set(event._id, event);
+      }
+    });
+
+    return Array.from(uniqueEvents.values());
+  }, [eventsForActiveMonth]);
 
   const upcomingEvents = useMemo<UpcomingEvent[]>(() => {
     return apiEvents
@@ -130,8 +204,14 @@ const HomeContainer = () => {
   }, [apiEvents]);
 
   const calendarEventMap = useMemo<CalendarEventMap>(() => {
-    return eventsForActiveMonth.reduce<CalendarEventMap>((accumulator, event) => {
-      const day = new Date(event.eventDate).getDate().toString();
+    return deduplicatedEventsForActiveMonth.reduce<CalendarEventMap>((accumulator, event) => {
+      const dateParts = getEventDateParts(event.eventDate);
+
+      if (!dateParts) {
+        return accumulator;
+      }
+
+      const day = dateParts.day.toString();
       const startTime = formatTime12Hour(event.startTime);
       const endTime = formatTime12Hour(event.endTime);
 
@@ -143,7 +223,7 @@ const HomeContainer = () => {
 
       return accumulator;
     }, {});
-  }, [eventsForActiveMonth]);
+  }, [deduplicatedEventsForActiveMonth]);
 
   const highlightedDays = useMemo(
     () => Object.keys(calendarEventMap).map((day) => Number(day)),
@@ -153,19 +233,49 @@ const HomeContainer = () => {
   const calendarDays = useMemo(() => getCalendarDays(activeMonthDate, highlightedDays), [activeMonthDate, highlightedDays]);
 
   const featuredDates = useMemo<FeaturedDate[]>(() => {
-    return eventsForActiveMonth
+    return deduplicatedEventsForActiveMonth
       .slice()
-      .sort((left, right) => new Date(left.eventDate).getTime() - new Date(right.eventDate).getTime())
+      .sort((left, right) => {
+        const leftDateParts = getEventDateParts(left.eventDate);
+        const rightDateParts = getEventDateParts(right.eventDate);
+
+        if (!leftDateParts && !rightDateParts) {
+          return 0;
+        }
+
+        if (!leftDateParts) {
+          return 1;
+        }
+
+        if (!rightDateParts) {
+          return -1;
+        }
+
+        return leftDateParts.timestamp - rightDateParts.timestamp;
+      })
       .slice(0, 4)
-      .map((event, index) => ({
-        date: new Intl.DateTimeFormat("en-US", {
-          month: "short",
-          day: "2-digit",
-        }).format(new Date(event.eventDate)),
-        name: event.eventTitle,
-        color: FEATURED_DATE_COLORS[index % FEATURED_DATE_COLORS.length],
-      }));
-  }, [eventsForActiveMonth]);
+      .map((event, index) => {
+        const dateParts = getEventDateParts(event.eventDate);
+
+        if (!dateParts) {
+          return {
+            date: "Invalid date",
+            name: event.eventTitle,
+            color: FEATURED_DATE_COLORS[index % FEATURED_DATE_COLORS.length],
+          };
+        }
+
+        return {
+          date: new Intl.DateTimeFormat("en-US", {
+            month: "short",
+            day: "2-digit",
+            timeZone: "UTC",
+          }).format(new Date(Date.UTC(dateParts.year, dateParts.month, dateParts.day))),
+          name: event.eventTitle,
+          color: FEATURED_DATE_COLORS[index % FEATURED_DATE_COLORS.length],
+        };
+      });
+  }, [deduplicatedEventsForActiveMonth]);
 
   const fetchUpcomingEvents = useCallback(async () => {
     setIsEventsLoading(true);
@@ -182,8 +292,15 @@ const HomeContainer = () => {
       }
 
       const eventsFromApi = Array.isArray(payload.message) ? payload.message : [];
+      const uniqueEvents = new Map<string, ApiEvent>();
 
-      setApiEvents(eventsFromApi);
+      eventsFromApi.forEach((event) => {
+        if (event?._id && !uniqueEvents.has(event._id)) {
+          uniqueEvents.set(event._id, event);
+        }
+      });
+
+      setApiEvents(Array.from(uniqueEvents.values()));
     } catch (error: any) {
       toast.error(error?.message || "Something went wrong while loading events.");
       setApiEvents([]);
@@ -208,6 +325,8 @@ const HomeContainer = () => {
       heroParticles={heroParticles}
       heroStats={heroStats}
       onRetryEvents={fetchUpcomingEvents}
+      onPreviousMonth={handlePreviousMonth}
+      onNextMonth={handleNextMonth}
     />
   );
 };
